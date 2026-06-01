@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <issue id="MissingPermission">
+        <ignore path="src/main/java/com/mx/mxSdk/SppCenter/A2dpUtils.java" />
+        <ignore path="src/main/java/com/mx/mxSdk/BleCenter/BleDevice.java" />
+    </issue>
+</lint>

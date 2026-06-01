@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:fitsSystemWindows="true"
+	tools:context=".ui.activity.WifiConfigurationActivity">
+	
+	<include layout="@layout/app_bar_wifi"
+		android:id="@+id/app_bar"/>
+
+	<FrameLayout
+		android:orientation="vertical"
+		android:layout_width="0dp"
+		android:layout_height="0dp"
+		app:layout_constraintTop_toBottomOf="@+id/app_bar"
+		app:layout_constraintBottom_toBottomOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintEnd_toEndOf="parent">
+
+		<RelativeLayout
+			android:layout_width="match_parent"
+			android:layout_height="match_parent">
+
+			<androidx.appcompat.widget.AppCompatButton
+				android:id="@+id/distributionNetworkBtn"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="@dimen/dimen_30dp"
+				android:layout_marginBottom="@dimen/dimen_30dp"
+				android:layout_marginStart="@dimen/dimen_30dp"
+				android:layout_marginEnd="@dimen/dimen_30dp"
+				android:layout_alignParentBottom="true"
+				android:textAllCaps="false"
+				android:background="@drawable/button_wifi_config_bg_selector"
+				android:text="@string/start_config"
+				android:textColor="@drawable/txt_wifi_config_color" />
+
+			<androidx.core.widget.NestedScrollView
+				android:layout_width="match_parent"
+				android:layout_height="match_parent"
+				android:layout_above="@id/distributionNetworkBtn">
+
+				<androidx.appcompat.widget.LinearLayoutCompat
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:paddingStart="@dimen/dimen_30dp"
+					android:paddingEnd="@dimen/dimen_30dp"
+					android:orientation="vertical">
+
+					<TextView
+						android:layout_marginTop="@dimen/dimen_15dp"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:text="@string/step2_tip"
+						android:textColor="@color/text_primary"
+						android:textSize="16sp"
+						android:textStyle="bold"/>
+
+					<CheckedTextView
+						android:id="@+id/tvTitle"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:text="@string/config_wifi"
+						android:drawablePadding="@dimen/dimen_10dp"
+						android:drawableEnd="@drawable/check_text_drawable"
+						android:checked="false"
+						android:textColor="@color/text_primary"
+						android:textSize="18sp"
+						android:textStyle="bold"/>
+
+					<LinearLayout
+						android:id="@+id/llTvs"
+						android:layout_width="match_parent"
+						android:orientation="vertical"
+						android:layout_height="wrap_content">
+
+						<TextView
+							android:layout_marginTop="@dimen/dimen_10dp"
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:text="@string/config_wifi1"
+							android:textColor="@color/text_secondary"
+							android:textSize="16sp"
+							/>
+
+						<TextView
+							android:id="@+id/tvAttention"
+							android:layout_marginTop="@dimen/dimen_10dp"
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:text="@string/config_wifi2"
+							android:textColor="@color/text_secondary"
+							android:textSize="16sp"
+							/>
+
+						<TextView
+							android:id="@+id/tvInstruction"
+							android:layout_marginTop="@dimen/dimen_10dp"
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:text="@string/config_wifi3"
+							android:textColor="?attr/app_normal_color"
+							android:textSize="16sp"
+							android:textStyle="bold"/>
+					</LinearLayout>
+
+
+
+					<TextView
+						android:layout_marginTop="@dimen/dimen_20dp"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:text="@string/wifi_name"
+						android:textColor="@color/text_primary"
+						android:textSize="16sp"/>
+
+					<com.org.jzprinter.widget.CleanableEditText
+						android:id="@+id/etWifi"
+						android:layout_marginTop="4.5dp"
+						android:layout_width="match_parent"
+						android:layout_height="50dp"
+						android:background="@drawable/wifi_input_bg"
+						app:clearIcon="@mipmap/ic_clear"
+						android:drawableTint="?attr/app_normal_color"
+						android:textColor="@color/text_primary"
+						android:textSize="14sp"
+						android:paddingLeft="@dimen/dimen_10dp"
+						android:paddingRight="@dimen/dimen_10dp"
+						android:hint="@string/wifi_name"
+						android:layout_weight="1"/>
+
+					<TextView
+						android:layout_marginTop="@dimen/dimen_20dp"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:text="@string/wifi_pwd"
+						android:textColor="@color/text_primary"
+						android:textSize="16sp"/>
+
+					<androidx.appcompat.widget.AppCompatEditText
+						android:id="@+id/etPwd"
+						android:layout_marginTop="4.5dp"
+						android:layout_width="match_parent"
+						android:layout_height="50dp"
+						android:background="@drawable/wifi_input_bg"
+						android:textColor="@color/text_primary"
+						android:textSize="14sp"
+						android:paddingLeft="@dimen/dimen_10dp"
+						android:paddingRight="@dimen/dimen_10dp"
+						android:hint="@string/wifi_pwd_hint"
+						android:layout_weight="1"/>
+
+
+				</androidx.appcompat.widget.LinearLayoutCompat>
+
+			</androidx.core.widget.NestedScrollView>
+
+		</RelativeLayout>
+
+		<LinearLayout
+			android:id="@+id/llStepSuccess"
+			android:layout_width="match_parent"
+			android:orientation="vertical"
+			android:visibility="gone"
+			android:paddingStart="@dimen/dimen_30dp"
+			android:paddingEnd="@dimen/dimen_30dp"
+			android:gravity="center"
+			android:background="@color/white"
+			android:layout_height="match_parent">
+
+			<ImageView
+				android:layout_gravity="center"
+				android:layout_width="wrap_content"
+				android:src="@mipmap/ic_config_success"
+				android:layout_height="wrap_content"/>
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:text="@string/config_successful"
+				android:layout_gravity="center"
+				android:textSize="18sp"
+				android:layout_marginTop="@dimen/dimen_10dp"
+				android:textStyle="bold"
+				android:textColor="@color/status_success"
+				android:layout_height="wrap_content"/>
+
+			<!-- 添加空白的View 让整体适当上移 -->
+			<View android:layout_width="match_parent"
+				android:layout_height="@dimen/dimen_100dp" />
+
+		</LinearLayout>
+
+		<LinearLayout
+			android:id="@+id/llStepFail"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:orientation="vertical"
+			android:visibility="gone"
+			android:paddingStart="@dimen/dimen_30dp"
+			android:paddingEnd="@dimen/dimen_30dp"
+			android:gravity="center"
+			android:background="@color/white">
+
+			<ImageView
+				android:layout_width="wrap_content"
+                android:src="@mipmap/ic_config_failed"
+				android:layout_height="wrap_content"/>
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:text="@string/config_fail"
+				android:layout_gravity="center"
+				android:textSize="18sp"
+				android:layout_marginTop="@dimen/dimen_10dp"
+				android:textStyle="bold"
+				android:textColor="@color/status_error"
+				android:layout_height="wrap_content"/>
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="@string/config_fail_tips"
+				android:textColor="@color/text_secondary"
+				android:textSize="16sp"
+				android:lineSpacingExtra="@dimen/dimen_3dp"
+				android:layout_marginTop="@dimen/dimen_25dp"/>
+
+			<!-- 添加空白的View 让整体适当上移 -->
+			<View android:layout_width="match_parent"
+				android:layout_height="@dimen/dimen_100dp" />
+
+		</LinearLayout>
+
+	</FrameLayout>
+	
+</androidx.constraintlayout.widget.ConstraintLayout>

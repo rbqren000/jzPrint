@@ -1,0 +1,4 @@
+ninja: Entering directory `/Users/rbq/AndroidStudioProjects/HalftoneAll/Android/jzPrint/opencv/.cxx/RelWithDebInfo/5ijf4i5r/armeabi-v7a'
+[1/1] Cleaning all built files...
+Cleaning... 0 files.
+ninja: build stopped: Error writing to build log: Operation not permitted.

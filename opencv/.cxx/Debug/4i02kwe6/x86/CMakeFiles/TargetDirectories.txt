@@ -1,0 +1,3 @@
+/Users/rbq/AndroidStudioProjects/jzPrint/opencv/.cxx/Debug/4i02kwe6/x86/CMakeFiles/opencv_jni_shared.dir
+/Users/rbq/AndroidStudioProjects/jzPrint/opencv/.cxx/Debug/4i02kwe6/x86/CMakeFiles/edit_cache.dir
+/Users/rbq/AndroidStudioProjects/jzPrint/opencv/.cxx/Debug/4i02kwe6/x86/CMakeFiles/rebuild_cache.dir

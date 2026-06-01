@@ -1,0 +1,29 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- T 字母，横线 x=23~55，竖杆 x=37~41，居中于左半区 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M23,36 L55,36 L55,43 L41,43 L41,72 L37,72 L37,43 L23,43 Z" />
+
+    <!-- P 竖线：x=59~67 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M59,36 L67,36 L67,72 L59,72 Z" />
+
+    <!-- P 空心半圆，圆心(67,48)，外径16，内径10，evenOdd挖空 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="
+            M67,36
+            C85,36 85,60 67,60
+            L67,54
+            C79,54 79,42 67,42
+            Z
+        " />
+
+</vector>

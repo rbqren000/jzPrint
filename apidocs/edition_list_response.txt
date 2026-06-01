@@ -1,0 +1,212 @@
+API: GET https://school.k12m.cn/v1/boXin/boXinEditionList?schoolId=1771835848643026945
+Authorization: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUz...
+HTTP Status: 200
+
+{
+  "code": "'200'",
+  "message": "操作成功",
+  "data": [
+    {
+      "semesterId": 5937,
+      "semesterName": "2026-2027学年第一学期",
+      "editionList": []
+    },
+    {
+      "semesterId": 4297,
+      "semesterName": "2025-2026学年第二学期",
+      "editionList": [
+        {
+          "editionId": 2086,
+          "editionName": "新疆四年级数学下册",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 2084,
+          "editionName": "武汉数学四年级下册",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 2083,
+          "editionName": "甘肃数学五年级下册",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 2082,
+          "editionName": "镇海艺术实验六年级复习卷",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 2081,
+          "editionName": "(北师)课堂精炼数学三下",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 2078,
+          "editionName": "1年级科学下册",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 2076,
+          "editionName": "（华东师大）八年级下册数学",
+          "editionType": "1"
+        },
+        {
+          "editionId": 2043,
+          "editionName": "（晨光）六年级下册语文",
+          "editionType": "1"
+        },
+        {
+          "editionId": 2064,
+          "editionName": "（晨光）四年级下册语文",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 2062,
+          "editionName": "（晨光）六年级下册数学",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 2063,
+          "editionName": "2年级科学下册",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 2055,
+          "editionName": "（晨光）五年级下数学",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 2046,
+          "editionName": "（晨光）四年级下册数学改",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 2042,
+          "editionName": "（晨光）五年级下册语文",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 2038,
+          "editionName": "语文作业本二年级下册人教版（2026）",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 2037,
+          "editionName": "数学作业本二年级下册人教版（2026）",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 2036,
+          "editionName": "语文作业本三年级下人教版（2026）",
+          "editionType": "1"
+        },
+        {
+          "editionId": 2033,
+          "editionName": "人教三数下",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 2035,
+          "editionName": "英语作业本四年级下人教版（2026）",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 2031,
+          "editionName": "英语三下",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 2025,
+          "editionName": "语文一下",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 2002,
+          "editionName": "数学作业本五年级下人教版（2026）",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 2016,
+          "editionName": "北师3数",
+          "editionType": "1"
+        },
+        {
+          "editionId": 2020,
+          "editionName": "科学统编三下",
+          "editionType": "1"
+        },
+        {
+          "editionId": 2012,
+          "editionName": "北师2数下",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 2001,
+          "editionName": "五年级英语下册（人教2026）",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 1972,
+          "editionName": "数学作业本六年级下北师版（2026）",
+          "editionType": "1"
+        },
+        {
+          "editionId": 1998,
+          "editionName": "语文作业本四年级下人教版（2026）",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 1984,
+          "editionName": "英语作业本六年级下册人教版（2026）",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 1993,
+          "editionName": "语文作业本六年级下人教版（2026）",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 1982,
+          "editionName": "科学作业本六年级下教科版（2026）",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 1981,
+          "editionName": "科学作业本五年级下教科版（2026）",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 1983,
+          "editionName": "科学作业本四年级下教科版（2026）",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 1980,
+          "editionName": "数学作业本六年级下人教版（2026）",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 1979,
+          "editionName": "数学作业本下册四年级(人教版）（2026）",
+          "editionType": "1,2"
+        },
+        {
+          "editionId": 1968,
+          "editionName": "数学作业本四年级下北师版（2026）",
+          "editionType": "1"
+        },
+        {
+          "editionId": 1970,
+          "editionName": "数学作业本五年级下北师版（2026）",
+          "editionType": "1"
+        },
+        {
+          "editionId": 1962,
+          "editionName": "数学课堂作业本一年级下册北师版（2026）",
+          "editionType": "1,2"
+        }
+      ]
+    }
+  ],
+  "success": true
+}

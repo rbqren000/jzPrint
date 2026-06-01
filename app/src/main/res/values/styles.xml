@@ -1,0 +1,47 @@
+<resources>
+
+    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="AppTheme.TabLayout.TextAppearance" parent="TextAppearance.Design.Tab">
+        <item name="android:textSize">16sp</item>
+    </style>
+
+    <!-- 底部按钮样式 -->
+    <style name="BottomButtonStyle" parent="Widget.MaterialComponents.Button">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="backgroundTint">@color/accent_blue</item>
+        <item name="cornerRadius">8dp</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <style name="mAlertDialog" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
+        <!-- 禁用按钮文字大写 -->
+        <item name="buttonBarButtonStyle">@style/DialogButtonStyle</item>
+    </style>
+
+    <!-- 对话框按钮样式 -->
+    <style name="DialogButtonStyle" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <!-- 自定义的 ProgressDialog 样式 -->
+    <style name="ProgressDialogStyle" parent="@style/ProgressDialog">
+        <!-- 去掉标题栏 -->
+        <item name="android:windowNoTitle">true</item>
+    </style>
+
+    <style name="ProgressDialog" parent="Theme.MaterialComponents.Dialog">
+        <!-- 背景透明 -->
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <!-- 去除背景遮罩 -->
+        <item name="android:backgroundDimEnabled">false</item>
+        <!-- 窗口无边框 -->
+        <item name="android:windowFrame">@null</item>
+        <!-- 禁用对话框的装饰 -->
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+
+</resources>

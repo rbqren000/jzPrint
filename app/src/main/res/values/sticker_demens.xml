@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<!-- 打印头相关尺寸（坐标计算用） -->
+	<dimen name="rowReferenceDistance">184dp</dimen>
+    <dimen name="rowPixDistance">552</dimen>
+</resources>

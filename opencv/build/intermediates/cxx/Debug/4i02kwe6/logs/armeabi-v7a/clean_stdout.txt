@@ -1,0 +1,3 @@
+ninja: Entering directory `/Users/rbq/AndroidStudioProjects/jzPrint/opencv/.cxx/Debug/4i02kwe6/armeabi-v7a'
+[1/1] Cleaning all built files...
+Cleaning... 0 files.

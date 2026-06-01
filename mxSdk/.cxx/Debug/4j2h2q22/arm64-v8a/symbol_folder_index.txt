@@ -1,0 +1,1 @@
+/Users/rbq/AndroidStudioProjects/HalftoneAll/Android/TaxTicketPrinter/mxSdk/build/intermediates/cxx/Debug/4j2h2q22/obj/arm64-v8a

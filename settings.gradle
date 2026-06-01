@@ -1,0 +1,22 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        maven { url 'https://jitpack.io' }
+        mavenCentral()
+    }
+}
+dependencyResolutionManagement {
+    repositories {
+        google()
+        maven { url 'https://jitpack.io' }
+        mavenCentral()
+    }
+}
+rootProject.name = "jzPrint"
+include ':app'
+include ':mxSdk'
+include ':serialport'
+include ':opencv'
+include ':NanoHttpd'
+//include ':ocr_ui'

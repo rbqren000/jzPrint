@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="StickerGroupView">
+
+        <attr name="directionSlip">
+            <!--      内容宽度等于组件宽度，内容高度不限      -->
+            <enum name="verticalDirectionSlip" value="0" />
+            <!--      内容高度等于组件高度，内容宽度不限      -->
+            <enum name="horizontalDirectionSlip" value="1" />
+            <!--      内容宽度、高度都不限制  暂时不实现    -->
+            <enum name="fixedRowHeightAnyDirectionSlip" value="4" />
+
+            <enum name="freeSizeAnyDirectionSlip" value="5" />
+
+        </attr>
+        <!--    行距离     -->
+        <attr name="rowSpacing" format="dimension"/>
+        <!-- 列距离 -->
+        <attr name="columnSpacing" format="dimension"/>
+
+        <attr name="showIcons" format="boolean" />
+
+<!--        <attr name="showBorder" format="boolean"/>-->
+        <attr name="borderColor" format="color"/>
+        <attr name="borderAlpha" format="integer"/>
+        <attr name="borderStrokeWidth" format="dimension"/>
+
+        <attr name="textBorderColor" format="color"/>
+        <attr name="textBorderAlpha" format="integer"/>
+        <attr name="showTextBorder" format="boolean" />
+        <attr name="textBorderStrokeWidth" format="dimension" />
+        <!--        是否绘制行参考线    -->
+        <attr name="rowReferenceLine" format="boolean" />
+        <!--        行参考线间距 用于显示    -->
+        <attr name="rowReferenceDistance" format="dimension" />
+        <!-- 最终的实际计算距离 -->
+        <attr name="rowPixDistance" format="float" />
+        <!--        行参考颜色   -->
+        <attr name="rowReferenceColor" format="color" />
+        <!--        行参考粗度   -->
+        <attr name="rowReferenceStrokeWidth" format="dimension" />
+        <!--        行参考透明度   -->
+        <attr name="rowReferenceAlpha" format="integer" />
+        <!--        行参考线绘制条数    -->
+        <attr name="rowReferenceCount" format="integer" />
+
+        <!--        是否绘制列参考线    -->
+        <attr name="columnReferenceLine" format="boolean" />
+        <!--        列参考颜色   -->
+        <attr name="columnReferenceColor" format="color" />
+        <!--        列参考粗度   -->
+        <attr name="columnReferenceStrokeWidth" format="dimension" />
+        <!--        行参考透明度   -->
+        <attr name="columnReferenceAlpha" format="integer" />
+        <!--        列参考线距离    -->
+        <attr name="columnReferenceDistance" format="dimension" />
+        <!--        实际最后换算的时候的大小    -->
+        <attr name="columnPixDistance" format="float" />
+        <!--        列参考线绘制条数    -->
+        <attr name="columnReferenceCount" format="integer" />
+
+        <attr name="edgeDistance" format="dimension" />
+        <attr name="leftEdgeDistance" format="dimension" />
+        <attr name="topEdgeDistance" format="dimension" />
+        <attr name="rightEdgeDistance" format="dimension" />
+        <attr name="bottomEdgeDistance" format="dimension" />
+        <attr name="customHeight" format="dimension" />
+        <attr name="minCustomHeight" format="dimension" />
+        <attr name="maxCustomHeight" format="dimension" />
+        <attr name="dividing" format="boolean" />
+        <attr name="allowRotate" format="boolean" />
+        <attr name="allowScale" format="boolean" />
+
+        <attr name="dividingRuleColor" format="color"/>
+        <attr name="dividingRuleStrokeWidth" format="dimension"/>
+        <attr name="dividingRuleTextSize" format="dimension"/>
+        <attr name="dividingRuleTextColor" format="color"/>
+
+        <attr name="backgroundColor" format="color"/>
+        <attr name="backgroundRadiusStrokeWidth" format="dimension"/>
+        <attr name="backgroundRadius" format="dimension"/>
+        <attr name="lockBorderColor" format="color"/>
+
+    </declare-styleable>
+
+    <declare-styleable name="CropOverlayView">
+        <attr name="civMaskAlpha" format="integer"/>
+        <attr name="civShowGuideLine" format="boolean"/>
+        <attr name="civLineColor" format="color"/>
+        <attr name="civLineWidth" format="dimension"/>
+        <attr name="civShowMagnifier" format="boolean"/>
+        <attr name="civMagnifierCrossColor" format="color"/>
+        <attr name="civGuideLineWidth" format="dimension"/>
+        <attr name="civGuideLineColor" format="color"/>
+        <attr name="civPointFillColor" format="color"/>
+        <attr name="civPointFillAlpha" format="integer"/>
+    </declare-styleable>
+
+    <declare-styleable name="RBQRadioButton">
+        <attr name="value" format="integer"/>
+        <attr name="L" format="integer"/>
+        <attr name="P" format="integer"/>
+        <attr name="describe" format="string"/>
+        <attr name="paperType" format="enum">
+            <enum name="A4" value="0"/>
+            <enum name="USLetter" value="1"/>
+            <enum name="B5" value="2"/>
+        </attr>
+        <attr name="rowLayoutDirection" format="enum">
+            <enum name="RowLayoutDirectionVertical" value="0"/>
+            <enum name="RowLayoutDirectionHorizontal" value="1"/>
+        </attr>
+    </declare-styleable>
+
+    <declare-styleable name="CleanableEditText">
+        <attr name="clearIcon" format="reference" />
+        <attr name="unclearIcon" format="reference" />
+        <attr name="clearIconSize" format="dimension" />
+        <attr name="isShowClearIcon" format="boolean" />
+        <attr name="clearIconTapPadding" format="dimension" />
+    </declare-styleable>
+
+    <declare-styleable name="PasswordEditText">
+        <attr name="showPasswordIcon" format="reference" />
+        <attr name="hidePasswordIcon" format="reference" />
+        <attr name="passwordIconSize" format="dimension" />
+        <attr name="isShowPasswordIcon" format="boolean" />
+        <attr name="passwordIconTapPadding" format="dimension" />
+    </declare-styleable>
+
+    <declare-styleable name="NiceImageView">
+        <attr name="is_circle" format="boolean" />
+        <attr name="is_cover_src" format="boolean" />
+        <attr name="corner_radius" format="dimension" />
+        <attr name="corner_top_left_radius" format="dimension" />
+        <attr name="corner_top_right_radius" format="dimension" />
+        <attr name="corner_bottom_left_radius" format="dimension" />
+        <attr name="corner_bottom_right_radius" format="dimension" />
+        <attr name="border_width" format="dimension" />
+        <attr name="border_color" format="color" />
+        <attr name="inner_border_width" format="dimension" />
+        <attr name="inner_border_color" format="color" />
+        <attr name="mask_color" format="color" />
+    </declare-styleable>
+
+    <declare-styleable name="SwitchView">
+        <attr name="hasShadow" format="boolean"/>
+        <attr name="primaryColor" format="color"/>
+        <attr name="primaryColorDark" format="color"/>
+        <attr name="offColor" format="color"/>
+        <attr name="offColorDark" format="color"/>
+        <attr name="barColor" format="color"/>
+        <attr name="bgColor" format="color"/>
+        <attr name="shadowColor" format="color"/>
+        <attr name="ratioAspect" format="float"/>
+        <attr name="isOpened" format="boolean"/>
+    </declare-styleable>
+    
+    <declare-styleable name="MultipleCropView">
+        <attr name="controlSize" format="dimension" />
+        <attr name="minSizeWith" format="dimension" />
+        <attr name="minSizeHeight" format="dimension" />
+        <attr name="minScale" format="float" />
+        <attr name="maxScale" format="float" />
+        <attr name="selectGuideStrokeWidth" format="dimension" />
+        <attr name="unselectGuideStrokeWidth" format="dimension" />
+        <attr name="guideCornerStrokeWidth" format="dimension" />
+        <attr name="textSize" format="dimension" />
+        <attr name="textColor" format="color" />
+        <attr name="textTopDistance" format="dimension" />
+        <attr name="textOffset" format="dimension" />
+        <attr name="textStrokeWidth" format="dimension" />
+    
+    </declare-styleable>
+
+    <declare-styleable name="MultipleImagePreview">
+        <attr name="ReferenceDistance" format="dimension" />
+        <attr name="p_minScale" format="float" />
+        <attr name="p_maxScale" format="float" />
+        <attr name="topSpacing" format="dimension" />
+        <attr name="leftSpacing" format="dimension" />
+        <attr name="rightSpacing" format="dimension" />
+        <attr name="bottomSpacing" format="dimension" />
+        <attr name="p_dividingRuleColor" format="color" />
+        <attr name="p_dividingRuleTextSize" format="dimension" />
+    </declare-styleable>
+
+    <declare-styleable name="LoopScaleView">
+        <!--可视范围内显示的大刻度数-->
+        <attr name="maxShowItem" format="integer"/>
+        <!--最大刻度值-->
+        <attr name="maxValue" format="integer"/>
+        <!--一个刻度表示的值的大小-->
+        <attr name="oneItemValue" format="integer"/>
+        <!--指针颜色-->
+        <attr name="cursorColor" format="color"/>
+        <!--刻度文字颜色-->
+        <attr name="scaleTextColor" format="color"/>
+        <!--指针图标，颜色和这个属性二选一-->
+        <attr name="cursorMap" format="reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="CircleProgressBar">
+        <!--文字大小-->
+        <attr name="text_size" format="dimension"/>
+        <!--文字颜色-->
+        <attr name="text_color" format="color"/>
+        <!--文本-->
+        <attr name="text" format="string"/>
+        <!--变宽宽度-->
+        <attr name="stroke_width" format="integer"/>
+        <!--未走的进度的颜色-->
+        <attr name="normal_color" format="color"/>
+        <!--已走的进度的颜色-->
+        <attr name="progress_color" format="color"/>
+        <!--已走的进度 0-360 -->
+        <attr name="progress" format="integer"/>
+        <!--类型 填充型，还是环形-->
+        <attr name="progress_style" format="enum">
+            <enum name="STROKE" value="0"/>
+            <enum name="FILL" value="1"/>
+        </attr>
+    </declare-styleable>
+
+    <declare-styleable name="SpacingLinearLayoutCompat">
+        <attr name="spacing" format="dimension" />
+    </declare-styleable>
+
+    <declare-styleable name="UniformSizeSpacingLinearLayout">
+        <attr name="uniform_spacing" format="dimension" />
+    </declare-styleable>
+
+    <declare-styleable name="AngleScrollView">
+        <!-- 线条属性 -->
+        <attr name="asv_lineWidth" format="dimension"/>
+        <attr name="asv_lineHeight" format="dimension"/>
+        <attr name="asv_lineMargin" format="dimension"/>
+        <attr name="asv_lineColor" format="color"/>
+        <!-- 中间线属性 -->
+        <attr name="asv_middleLineWidth" format="dimension"/>
+        <attr name="asv_middleLineHeight" format="dimension"/>
+        <attr name="asv_middleLineColor" format="color"/>
+        <!-- 长刻度线属性 -->
+        <attr name="asv_longLineHeight" format="dimension"/>
+        <!-- 是否显示边界外的刻度线 -->
+        <attr name="asv_showOutOfBoundsLines" format="boolean"/>
+        <!-- 旋转灵敏度，默认值为 0.5 -->
+        <attr name="asv_rotateSensitivity" format="float"/>
+    </declare-styleable>
+
+    <attr name="selectedColor" format="color"/>
+    <attr name="unselectedColor" format="color"/>
+    <declare-styleable name="Indicator">
+        <attr name="selectedColor"/>
+        <attr name="unselectedColor"/>
+    </declare-styleable>
+
+    <style name="TabLayoutTextStyle" parent="TextAppearance.Design.Tab">
+        <item name="textAllCaps">false</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <attr name="app_bar_color" format="reference|color"/>
+    <attr name="app_normal_color" format="reference|color"/>
+    <attr name="app_bar_icon_color" format="reference|color"/>
+    <attr name="app_bar_txt_color" format="reference|color"/>
+    <attr name="icon_color" format="reference|color"/>
+    <attr name="txt_save_color" format="reference|color"/>
+    <attr name="divider_color" format="reference|color"/>
+
+
+    <declare-styleable name="SelectableTextView">
+        <attr name="textJustify" format="boolean"/>
+        <attr name="forbiddenActionMenu" format="boolean"/>
+        <attr name="textHeightColor" format="color"/>
+    </declare-styleable>
+
+    <declare-styleable name="VerticalTextView">
+        <attr name="lineSpacingExtra" format="dimension"/>
+        <attr name="charSpacingExtra" format="dimension"/>
+        <attr name="textLeftToRight" format="boolean"/>
+        <attr name="underLineText" format="boolean"/>
+        <attr name="underLineWidth" format="float"/>
+        <attr name="underLineColor" format="color"/>
+        <attr name="underlineOffset" format="dimension"/>
+        <attr name="textHeightLightColor" format="color"/>
+        <attr name="showActionMenu" format="boolean"/>
+    </declare-styleable>
+
+    <declare-styleable name="DragExtendedFloatingActionButton">
+        <attr name="fabBackgroundColor" format="color"/>
+        <attr name="fabText" format="string"/>
+        <attr name="fabIcon" format="reference"/>
+        <attr name="fabDisplayMode">
+            <enum name="iconOnly" value="0"/>
+            <enum name="textOnly" value="1"/>
+            <enum name="iconAndText" value="2"/>
+        </attr>
+        <attr name="fabTextSize" format="dimension"/>
+        <attr name="fabTextColor" format="color"/>
+        <attr name="fabIconSize" format="dimension"/>
+        <attr name="fabIconAndTextSpacing" format="dimension"/>
+        <attr name="fabIconAndTextOrientation">
+            <enum name="horizontal" value="0"/>
+            <enum name="vertical" value="1"/>
+        </attr>
+        
+        <attr name="fabShape">
+            <enum name="circle" value="0"/>
+            <enum name="rectangle" value="1"/>
+            <enum name="roundedRect" value="2"/>
+            <enum name="oval" value="3"/>
+        </attr>
+        
+        <attr name="fabCornerRadius" format="dimension"/>
+        
+        <attr name="fabPadding" format="dimension"/>
+        
+        <attr name="fabPaddingLeft" format="dimension"/>
+        <attr name="fabPaddingTop" format="dimension"/>
+        <attr name="fabPaddingRight" format="dimension"/>
+        <attr name="fabPaddingBottom" format="dimension"/>
+        
+        <!-- 最小边距属性，控制组件不靠边 -->
+        <attr name="fabMinMarginX" format="dimension"/>
+        <attr name="fabMinMarginY" format="dimension"/>
+    </declare-styleable>
+
+    <!-- WhatsApp风格波形View -->
+    <declare-styleable name="WhatsAppWaveformView">
+        <attr name="waveColor" format="color"/>
+        <attr name="progressColor" format="color"/>
+        <attr name="waveTextColor" format="color"/>
+        <attr name="playButtonColor" format="color"/>
+        <attr name="barWidth" format="dimension"/>
+        <attr name="barGap" format="dimension"/>
+    </declare-styleable>
+
+
+</resources>

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:layout_marginStart="@dimen/dimen_15dp"
+	android:layout_marginEnd="@dimen/dimen_15dp"
+	android:background="@drawable/setting_titlebar_white_bg"
+	android:gravity="center_vertical"
+	android:layout_marginTop="@dimen/dimen_7dp"
+	android:layout_marginBottom="@dimen/dimen_7dp"
+	android:padding="@dimen/dimen_10dp">
+	
+	<androidx.appcompat.widget.AppCompatImageView
+		android:id="@+id/iv"
+		android:layout_width="@dimen/dimen_55dp"
+		android:layout_height="@dimen/dimen_55dp"
+		android:src="@mipmap/ic_inksi01" />
+	
+	<LinearLayout
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:layout_marginStart="@dimen/dimen_8dp"
+		android:layout_marginEnd="@dimen/dimen_8dp"
+		android:layout_weight="1"
+		android:orientation="vertical">
+		
+		<androidx.appcompat.widget.AppCompatTextView
+			android:id="@+id/tvName"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="MX-06"
+			android:textColor="@color/text_primary"
+			android:textAllCaps="false"
+			android:textSize="15sp" />
+		
+		<androidx.appcompat.widget.AppCompatTextView
+			android:id="@+id/tvMac"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/label_mac_address"
+			android:textColor="@color/text_secondary"
+			android:textAllCaps="false"
+			android:textSize="12sp" />
+
+		<androidx.appcompat.widget.AppCompatImageView
+			android:id="@+id/batteryImageView"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:visibility="gone"
+			android:layout_marginTop="@dimen/dimen_8dp"
+			android:src="@mipmap/ic_battery_normal"/>
+	
+	</LinearLayout>
+	
+	<com.org.jzprinter.widget.CustomLinearLayout.UniformSizeSpacingLinearLayout
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		app:uniform_spacing="@dimen/dimen_10dp"
+		android:orientation="vertical">
+
+		<androidx.appcompat.widget.AppCompatButton
+			android:id="@+id/addBtn"
+			android:layout_width="wrap_content"
+			android:minWidth="@dimen/dimen_120dp"
+			android:maxWidth="140dp"
+			android:layout_height="36dp"
+			android:textAllCaps="false"
+			android:background="@drawable/button_next_selector"
+			android:text="@string/add"
+			android:textColor="@drawable/txt_wifi_config_color"
+			android:ellipsize="end"
+			android:paddingStart="@dimen/dimen_3dp"
+			android:paddingEnd="@dimen/dimen_3dp"
+			android:lines="1"
+			android:textSize="12sp" />
+		
+		<androidx.appcompat.widget.AppCompatButton
+			android:id="@+id/blueToothConnBtn"
+			android:layout_width="wrap_content"
+			android:minWidth="@dimen/dimen_120dp"
+			android:maxWidth="140dp"
+			android:layout_height="36dp"
+			android:background="@drawable/button_next_selector"
+			android:text="@string/ble_connect"
+			android:textAllCaps="false"
+			android:textColor="@drawable/txt_wifi_config_color"
+			android:ellipsize="end"
+			android:paddingStart="@dimen/dimen_3dp"
+			android:paddingEnd="@dimen/dimen_3dp"
+			android:lines="1"
+			android:textSize="12sp" />
+		
+		<androidx.appcompat.widget.AppCompatButton
+			android:id="@+id/wifiConnBtn"
+			android:layout_width="wrap_content"
+			android:minWidth="@dimen/dimen_120dp"
+			android:maxWidth="140dp"
+			android:layout_height="36dp"
+			android:background="@drawable/button_ap_selector"
+			android:text="@string/wifi_connect"
+			android:textAllCaps="false"
+			android:textColor="?attr/app_normal_color"
+			android:lines="1"
+			android:paddingStart="@dimen/dimen_3dp"
+			android:paddingEnd="@dimen/dimen_3dp"
+			android:ellipsize="end"
+			android:textSize="12sp" />
+
+		<androidx.appcompat.widget.AppCompatButton
+			android:id="@+id/wifiConfigBtn"
+			android:layout_width="wrap_content"
+			android:minWidth="@dimen/dimen_120dp"
+			android:maxWidth="140dp"
+			android:layout_height="36dp"
+			android:background="@drawable/button_ap_selector"
+			android:text="@string/wifi_configuration"
+			android:textAllCaps="false"
+			android:textColor="?attr/app_normal_color"
+			android:lines="1"
+			android:paddingStart="@dimen/dimen_3dp"
+			android:paddingEnd="@dimen/dimen_3dp"
+			android:ellipsize="end"
+			android:textSize="12sp" />
+		
+		<androidx.appcompat.widget.AppCompatButton
+			android:id="@+id/apConnBtn"
+			android:layout_width="wrap_content"
+			android:minWidth="@dimen/dimen_120dp"
+			android:maxWidth="140dp"
+			android:layout_height="36dp"
+			android:background="@drawable/button_ap_selector"
+			android:text="@string/ap_direct"
+			android:textAllCaps="false"
+			android:textColor="?attr/app_normal_color"
+			android:ellipsize="end"
+			android:lines="1"
+			android:paddingStart="@dimen/dimen_3dp"
+			android:paddingEnd="@dimen/dimen_3dp"
+			android:textSize="12sp" />
+
+		<androidx.appcompat.widget.AppCompatButton
+			android:id="@+id/disConnectBtn"
+			android:layout_width="wrap_content"
+			android:minWidth="@dimen/dimen_120dp"
+			android:maxWidth="140dp"
+			android:layout_height="36dp"
+			android:background="@drawable/button_disconnect_selector"
+			android:text="@string/btn_disconnect"
+			android:textColor="@color/status_error"
+			android:textAllCaps="false"
+			android:ellipsize="end"
+			android:lines="1"
+			android:paddingStart="@dimen/dimen_3dp"
+			android:paddingEnd="@dimen/dimen_3dp"
+			android:textSize="12sp" />
+	
+	</com.org.jzprinter.widget.CustomLinearLayout.UniformSizeSpacingLinearLayout>
+	
+</LinearLayout>

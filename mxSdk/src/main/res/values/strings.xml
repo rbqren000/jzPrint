@@ -1,0 +1,15 @@
+<resources>
+    <!-- 纸张类型名称 -->
+    <string name="paper_type_coated_matt">铜版纸（哑光）</string>
+    <string name="paper_type_coated_gloss">铜版纸（亮光）</string>
+    <string name="paper_type_uncoated">胶版纸</string>
+    <string name="paper_type_news_print">新闻纸</string>
+    <string name="paper_type_a4_plain">A4普通纸</string>
+    <string name="paper_type_photo_paper">相纸</string>
+    
+    <!-- 预览模式名称 -->
+    <string name="preview_mode_layer_multiply">图层叠加模式 (标准)</string>
+    <string name="preview_mode_direct_calculation">直接计算模式 (增强)</string>
+    <string name="preview_mode_neugebauer">Neugebauer模式 (专业)</string>
+    
+</resources>

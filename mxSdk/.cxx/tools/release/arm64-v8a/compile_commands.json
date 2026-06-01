@@ -1,0 +1,12 @@
+[
+{
+  "directory": "/Users/rbq/AndroidStudioProjects/inksi/mxSdk/.cxx/RelWithDebInfo/2c3f5on4/arm64-v8a",
+  "command": "/Users/rbq/Library/Android/sdk/ndk/21.4.7075529/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++ --target=aarch64-none-linux-android24 --gcc-toolchain=/Users/rbq/Library/Android/sdk/ndk/21.4.7075529/toolchains/llvm/prebuilt/darwin-x86_64 --sysroot=/Users/rbq/Library/Android/sdk/ndk/21.4.7075529/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -DmxSdk_EXPORTS -I/Users/rbq/AndroidStudioProjects/inksi/mxSdk/liblcms/arm64-v8a/include -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -O2 -g -DNDEBUG -fPIC -Wno-deprecated-register -o CMakeFiles/mxSdk.dir/lcms_jni.cpp.o -c /Users/rbq/AndroidStudioProjects/inksi/mxSdk/src/main/cpp/lcms_jni.cpp",
+  "file": "/Users/rbq/AndroidStudioProjects/inksi/mxSdk/src/main/cpp/lcms_jni.cpp"
+},
+{
+  "directory": "/Users/rbq/AndroidStudioProjects/inksi/mxSdk/.cxx/RelWithDebInfo/2c3f5on4/arm64-v8a",
+  "command": "/Users/rbq/Library/Android/sdk/ndk/21.4.7075529/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++ --target=aarch64-none-linux-android24 --gcc-toolchain=/Users/rbq/Library/Android/sdk/ndk/21.4.7075529/toolchains/llvm/prebuilt/darwin-x86_64 --sysroot=/Users/rbq/Library/Android/sdk/ndk/21.4.7075529/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -DmxSdk_EXPORTS -I/Users/rbq/AndroidStudioProjects/inksi/mxSdk/liblcms/arm64-v8a/include -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -O2 -g -DNDEBUG -fPIC -Wno-deprecated-register -o CMakeFiles/mxSdk.dir/ZlibNativeUtils.cpp.o -c /Users/rbq/AndroidStudioProjects/inksi/mxSdk/src/main/cpp/ZlibNativeUtils.cpp",
+  "file": "/Users/rbq/AndroidStudioProjects/inksi/mxSdk/src/main/cpp/ZlibNativeUtils.cpp"
+}
+]

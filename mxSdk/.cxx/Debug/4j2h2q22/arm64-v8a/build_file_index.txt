@@ -1,0 +1,1 @@
+/Users/rbq/AndroidStudioProjects/HalftoneAll/Android/TaxTicketPrinter/mxSdk/src/main/cpp/CMakeLists.txt

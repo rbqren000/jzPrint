@@ -1,0 +1,4 @@
+/Users/rbq/Library/Android/sdk/cmake/3.22.1/bin/ninja \
+  -C \
+  /Users/rbq/AndroidStudioProjects/HalftoneAll/Android/jzPrint/opencv/.cxx/RelWithDebInfo/5ijf4i5r/armeabi-v7a \
+  clean
