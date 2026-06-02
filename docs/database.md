@@ -4,7 +4,7 @@
 > 日期：2026-05-26  
 > 数据库方案：Room (androidx.room)  
 > 数据库名称：jz_print_db  
-> 版本号：1
+> 版本号：4（含 editionName 字段迁移）
 
 ## 1. 技术选型
 
@@ -396,7 +396,7 @@ public interface PrintProgressDao {
     MaterialEntity.class,
     PrintTaskEntity.class,
     PrintProgressEntity.class
-}, version = 1, exportSchema = true)
+}, version = 4, exportSchema = true)
 @TypeConverters({IntegerListConverter.class})
 public abstract class AppDatabase extends RoomDatabase {
     private static volatile AppDatabase INSTANCE;
@@ -420,6 +420,17 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract MaterialDao materialDao();
     public abstract PrintTaskDao printTaskDao();
     public abstract PrintProgressDao printProgressDao();
+
+    // Repository 工厂方法（统一数据访问入口）
+    public StudentRepository studentRepository() {
+        return new StudentRepository(studentDao());
+    }
+    public PrintTaskRepository printTaskRepository() {
+        return new PrintTaskRepository(printTaskDao());
+    }
+    public PrintProgressRepository printProgressRepository() {
+        return new PrintProgressRepository(printProgressDao());
+    }
 }
 ```
 
@@ -430,11 +441,9 @@ public abstract class AppDatabase extends RoomDatabase {
 ```java
 public class PrintTaskRepository {
     private final PrintTaskDao taskDao;
-    private final PrintProgressDao progressDao;
 
-    public PrintTaskRepository(PrintTaskDao taskDao, PrintProgressDao progressDao) {
+    public PrintTaskRepository(PrintTaskDao taskDao) {
         this.taskDao = taskDao;
-        this.progressDao = progressDao;
     }
 
     public long insert(PrintTaskEntity task) {
@@ -446,33 +455,29 @@ public class PrintTaskRepository {
         taskDao.update(task);
     }
 
-    public PrintTaskEntity findUnfinished(String targetId) {
-        return taskDao.findUnfinished(targetId);
+    public void delete(PrintTaskEntity task) {
+        taskDao.delete(task);
     }
 
-    /**
-     * 添加已打印页码并更新任务
-     */
-    public void addPrintedPage(long taskId, int pageIndex) {
-        PrintTaskEntity task = taskDao.getById(taskId);
-        if (task == null) return;
+    // ... findUnfinished, addPrintedPage, 等
+}
+```
 
-        List<Integer> printed = IntegerListConverter.fromString(task.getPrintedPages());
-        if (!printed.contains(pageIndex)) {
-            printed.add(pageIndex);
-            task.setPrintedPages(IntegerListConverter.fromList(printed));
-        }
-        task.setUpdatedAt(System.currentTimeMillis());
+### 5.2 PrintProgressRepository
 
-        // 检查是否全部完成
-        List<Integer> target = IntegerListConverter.fromString(task.getTargetPages());
-        if (printed.containsAll(target)) {
-            task.setStatus(2); // COMPLETED
-            task.setCompletedAt(System.currentTimeMillis());
-        }
+```java
+public class PrintProgressRepository {
+    private final PrintProgressDao progressDao;
 
-        taskDao.update(task);
+    public PrintProgressRepository(PrintProgressDao progressDao) {
+        this.progressDao = progressDao;
     }
+
+    public void insert(PrintProgressEntity progress) {
+        progressDao.insert(progress);
+    }
+
+    // ... 其他查询方法
 }
 ```
 

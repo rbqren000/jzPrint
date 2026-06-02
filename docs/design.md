@@ -48,11 +48,9 @@ com.org.jzprinter
 │   ├── MaterialLoader.java             # 素材加载（两种模式）
 │   ├── ImageMerger.java                # 单点阵纵向拼接
 │   ├── PrintProgressManager.java       # 打印进度管理（监听SDK回调）
-│   ├── PrintImagePreparer.java         # ★ 旋转90°+补白到552px+对齐方式
-│   └── reprint/                        # 重打策略
-│       ├── ReprintStrategy.java        # 重打策略接口
-│       ├── ResendReprintStrategy.java  # 重新发送模式（当前）
-│       └── CommandReprintStrategy.java # 指令重打模式（未来）
+│   ├── PrintImagePreparer.java         # 旋转90°+补白到552px+对齐方式
+│   ├── PrintConfig.java                # 打印配置中心（奇偶页方向）
+│   └── StorageManager.java             # 存储空间管理
 │
 ├── service/                            # 后台服务
 │   ├── DownloadService.java            # 素材下载前台服务
@@ -62,29 +60,29 @@ com.org.jzprinter
 │   ├── ApiClient.java                  # API 客户端（BaseOkHttpV3）
 │   └── ApiResponse.java                # 通用响应模型
 │
-└── ui/                                 # 界面层（已有 + 新增）
-    ├── activity/                       # 已有 Activity
-    │   ├── MainActivity.java           # 已有，主界面
-    │   ├── DeviceSelectActivity.java   # 已有，设备选择
-    │   ├── DeepLinkActivity.java       # 新增，小程序分享跳转入口
-    │   └── ...
-    ├── print/                          # 新增打印相关界面
-    │   ├── EditionListActivity.java    # 校本作业列表
+└── ui/                                 # 界面层
+    ├── activity/
+    │   ├── MainActivity.java           # 主界面 + 任务卡片列表
+    │   ├── DeviceSelectActivity.java   # 设备选择
+    │   ├── DeepLinkActivity.java       # 小程序分享跳转入口
+    │   ├── SchoolHomeworkListActivity.java  # 校本作业列表
     │   ├── StudentListActivity.java    # 学生列表
     │   ├── PrintModeSelectActivity.java# 打印模式选择
     │   ├── PrintProgressActivity.java  # 打印进度展示
-    │   └── TaskDetailActivity.java     # 任务详情（含重打选择）
-    └── dialog/
-        └── ContinuePrintDialog.java    # 继续打印提示
+    │   ├── PrintSettingsActivity.java  # 打印设置（奇偶页方向）
+    │   └── TaskDetailActivity.java     # 任务详情
+    └── adapter/
+        ├── TaskCardAdapter.java        # 首页任务卡片适配器
+        └── ...
 ```
 
 ### 1.3 依赖关系
 
 ```
 UI 层 → Repository 层 → DAO 层 → Room Database
-UI 层 → PrintEngine → PrintController（已有） → mxSdk
+UI 层 → PrintEngine → ConnectManager → mxSdk
 UI 层 → DownloadService → ApiClient → 远程 API
-PrintEngine → PrintProgressManager → PrintTaskRepository
+PrintEngine → PrintProgressManager → PrintTaskRepository + PrintProgressRepository
 ```
 
 ## 2. 打印模式设计
@@ -361,7 +359,6 @@ ConnectManager.setWithSendMultiRowDataPacket(data)  ← 一次发送
 public class PrintEngine {
     private final PrintTaskRepository taskRepo;
     private final MaterialLoader materialLoader;
-    private final PrintController printController;
     private final ExecutorService dbExecutor = Executors.newSingleThreadExecutor();  // ★ DB操作专用线程
     private PrintProgressManager progressManager;
     private PrintTaskEntity currentTask;
@@ -897,19 +894,17 @@ public interface OnDataProgressListener {
 
 **本项目中**：用于 UI 展示数据传输进度百分比。
 
-### 5.4 打印流程（已有 PrintController）
+### 5.4 打印数据发送链路
 
-现有 `PrintController` 的打印链路：
+PrintEngine 直接通过 `ConnectManager` 发送打印数据：
 
 ```
 Bitmap
-  → MultiRowImageFactory.image2MultiRowImage()      // 图片拆分
-  → MultiRowDataFactory.bitmap2MultiRowData()        // 生成打印数据
-    参数：threshold=127, dithering=true, 其他默认
-  → ConnectManager.setWithSendMultiRowDataPacket()   // 发送给打印机
+  → PrintImagePreparer.prepare() 旋转+补白到552px
+  → MultiRowImageFactory.image2MultiRowImage()
+  → MultiRowDataFactory.bitmap2MultiRowData()
+  → ConnectManager.setWithSendMultiRowDataPacket()
 ```
-
-**本项目中**：直接复用 `PrintController.print(Bitmap, PrintCallback)`，无需修改。
 
 **重要：MultiRow 一次发送模式**：
 
@@ -1070,7 +1065,7 @@ public class DeepLinkActivity extends BaseActivity {
             if (schoolId != null) {
                 // 保存 schoolId，跳转到校本作业列表
                 PreferencesUtils.putString(this, "schoolId", schoolId);
-                Intent intent = new Intent(this, EditionListActivity.class);
+                Intent intent = new Intent(this, SchoolHomeworkListActivity.class);
                 intent.putExtra("schoolId", schoolId);
                 startActivity(intent);
             }
@@ -1192,7 +1187,7 @@ public enum TaskStatus {
 
 ```java
 public class TaskRecoveryManager {
-    private final PrintTaskDao taskDao;
+    private final PrintTaskRepository taskRepo;
     private final ExecutorService dbExecutor = Executors.newSingleThreadExecutor();  // ★ DB操作专用线程
 
     /**
@@ -1693,363 +1688,68 @@ public class MainActivity extends BaseActivity {
 
 ### 10.1 重打的两种模式
 
-当前打印机暂不支持重打指令，重打需要重新发送完整数据。但未来打印机固件可能支持"重打指令"——直接从打印机缓冲区重打某拼，无需 App 重新传输数据。设计上需要预留两种模式。
-
-| 模式 | 当前 | 未来 |
+| 模式 | 说明 | 状态 |
 |------|------|------|
-| **重新发送模式** | ✅ 可用 | ✅ 始终可用（兜底） |
-| **重打指令模式** | ❌ 暂不可用 | ⏳ 需打印机固件配合 |
+| **指令重打模式** | App 发送 jzPrint 扩展指令（0x030A），打印机从缓冲区重打指定拼 | ✅ 已实现 |
+| **重新发送模式** | App 重新加载素材并完整发送数据给打印机 | ✅ 兜底方案 |
 
-### 10.2 重新发送模式（当前实现）
+### 10.2 指令重打模式（0x030A）
 
-将需重打的页从 `printedPages` 中移除，它们自动进入待打印列表，App 重新加载 Bitmap 并发送完整数据给打印机。
-
-```
-printedPages = [85,87,89,91,93,95]  ← 已完成
-用户选择重打 87, 91
-    ↓
-printedPages = [85,89,93,95]  ← 移除87,91
-    ↓
-remaining = targetPages - printedPages = [87,91]
-    ↓
-App 重新 loadPage(87) → 生成 MultiRowData → 完整发送给打印机
-    ↓
-打印完成 → printedPages 重新记入 87
-```
-
-**开销**：需要重新传输整页数据（Bitmap → MultiRowImage → MultiRowData → 分包发送），耗时与正常打印相同。
-
-### 10.3 重打指令模式（未来扩展）
-
-打印机固件保留已接收数据的缓冲区，App 只需发送一条"重打第 N 拼"指令，打印机直接从缓冲区取出数据重新打印，无需 App 重新传输。
+jzPrint 为打印机扩展了专用指令 `opcode=0x030A`，参数 1 byte（拼索引）。打印机固件保留已接收数据的缓冲区，App 只需发送指令，打印机直接从缓冲区重打。**不修改 SDK，仅通过 `ConnectManager.sendCommand()` 通用接口发送。**
 
 ```
-printedPages = [85,87,89,91,93,95]
-用户选择重打 87, 91
+用户看到 Anoto 没打好 → 进度页点「重打指定页」
     ↓
-App 发送重打指令：reprintCommand(puzzleIndex=1)   ← 仅一条指令，几字节
+弹出 BottomSheet，列出所有 targetPages（✅/⬜ 标记已打印/未打印）
     ↓
-打印机从缓冲区取出第1拼数据 → 重新打印
+默认选中最后打印的页，用户可改选任意页
     ↓
-onPrintComplete 回调 → printedPages 不变（本来就含87）
+确认 → PrintEngine.reprintSpecifiedPage(puzzleIndex)
+    → sendCommand(0x030A, [(byte)puzzleIndex])
+    → isReprintMode = true
+    ↓
+用户按打印机按钮 → 打印指定拼
+    ↓
+onPhysicalPrintComplete 检测到重打模式 → 跳过进度推进 → 恢复正常
 ```
 
-**开销**：仅一条指令，几乎零耗时。
-
-### 10.4 抽象层设计（适配两种模式）
-
+**关键实现（PrintEngine.java）**：
 ```java
-public interface ReprintStrategy {
-    /**
-     * 重打指定页
-     * @return true=重打指令已发送/数据已发送，false=不支持或失败
-     */
-    boolean reprint(PrintTaskEntity task, int pageIndex);
+// 扩展指令 opcode
+private static final int OPCODE_REPRINT_PAGE = 0x030A;
 
-    /**
-     * 是否支持指令重打（不需要重新传输数据）
-     */
-    boolean supportsCommandReprint();
+// 重打模式标志（volatile 保证 SDK 线程可见）
+private volatile boolean isReprintMode = false;
+private volatile int reprintTargetPuzzleIndex = -1;
+
+public void reprintSpecifiedPage(int puzzleIndex) {
+    // 校验 + 设置标志 + 发送指令
+    isReprintMode = true;
+    reprintTargetPuzzleIndex = puzzleIndex;
+    ConnectManager.share().sendCommand(OPCODE_REPRINT_PAGE, new byte[]{(byte) puzzleIndex});
 }
 
-/**
- * 重新发送模式（当前实现）
- */
-public class ResendReprintStrategy implements ReprintStrategy {
-    private final PrintEngine printEngine;
-    private final PrintTaskRepository taskRepo;
-    private final ExecutorService dbExecutor = Executors.newSingleThreadExecutor();  // ★ DB操作专用线程
-
-    @Override
-    public boolean reprint(PrintTaskEntity task, int pageIndex) {
-        // 从 printedPages 移除该页，使其进入 remaining
-        List<Integer> printed = IntegerListConverter.fromString(task.getPrintedPages());
-        printed.remove(Integer.valueOf(pageIndex));
-        task.setPrintedPages(IntegerListConverter.fromList(printed));
-        task.setStatus(TaskStatus.IN_PROGRESS.getCode());
-        dbExecutor.execute(() -> taskRepo.update(task));  // ★ 子线程DB写
-
-        // 触发正常打印流程（重新加载+发送完整数据）
-        printEngine.execute(task);
-        return true;
-    }
-
-    @Override
-    public boolean supportsCommandReprint() {
-        return false;
-    }
-}
-
-/**
- * 指令重打模式（未来实现，需打印机固件配合）
- * 
- * 前提条件：
- * 1. 打印机固件支持缓冲区保留已接收数据
- * 2. SDK 新增 reprintCommand(int puzzleIndex) 接口
- * 3. 打印机收到指令后从缓冲区取数据重新打印
- */
-public class CommandReprintStrategy implements ReprintStrategy {
-    private final ConnectManager connectManager;
-
-    @Override
-    public boolean reprint(PrintTaskEntity task, int pageIndex) {
-        // 将页码转换为拼索引（当前 1页=1拼，直接对应）
-        int puzzleIndex = pageIndex;  // 或通过映射表转换
-
-        // 发送重打指令给打印机（SDK 需扩展此接口）
-        // connectManager.sendReprintCommand(puzzleIndex);
-        // 暂未实现，返回 false 回退到重新发送模式
-        return false;
-    }
-
-    @Override
-    public boolean supportsCommandReprint() {
-        // 检查打印机是否支持重打指令
-        // 可通过打印机软件版本/功能标志判断
-        // return connectManager.getConnectedDevice().supportsReprintCommand();
-        return false;  // 当前所有机型暂不支持
-    }
-}
+// onPhysicalPrintStart/Complete 中检测重打模式，跳过正常进度记录
 ```
 
-### 10.5 PrintEngine 重打入口（自动选择策略）
+**UI（PrintProgressActivity）**：PRINT 阶段底部显示「重打指定页」按钮 → 弹出单选页面列表（✅/⬜ 标记）→ 确认发送指令 + Toast 提示按按钮。
 
-```java
-public class PrintEngine {
-    private ReprintStrategy reprintStrategy;
+### 10.3 重新发送模式（兜底方案）
 
-    /**
-     * 设置重打策略（由 App 初始化时根据打印机能力选择）
-     */
-    public void setReprintStrategy(ReprintStrategy strategy) {
-        this.reprintStrategy = strategy;
-    }
+`PrintEngine.reprintPages(task, pages)` → 从 `printedPages` 中移除目标页 → 重新加载 Bitmap 并完整发送。
 
-    /**
-     * 重打指定页（自动选择最优策略）
-     */
-    public void reprintPages(PrintTaskEntity task, List<Integer> pagesToReprint) {
-        if (pagesToReprint == null || pagesToReprint.isEmpty()) return;
+入口：任务详情页（TaskDetailActivity）支持多选重打。
 
-        if (!Boolean.TRUE.equals(ConnectManager.share().isConnected())) {
-            throw new PrinterNotConnectedException();
-        }
+### 10.4 两种模式对比
 
-        // 优先尝试指令重打（未来）
-        if (reprintStrategy != null && reprintStrategy.supportsCommandReprint()) {
-            for (int pageIndex : pagesToReprint) {
-                if (!reprintStrategy.reprint(task, pageIndex)) {
-                    // 指令重打失败，回退到重新发送模式
-                    fallbackResend(task, pagesToReprint);
-                    return;
-                }
-            }
-            return;
-        }
-
-        // 当前：使用重新发送模式
-        fallbackResend(task, pagesToReprint);
-    }
-
-    /**
-     * 重新发送模式（兜底方案，始终可用）
-     */
-    private void fallbackResend(PrintTaskEntity task, List<Integer> pagesToReprint) {
-        // 检查素材存在
-        if (!new File(task.getMaterialPath()).exists()) {
-            throw new MaterialLostException();
-        }
-
-        // 从 printedPages 中移除需重打的页
-        List<Integer> printed = IntegerListConverter.fromString(task.getPrintedPages());
-        printed.removeAll(pagesToReprint);
-        task.setPrintedPages(IntegerListConverter.fromList(printed));
-        task.setStatus(TaskStatus.IN_PROGRESS.getCode());
-        task.setUpdatedAt(System.currentTimeMillis());
-        dbExecutor.execute(() -> taskRepo.update(task));  // ★ 子线程DB写
-
-        // 开始打印（自动计算 remaining，即 pagesToReprint）
-        currentTask = task;
-        isPrinting = true;
-        PrintService.start();
-        execute(task);
-    }
-
-    /**
-     * 全部重打
-     */
-    public void reprintAll(PrintTaskEntity task) {
-        List<Integer> allTarget = IntegerListConverter.fromString(task.getTargetPages());
-        reprintPages(task, allTarget);
-    }
-}
-```
-
-### 10.6 策略选择时机
-
-```java
-// 在连接打印机后，根据打印机能力选择策略
-public class DeviceSelectActivity extends BaseActivity {
-    @Override
-    protected void onDeviceConnected(Device device) {
-        PrintEngine engine = PrintEngine.getInstance();
-
-        // 检查打印机是否支持重打指令
-        // if (device.supportsReprintCommand()) {
-        //     engine.setReprintStrategy(new CommandReprintStrategy());
-        // } else {
-            engine.setReprintStrategy(new ResendReprintStrategy());
-        // }
-    }
-}
-```
-
-### 10.7 两种模式对比
-
-| 维度 | 重新发送模式 | 指令重打模式 |
+| 维度 | 指令重打模式 | 重新发送模式 |
 |------|------------|------------|
-| **当前可用** | ✅ 是 | ❌ 需打印机固件配合 |
-| **数据传输** | 完整传输整页数据 | 仅一条指令（几字节） |
-| **耗时** | 与正常打印相同 | 几乎瞬间 |
-| **打印机要求** | 无额外要求 | 缓冲区保留已接收数据 |
-| **SDK 要求** | 无需修改 | 需新增 `sendReprintCommand()` 接口 |
-| **printedPages 处理** | 移除→重打→记入 | 不变（本来就含该页） |
-| **可靠性** | 高（与正常打印相同） | 依赖缓冲区完整性 |
-| **适用场景** | 任何情况 | 打印机刚打完、缓冲区数据仍在 |
-
-### 10.8 未来扩展路线
-
-```
-当前阶段：
-├── 实现 ResendReprintStrategy
-├── UI 支持选择重打页
-└── 功能完整可用
-
-未来阶段（需与打印机团队配合）：
-├── 打印机固件：缓冲区保留已接收数据
-├── SDK：新增 sendReprintCommand(int puzzleIndex) 接口
-├── App：实现 CommandReprintStrategy
-├── 连接时自动检测打印机能力，选择最优策略
-└── 指令重打失败时自动回退到重新发送模式
-```
-
-### 10.9 UI 交互
-
-#### 已完成任务的详情界面
-
-```
-┌─────────────────────────────────────┐
-│  打印任务详情                        │
-│                                     │
-│  学生：张三                          │
-│  校本：校本作业A                      │
-│  模式：奇数页 (12页)                  │
-│  状态：✓ 已完成                      │
-│                                     │
-│  ┌─────────────────────────────┐    │
-│  │ ☑ page_85  ✓ 已完成         │    │
-│  │ ☑ page_87  ✓ 已完成         │    │
-│  │ ☑ page_89  ✓ 已完成         │    │
-│  │ ☑ page_91  ✓ 已完成         │    │
-│  │ ☑ page_93  ✓ 已完成         │    │
-│  │ ☑ page_95  ✓ 已完成         │    │
-│  │ ...                          │    │
-│  └─────────────────────────────┘    │
-│                                     │
-│  ┌──────────┐  ┌──────────┐         │
-│  │ 重打选中 │  │ 全部重打 │         │
-│  └──────────┘  └──────────┘         │
-└─────────────────────────────────────┘
-
-用户勾选 page_87, page_91 → 点击"重打选中"
-    ↓
-确认对话框："确定重打 2 页？"
-    ↓
-reprintPages(task, [87, 91])
-    ↓
-进入打印流程，只打印 page_87, page_91
-```
-
-#### 进行中/暂停任务的详情界面（也可重打已完成页）
-
-```
-┌─────────────────────────────────────┐
-│  打印任务详情                        │
-│                                     │
-│  学生：李四                          │
-│  模式：全部页 (8页)                   │
-│  状态：已暂停 (2/8页)                │
-│                                     │
-│  ┌─────────────────────────────┐    │
-│  │ ☑ page_85  ✓ 已完成         │    │
-│  │ ☑ page_86  ✓ 已完成         │    │
-│  │   page_87  ○ 待打印         │    │
-│  │   page_88  ○ 待打印         │    │
-│  │   ...                        │    │
-│  └─────────────────────────────┘    │
-│                                     │
-│  ┌──────────┐  ┌──────────┐         │
-│  │ 继续打印 │  │ 重打选中 │         │
-│  └──────────┘  └──────────┘         │
-└─────────────────────────────────────┘
-```
-
-### 10.10 重打与续打的统一
-
-重打和续打在底层是同一套逻辑：
-
-| 操作 | printedPages 变化 | remaining 计算 | 效果 |
-|------|-------------------|---------------|------|
-| 续打 | 不变 | targetPages - printedPages | 继续未完成的页 |
-| 重打选中页 | 移除选中页 | targetPages - printedPages | 选中页进入 remaining |
-| 全部重打 | 清空 | targetPages | 从头开始 |
-| 打印完成一页 | 追加 | 自动缩减 | 推进进度 |
-
-**核心公式始终不变**：`remaining = targetPages - printedPages`
-
-### 10.11 任务详情 Activity
-
-```java
-public class TaskDetailActivity extends BaseActivity {
-    private PrintTaskEntity task;
-    private Set<Integer> selectedPages = new HashSet<>();
-
-    private void onReprintSelected() {
-        if (selectedPages.isEmpty()) {
-            showToast("请选择需要重打的页面");
-            return;
-        }
-
-        List<Integer> pagesToReprint = new ArrayList<>(selectedPages);
-        Collections.sort(pagesToReprint);
-
-        new AlertDialog.Builder(this)
-            .setTitle("确认重打")
-            .setMessage(String.format("将重新打印 %d 页：%s",
-                pagesToReprint.size(), pagesToReprint))
-            .setPositiveButton("重打", (d, w) -> {
-                printEngine.switchToNewTarget();  // 暂停当前任务
-                printEngine.reprintPages(task, pagesToReprint);
-                navigateToPrintProgress(task);
-            })
-            .setNegativeButton("取消", null)
-            .show();
-    }
-
-    private void onReprintAll() {
-        new AlertDialog.Builder(this)
-            .setTitle("确认全部重打")
-            .setMessage("将重新打印所有页面")
-            .setPositiveButton("全部重打", (d, w) -> {
-                printEngine.switchToNewTarget();
-                printEngine.reprintAll(task);
-                navigateToPrintProgress(task);
-            })
-            .setNegativeButton("取消", null)
-            .show();
-    }
-}
-```
+| **数据传输** | 仅 3 字节指令 | 完整传输整页数据 |
+| **耗时** | 几乎瞬间 | 与正常打印相同 |
+| **入口** | 打印进度页 BottomSheet | 任务详情页 |
+| **选择** | 单选任意 targetPages 中的页 | 多选已打印页 |
+| **printedPages** | 不变 | 移除→重打→记入 |
+| **UI 操作** | 进度页 → 弹窗 → 确认 | 详情页 → 多选 → 确认 |
 
 ## 11. Bitmap 内存管理
 

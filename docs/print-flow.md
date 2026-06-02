@@ -138,35 +138,47 @@
 
 ### 2.4 重打指定页流程
 
+#### 指令重打模式（0x030A — 进度页触发）
+
 ```
-用户                    TaskDetailActivity       PrintEngine             数据库
- │                         │                       │                   │
- │──查看已完成任务────────►│                       │                   │
- │                         │──展示所有页状态───────│                   │
- │                         │  ✓85 ✓87 ✓89 ✓91    │                   │
- │                         │                       │                   │
- │──勾选87,91，点击重打──►│                       │                   │
- │                         │──确认对话框──────────│                   │
- │                         │                       │                   │
- │──确认重打──────────────►│──reprintPages(task,   │                   │
- │                         │    [87,91])──────────►│                   │
- │                         │                       │──移除printedPages│──UPDATE
- │                         │                       │  [85,87,89,91]   │  →[85,89]
- │                         │                       │  status=IN_PROGRESS│
- │                         │                       │                   │
- │                         │                       │──execute(task)───│
- │                         │                       │  remaining=[87,91]│
- │                         │                       │                   │
- │◄─打印page_87──────────│                       │                   │
- │◄─page_87完成───────────│                       │──★记入printedPages│──UPDATE
- │                         │                       │  [85,89,87]       │
- │◄─打印page_91──────────│                       │                   │
- │◄─page_91完成───────────│                       │──★记入printedPages│──UPDATE
- │                         │                       │  [85,89,87,91]    │
- │                         │                       │  status=COMPLETED │
+用户                    PrintProgressActivity    PrintEngine              打印机
+ │                         │                       │                        │
+ │──点击「重打指定页」────►│                       │                        │
+ │                         │──弹出BottomSheet─────│                        │
+ │                         │  列出所有targetPages  │                        │
+ │                         │  ✅/⬜ 标记已打印/   │                        │
+ │                         │  未打印               │                        │
+ │──选择 page_87──────────►│                       │                        │
+ │──点击「确认重打」──────►│                       │                        │
+ │                         │──reprintSpecifiedPage(puzzleIndex)───────────►│
+ │                         │                       │──sendCommand(0x030A,  │
+ │                         │                       │    [puzzleIndex])    │
+ │                         │                       │──isReprintMode=true  │
+ │◄──Toast: 请按按钮──────│                       │                        │
+ │                         │                       │                        │
+ │──按打印机按钮───────────│                       │◄──打印机打印指定拼────│
+ │                         │                       │──onPrintComplete────►│
+ │                         │                       │  检测重打模式→跳过    │
+ │                         │                       │  onPageComplete       │
+ │                         │                       │  恢复正常进度          │
 ```
 
-**核心**：重打和续打统一用 `remaining = targetPages - printedPages`，只需操控 `printedPages` 即可。
+**关键**：指令重打不推进 `printedPages`（页面已记录），`onPhysicalPrintStart/Complete` 检测 `isReprintMode` 标志跳过正常进度记录。
+
+#### 重新发送模式（任务详情页触发）
+
+```
+用户                    TaskDetailActivity         PrintEngine             数据库
+ │                         │                       │                   │
+ │──查看已完成任务────────►│                       │                   │
+ │──勾选87,91，确认重打──►│──reprintPages(task,    │                   │
+ │                         │    [87,91])──────────►│                   │
+ │                         │                       │──移除printedPages│──UPDATE
+ │                         │                       │  →[85,89]         │
+ │                         │                       │──重新发送数据────│
+ │◄─打印87,91────────────│                       │                   │
+ │◄─全部完成──────────────│                       │──记入printedPages│──UPDATE
+```
 
 ### 2.5 打印异常流程
 
@@ -243,10 +255,10 @@ ConnectManager.share().registerPrintListener(new ConnectManager.OnPrintListener(
 // ConnectManager.share().unregisterPrintListener(printListener);
 ```
 
-### 3.3 OnDataProgressListener（已有，在 PrintController 中）
+### 3.3 OnDataProgressListener
 
 ```java
-// PrintController.sendToPrinter() 中已注册
+// PrintEngine.sendToPrinter() 中注册
 connectManager.registerDataProgressListener(new ConnectManager.OnDataProgressListener() {
     @Override
     public void onDataProgressStart(float size, int progress, long startTime) {
