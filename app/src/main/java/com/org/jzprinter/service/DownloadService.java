@@ -10,16 +10,13 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
-
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
-
 import com.org.jzprinter.R;
 import com.org.jzprinter.network.Api;
 import com.org.jzprinter.network.ApiClientFactory;
 import com.org.jzprinter.print.MaterialPathBuilder;
 import com.org.jzprinter.ui.activity.MainActivity;
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;

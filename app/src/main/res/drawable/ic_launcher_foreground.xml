@@ -1,29 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- T 字母，横线 x=23~55，竖杆 x=37~41，居中于左半区 -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M23,36 L55,36 L55,43 L41,43 L41,72 L37,72 L37,43 L23,43 Z" />
+    <!--
+    Anoto 点阵示意图标
+    jzPrint 打印 App 专用
+    6x6 点阵，2dp 点，8dp 间距，居中，安全区内
+    -->
 
-    <!-- P 竖线：x=59~67 -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M59,36 L67,36 L67,72 L59,72 Z" />
+    <!-- 行 1-2 -->
+    <path android:fillColor="#FFFFFF" android:pathData="M34,34 h2 v2 h-2 Z M42,34 h2 v2 h-2 Z M50,34 h2 v2 h-2 Z M58,34 h2 v2 h-2 Z M66,34 h2 v2 h-2 Z M74,34 h2 v2 h-2 Z M34,42 h2 v2 h-2 Z M42,42 h2 v2 h-2 Z M50,42 h2 v2 h-2 Z M58,42 h2 v2 h-2 Z M66,42 h2 v2 h-2 Z M74,42 h2 v2 h-2 Z" />
 
-    <!-- P 空心半圆，圆心(67,48)，外径16，内径10，evenOdd挖空 -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:fillType="evenOdd"
-        android:pathData="
-            M67,36
-            C85,36 85,60 67,60
-            L67,54
-            C79,54 79,42 67,42
-            Z
-        " />
+    <!-- 行 3-4 -->
+    <path android:fillColor="#FFFFFF" android:pathData="M34,50 h2 v2 h-2 Z M42,50 h2 v2 h-2 Z M50,50 h2 v2 h-2 Z M58,50 h2 v2 h-2 Z M66,50 h2 v2 h-2 Z M74,50 h2 v2 h-2 Z M34,58 h2 v2 h-2 Z M42,58 h2 v2 h-2 Z M50,58 h2 v2 h-2 Z M58,58 h2 v2 h-2 Z M66,58 h2 v2 h-2 Z M74,58 h2 v2 h-2 Z" />
+
+    <!-- 行 5-6 -->
+    <path android:fillColor="#FFFFFF" android:pathData="M34,66 h2 v2 h-2 Z M42,66 h2 v2 h-2 Z M50,66 h2 v2 h-2 Z M58,66 h2 v2 h-2 Z M66,66 h2 v2 h-2 Z M74,66 h2 v2 h-2 Z M34,74 h2 v2 h-2 Z M42,74 h2 v2 h-2 Z M50,74 h2 v2 h-2 Z M58,74 h2 v2 h-2 Z M66,74 h2 v2 h-2 Z M74,74 h2 v2 h-2 Z" />
 
 </vector>
