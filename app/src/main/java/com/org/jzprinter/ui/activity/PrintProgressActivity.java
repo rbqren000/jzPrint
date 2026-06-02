@@ -124,7 +124,7 @@ public class PrintProgressActivity extends BaseActivity {
             rbqRunOnUiThread(() -> {
                 binding.pbPrepare.setProgress(prepareTotal);
                 binding.tvPrepareStatus.setText("完成 ✓");
-                binding.tvStatus.setText("发送数据中...");
+                binding.tvStatus.setText("正在发送 " + prepareTotal + " 页数据...");
                 setPhaseActive(1);
             });
         }
@@ -276,6 +276,9 @@ public class PrintProgressActivity extends BaseActivity {
                 finish();
             }
         });
+
+        // 重打指定页按钮：仅 PRINT 阶段可用，弹出页面选择弹窗
+        binding.btnReprintSpecifiedPage.setOnClickListener(v -> showReprintPageSelector());
 
         PrintEngine.getInstance().setPhaseCallback(phaseCallback);
         startOrResumePrint();
@@ -434,14 +437,17 @@ public class PrintProgressActivity extends BaseActivity {
             case PREPARE:
                 binding.btnRestart.setText("重新发送");
                 binding.btnRestart.setEnabled(false);
+                binding.btnReprintSpecifiedPage.setVisibility(View.GONE);
                 break;
             case TRANSFER:
                 binding.btnRestart.setText("停止发送");
                 binding.btnRestart.setEnabled(true);
+                binding.btnReprintSpecifiedPage.setVisibility(View.GONE);
                 break;
             case STOPPED:
                 binding.btnRestart.setText("重新发送");
                 binding.btnRestart.setEnabled(false);
+                binding.btnReprintSpecifiedPage.setVisibility(View.GONE);
                 binding.tvStatus.setText("发送已停止");
                 new Handler(Looper.getMainLooper()).postDelayed(() -> {
                     if (currentPhase == PrintPhaseCallback.Phase.STOPPED) {
@@ -452,6 +458,7 @@ public class PrintProgressActivity extends BaseActivity {
             case PRINT:
                 binding.btnRestart.setText("重新发送");
                 binding.btnRestart.setEnabled(false);
+                binding.btnReprintSpecifiedPage.setVisibility(View.VISIBLE);
                 break;
         }
     }
@@ -498,6 +505,56 @@ public class PrintProgressActivity extends BaseActivity {
                 rbqRunOnUiThread(() -> binding.tvStatus.setText("重启失败: " + e.getMessage()));
             }
         });
+    }
+
+    /**
+     * 弹出重打指定页选择弹窗。
+     * 列出所有 targetPages，用 ✅/⬜ 标记已打印/未打印，
+     * 默认选中最后打印的页，确认后发送指令重打。
+     */
+    private void showReprintPageSelector() {
+        PrintEngine engine = PrintEngine.getInstance();
+        PrintTaskEntity task = engine.getCurrentTask();
+        if (task == null) return;
+
+        List<Integer> targetPages = IntegerListConverter.fromString(task.getTargetPages());
+        List<Integer> printedPages = IntegerListConverter.fromString(task.getPrintedPages());
+        if (targetPages.isEmpty()) return;
+
+        // 构建选项列表：✅ page_85 / ⬜ page_87 ...
+        String[] items = new String[targetPages.size()];
+        int defaultSelectedIndex = -1;
+        // 从后往前找最后打印的页，作为默认选中
+        for (int i = targetPages.size() - 1; i >= 0; i--) {
+            if (printedPages.contains(targetPages.get(i))) {
+                defaultSelectedIndex = i;
+                break;
+            }
+        }
+        if (defaultSelectedIndex < 0) defaultSelectedIndex = 0;
+
+        for (int i = 0; i < targetPages.size(); i++) {
+            int page = targetPages.get(i);
+            items[i] = (printedPages.contains(page) ? "✅ 第 " : "⬜ 第 ") + page + " 页";
+        }
+
+        final int[] selectedIndex = {defaultSelectedIndex};
+
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("重打指定页")
+            .setSingleChoiceItems(items, defaultSelectedIndex, (dialog, which) -> {
+                selectedIndex[0] = which;
+            })
+            .setNegativeButton("取消", null)
+            .setPositiveButton("确认重打", (dialog, which) -> {
+                int puzzleIndex = selectedIndex[0];
+                int page = targetPages.get(puzzleIndex);
+                engine.reprintSpecifiedPage(puzzleIndex);
+                android.widget.Toast.makeText(PrintProgressActivity.this,
+                    "已发送重打指令，请按打印机按钮重打第 " + page + " 页",
+                    android.widget.Toast.LENGTH_SHORT).show();
+            })
+            .show();
     }
 
     private void startProgressPolling() {

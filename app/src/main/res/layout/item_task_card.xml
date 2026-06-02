@@ -83,6 +83,10 @@
             android:layout_height="36dp"
             android:text="继续"
             android:textSize="13sp"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
             android:layout_marginEnd="8dp" />
 
         <Button
@@ -91,6 +95,10 @@
             android:layout_height="36dp"
             android:text="详情/重打"
             android:textSize="13sp"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
             android:layout_marginEnd="8dp" />
 
         <Button
@@ -99,6 +107,10 @@
             android:layout_height="36dp"
             android:text="取消"
             android:textSize="13sp"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
             android:layout_marginEnd="8dp"
             style="?attr/borderlessButtonStyle" />
 
@@ -109,6 +121,10 @@
             android:text="删除"
             android:textSize="13sp"
             android:textColor="#FF4444"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
             style="?attr/borderlessButtonStyle" />
 
     </LinearLayout>

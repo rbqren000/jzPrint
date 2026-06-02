@@ -26,6 +26,13 @@ public class PrintEngine {
     private static final String TAG = "PrintEngine";
     private static PrintEngine instance;
 
+    /**
+     * jzPrint 扩展指令：重打指定拼。
+     * 参数 1 byte（puzzleIndex），发送后用户按打印机按钮即打印该拼，
+     * 完成后恢复原进度。
+     */
+    private static final int OPCODE_REPRINT_PAGE = 0x030A;
+
     private final Context context;
     private final PrintTaskRepository taskRepo;
     private final MaterialLoader materialLoader;
@@ -39,6 +46,10 @@ public class PrintEngine {
     private boolean oddPageOnRight = true;
     private boolean useCustomMerge = false;
     private PrintPhaseCallback phaseCallback;
+
+    // 重打模式：sendCommand(0x030A) 发送后，下次 onPhysicalPrintStart/Complete 为本次重打
+    private volatile boolean isReprintMode = false;
+    private volatile int reprintTargetPuzzleIndex = -1;
 
     private PrintEngine(Context context, PrintTaskRepository taskRepo,
                          MaterialLoader materialLoader) {
@@ -399,6 +410,14 @@ public class PrintEngine {
         if (currentTask == null) return;
         if (progressManager == null) return;
 
+        // 重打模式：跳过进度推进，仅清除重打标志恢复正常打印
+        if (isReprintMode && currentIndex == reprintTargetPuzzleIndex) {
+            isReprintMode = false;
+            reprintTargetPuzzleIndex = -1;
+            Log.d(TAG, "[onPhysicalPrintComplete] reprint done, resumed normal progress");
+            return;
+        }
+
         int pageIndex = progressManager.getPageByPuzzleIndex(currentIndex);
         progressManager.onPageComplete(currentTask, pageIndex);
         progressManager.onSdkPrintComplete(beginIndex, endIndex, currentIndex, cartridgeId);
@@ -422,6 +441,13 @@ public class PrintEngine {
 
     public void onPhysicalPrintStart(int beginIndex, int endIndex, int currentIndex) {
         if (currentTask == null || progressManager == null) return;
+
+        // 重打模式：跳过进度记录
+        if (isReprintMode && currentIndex == reprintTargetPuzzleIndex) {
+            Log.d(TAG, "[onPhysicalPrintStart] reprint mode, skip progress");
+            return;
+        }
+
         progressManager.onSdkPrintStart(beginIndex, endIndex, currentIndex);
         if (phaseCallback != null && currentIndex == beginIndex) {
             List<Integer> target = IntegerListConverter.fromString(currentTask.getTargetPages());
@@ -515,6 +541,35 @@ public class PrintEngine {
             isPrinting.set(false);
             ConnectManager.share().cancelSendMultiRowDataPacket();
         }
+    }
+
+    /**
+     * 指令重打指定拼（jzPrint 扩展指令 0x030A）。
+     * 数据已全部发送到打印机内存后，可通过此方法重打任意已发送页。
+     * 发送指令后用户按打印机按钮时打印指定拼，完成后恢复原进度。
+     *
+     * @param puzzleIndex 要重打的拼索引（0-based，对应 targetPages 中的下标）
+     */
+    public void reprintSpecifiedPage(int puzzleIndex) {
+        if (currentTask == null) return;
+        if (!Boolean.TRUE.equals(ConnectManager.share().isConnected())) return;
+
+        List<Integer> target = IntegerListConverter.fromString(currentTask.getTargetPages());
+        if (puzzleIndex < 0 || puzzleIndex >= target.size()) return;
+
+        isReprintMode = true;
+        reprintTargetPuzzleIndex = puzzleIndex;
+
+        ConnectManager.share().sendCommand(OPCODE_REPRINT_PAGE, new byte[]{(byte) puzzleIndex});
+        Log.d(TAG, "[reprintSpecifiedPage] sent opcode=0x030A puzzleIndex=" + puzzleIndex
+            + " page=" + target.get(puzzleIndex));
+    }
+
+    /**
+     * 是否有重打指令待执行（用户已发送，等待按按钮）
+     */
+    public boolean isReprintPending() {
+        return isReprintMode;
     }
 
     public void reprintPages(PrintTaskEntity task, List<Integer> pagesToReprint) {
