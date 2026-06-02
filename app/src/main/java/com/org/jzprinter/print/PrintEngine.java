@@ -572,6 +572,10 @@ public class PrintEngine {
         return isReprintMode;
     }
 
+    public int getReprintTargetPuzzleIndex() {
+        return reprintTargetPuzzleIndex;
+    }
+
     public void reprintPages(PrintTaskEntity task, List<Integer> pagesToReprint) {
         if (pagesToReprint == null || pagesToReprint.isEmpty()) return;
 

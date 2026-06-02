@@ -95,13 +95,14 @@
             android:textColor="@color/text_primary"
             android:layout_marginBottom="8dp" />
 
-        <TextView
-            android:id="@+id/tvPrintedPages"
-            android:layout_width="wrap_content"
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvPageChips"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="12sp"
-            android:textColor="@color/text_secondary"
-            android:visibility="gone" />
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:maxHeight="120dp"
+            android:nestedScrollingEnabled="false" />
 
     </LinearLayout>
 

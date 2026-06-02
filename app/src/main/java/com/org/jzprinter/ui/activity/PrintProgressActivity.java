@@ -10,6 +10,8 @@ import android.view.View;
 
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.org.jzprinter.R;
 import com.org.jzprinter.database.AppDatabase;
@@ -20,6 +22,9 @@ import com.org.jzprinter.print.PrintEngine;
 import com.org.jzprinter.print.PrintMode;
 import com.org.jzprinter.print.PrintPhaseCallback;
 import com.org.jzprinter.print.TaskStatus;
+import com.org.jzprinter.ui.adapter.PageChipAdapter;
+import com.org.jzprinter.ui.adapter.PageChipAdapter.ChipItem;
+import com.org.jzprinter.ui.adapter.PageChipAdapter.State;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,9 +47,16 @@ public class PrintProgressActivity extends BaseActivity {
     private static final String EXTRA_BUSINESS_ID = "businessId";
     private static final String EXTRA_EDITION_NAME = "editionName";
 
+    private static final long POLL_INTERVAL_MS = 500L;
+
     private ActivityPrintProgressBinding binding;
+    private PageChipAdapter pageChipAdapter;
     private long currentTaskId = -1;
     private PrintTaskEntity currentTask;
+    private final Handler pollHandler = new Handler(Looper.getMainLooper());
+    private boolean isPollingActive = false;
+    private boolean isPollRequestInFlight = false;
+    private final Runnable pollRunnable = this::pollProgressSnapshot;
 
     private int prepareTotal = 0;
     private int printTotal = 0;
@@ -171,6 +183,7 @@ public class PrintProgressActivity extends BaseActivity {
             rbqRunOnUiThread(() -> {
                 binding.pbPrint.setProgress(printedPages);
                 binding.tvPrintStatus.setText(printedPages + "/" + totalPages + " 页");
+                refreshPageChipsFromMemory();
             });
         }
 
@@ -180,6 +193,7 @@ public class PrintProgressActivity extends BaseActivity {
                 binding.pbPrint.setProgress(printTotal);
                 binding.tvPrintStatus.setText(printTotal + "/" + printTotal + " 页 ✓");
                 binding.tvStatus.setText("打印完成");
+                refreshPageChipsFromMemory();
                 binding.btnRestart.setVisibility(View.GONE);
                 binding.btnCancel.setVisibility(View.GONE);
                 binding.btnViewDetail.setVisibility(View.VISIBLE);
@@ -202,6 +216,12 @@ public class PrintProgressActivity extends BaseActivity {
         binding = ActivityPrintProgressBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         setupStatusBarWithCustomColorResId(R.color.primary_blue);
+
+        // 初始化页码 Chip RecyclerView
+        binding.rvPageChips.setLayoutManager(
+            new GridLayoutManager(this, 7, RecyclerView.VERTICAL, false));
+        pageChipAdapter = new PageChipAdapter(binding.rvPageChips);
+        binding.rvPageChips.setAdapter(pageChipAdapter);
 
         binding.commonAppBar.titleTextView.setText("打印进度");
         binding.commonAppBar.leftMenuLayout.setOnClickListener(v -> {
@@ -550,6 +570,8 @@ public class PrintProgressActivity extends BaseActivity {
                 int puzzleIndex = selectedIndex[0];
                 int page = targetPages.get(puzzleIndex);
                 engine.reprintSpecifiedPage(puzzleIndex);
+                // 立即刷新 chip 状态，将重打页标记为橙色
+                refreshPageChips(task);
                 android.widget.Toast.makeText(PrintProgressActivity.this,
                     "已发送重打指令，请按打印机按钮重打第 " + page + " 页",
                     android.widget.Toast.LENGTH_SHORT).show();
@@ -557,78 +579,235 @@ public class PrintProgressActivity extends BaseActivity {
             .show();
     }
 
+    /**
+     * 物理打印回调到达时，直接使用 PrintEngine 内存中的 currentTask 刷新页码 Chip。
+     * `printedPages` 已在 `onPageComplete()` 中先同步写回任务对象，再异步持久化到 Room，
+     * 因此这里应以内存态为准，而不是在主线程二次查询数据库。
+     */
+    private void refreshPageChipsFromMemory() {
+        if (pageChipAdapter == null) return;
+
+        PrintTaskEntity liveTask = PrintEngine.getInstance().getCurrentTask();
+        if (liveTask == null) {
+            liveTask = currentTask;
+        }
+        if (liveTask == null) return;
+        if (currentTaskId > 0 && liveTask.getTaskId() != currentTaskId) return;
+
+        currentTask = liveTask;
+        refreshPageChips(liveTask);
+    }
+
+    /**
+     * 刷新页码 Chip 视图。
+     * 从 task 中读取 targetPages / printedPages，结合 PrintEngine 重打状态，
+     * 为每个页码设置对应颜色：已打印=绿、即将打印=蓝、重打中=橙、待打印=灰。
+     */
+    private void refreshPageChips(PrintTaskEntity task) {
+        if (task == null || pageChipAdapter == null) return;
+
+        List<Integer> target = IntegerListConverter.fromString(task.getTargetPages());
+        List<Integer> printed = IntegerListConverter.fromString(task.getPrintedPages());
+        if (target.isEmpty()) {
+            binding.rvPageChips.setVisibility(View.GONE);
+            return;
+        }
+
+        // 计算 remaining 和 nextPage
+        List<Integer> remaining = new ArrayList<>();
+        for (int p : target) {
+            if (!printed.contains(p)) remaining.add(p);
+        }
+        int nextPage = remaining.isEmpty() ? -1 : remaining.get(0);
+
+        // 重打状态
+        PrintEngine engine = PrintEngine.getInstance();
+        boolean reprintPending = engine.isReprintPending();
+        int reprintPuzzleIndex = engine.getReprintTargetPuzzleIndex();
+        int reprintPage = (reprintPending && reprintPuzzleIndex >= 0
+            && reprintPuzzleIndex < target.size()) ? target.get(reprintPuzzleIndex) : -1;
+
+        // 构建 ChipItem 列表
+        List<ChipItem> chipItems = new ArrayList<>();
+        for (int page : target) {
+            ChipItem item = new ChipItem(page);
+            if (reprintPending && page == reprintPage) {
+                item.state = State.REPRINTING;
+            } else if (printed.contains(page)) {
+                item.state = State.PRINTED;
+            } else if (page == nextPage) {
+                item.state = State.NEXT;
+            } else {
+                item.state = State.PENDING;
+            }
+            chipItems.add(item);
+        }
+
+        binding.rvPageChips.setVisibility(View.VISIBLE);
+        pageChipAdapter.setItems(chipItems);
+    }
+
     private void startProgressPolling() {
+        stopProgressPolling();
+        if (currentTaskId < 0) return;
+        isPollingActive = true;
+        requestNextPoll(0L);
+    }
+
+    private void stopProgressPolling() {
+        isPollingActive = false;
+        isPollRequestInFlight = false;
+        pollHandler.removeCallbacks(pollRunnable);
+    }
+
+    private void requestNextPoll(long delayMs) {
+        if (!isPollingActive) return;
+        pollHandler.removeCallbacks(pollRunnable);
+        pollHandler.postDelayed(pollRunnable, delayMs);
+    }
+
+    private void pollProgressSnapshot() {
+        if (!isPollingActive || currentTaskId < 0 || isFinishing() || isDestroyed()) {
+            stopProgressPolling();
+            return;
+        }
+        if (isPollRequestInFlight) {
+            requestNextPoll(POLL_INTERVAL_MS);
+            return;
+        }
+
+        isPollRequestInFlight = true;
         final long pollTaskId = currentTaskId;
         PrintEngine.getInstance().getDbExecutor().execute(() -> {
+            PrintTaskEntity snapshot = null;
+            Exception loadError = null;
             try {
-                while (true) {
-                    Thread.sleep(500);
-                    if (isFinishing() || isDestroyed()) break;
-
-                    // 关键检查：cancelTransfer()/pause() 会同步设置 isPrinting=false，
-                    // 但 DB 的 PAUSED 更新可能排在 dbExecutor 队列后面尚未执行。
-                    // 此处提前用 AtomicBoolean 判断，避免因 dbExecutor 单线程导致死锁：
-                    //   polling 等 DB PAUSED → DB 更新在队列中等 polling 退出 → 互等。
-                    if (!PrintEngine.getInstance().isPrinting()) {
-                        Log.d(TAG, "[polling] isPrinting=false, breaking loop");
-                        break;
-                    }
-
-                    AppDatabase db = AppDatabase.getInstance(PrintProgressActivity.this);
-                    PrintTaskEntity task = db.printTaskRepository().getById(pollTaskId);
-                    if (task == null) break;
-
-                    TaskStatus status = TaskStatus.fromCode(task.getStatus());
-                    List<Integer> printed = IntegerListConverter.fromString(task.getPrintedPages());
-
-                    rbqRunOnUiThread(() -> {
-                        if (!printed.isEmpty()) {
-                            binding.tvPrintedPages.setVisibility(View.VISIBLE);
-                            StringBuilder sb = new StringBuilder("已打印：");
-                            for (int i = 0; i < printed.size(); i++) {
-                                if (i > 0) sb.append(",");
-                                sb.append("page_").append(printed.get(i));
-                            }
-                            binding.tvPrintedPages.setText(sb.toString());
-                        }
-
-                        if (PrintEngine.getInstance().getPhaseCallback() == null) {
-                            switch (status) {
-                                case COMPLETED:
-                                    binding.tvStatus.setText("打印完成");
-                                    binding.btnRestart.setVisibility(View.GONE);
-                                    binding.btnCancel.setVisibility(View.GONE);
-                                    binding.btnViewDetail.setVisibility(View.VISIBLE);
-                                    break;
-                                case PAUSED:
-                                    binding.tvStatus.setText("已暂停");
-                                    binding.btnRestart.setEnabled(false);
-                                    binding.btnViewDetail.setVisibility(View.VISIBLE);
-                                    break;
-                                case INTERRUPTED:
-                                    binding.tvStatus.setText("中断: " + (task.getLastError() != null ? task.getLastError() : ""));
-                                    binding.btnRestart.setEnabled(false);
-                                    binding.btnViewDetail.setVisibility(View.VISIBLE);
-                                    break;
-                                case CANCELLED:
-                                    binding.tvStatus.setText("已取消");
-                                    binding.btnRestart.setVisibility(View.GONE);
-                                    binding.btnCancel.setVisibility(View.GONE);
-                                    break;
-                                default:
-                                    break;
-                            }
-                        }
-                    });
-
-                    if (status == TaskStatus.COMPLETED || status == TaskStatus.PAUSED
-                        || status == TaskStatus.INTERRUPTED || status == TaskStatus.CANCELLED) {
-                        break;
-                    }
-                }
-            } catch (InterruptedException ignored) {
+                snapshot = AppDatabase.getInstance(PrintProgressActivity.this)
+                    .printTaskRepository().getById(pollTaskId);
+            } catch (Exception e) {
+                loadError = e;
             }
+
+            final PrintTaskEntity finalSnapshot = snapshot;
+            final Exception finalLoadError = loadError;
+            rbqRunOnUiThread(() -> {
+                isPollRequestInFlight = false;
+                if (!isPollingActive || isFinishing() || isDestroyed()) {
+                    return;
+                }
+                if (finalLoadError != null) {
+                    Log.e(TAG, "[polling] load task failed", finalLoadError);
+                    requestNextPoll(POLL_INTERVAL_MS);
+                    return;
+                }
+                if (finalSnapshot == null) {
+                    stopProgressPolling();
+                    binding.tvStatus.setText("任务不存在");
+                    binding.btnRestart.setEnabled(false);
+                    return;
+                }
+
+                renderTaskSnapshot(finalSnapshot);
+                if (shouldContinuePolling(finalSnapshot)) {
+                    requestNextPoll(POLL_INTERVAL_MS);
+                } else {
+                    stopProgressPolling();
+                }
+            });
         });
+    }
+
+    private void renderTaskSnapshot(PrintTaskEntity task) {
+        currentTask = task;
+        refreshPageChips(task);
+        updatePrintProgress(task);
+
+        TaskStatus status = TaskStatus.fromCode(task.getStatus());
+        if (!isCurrentTaskActivelyPrinting(task) || isTerminalStatus(status)) {
+            applyTaskStatus(task, status);
+        }
+    }
+
+    private void updatePrintProgress(PrintTaskEntity task) {
+        List<Integer> target = IntegerListConverter.fromString(task.getTargetPages());
+        List<Integer> printed = IntegerListConverter.fromString(task.getPrintedPages());
+        int total = target.size();
+        int done = countPrintedPages(target, printed);
+
+        binding.pbPrint.setMax(Math.max(total, 1));
+        binding.pbPrint.setProgress(done);
+
+        if (isTerminalStatus(TaskStatus.fromCode(task.getStatus())) && total > 0 && done >= total) {
+            binding.tvPrintStatus.setText(total + "/" + total + " 页 ✓");
+        } else {
+            binding.tvPrintStatus.setText(done + "/" + total + " 页");
+        }
+    }
+
+    private int countPrintedPages(List<Integer> target, List<Integer> printed) {
+        int done = 0;
+        for (int page : printed) {
+            if (target.contains(page)) {
+                done++;
+            }
+        }
+        return done;
+    }
+
+    private boolean shouldContinuePolling(PrintTaskEntity task) {
+        return !isTerminalStatus(TaskStatus.fromCode(task.getStatus()));
+    }
+
+    private boolean isCurrentTaskActivelyPrinting(PrintTaskEntity task) {
+        PrintEngine engine = PrintEngine.getInstance();
+        PrintTaskEntity engineTask = engine.getCurrentTask();
+        return engine.isPrinting() && engineTask != null && task != null
+            && engineTask.getTaskId() == task.getTaskId();
+    }
+
+    private boolean isTerminalStatus(TaskStatus status) {
+        return status == TaskStatus.COMPLETED
+            || status == TaskStatus.PAUSED
+            || status == TaskStatus.INTERRUPTED
+            || status == TaskStatus.CANCELLED;
+    }
+
+    private void applyTaskStatus(PrintTaskEntity task, TaskStatus status) {
+        switch (status) {
+            case COMPLETED:
+                binding.tvStatus.setText("打印完成");
+                binding.btnRestart.setVisibility(View.GONE);
+                binding.btnCancel.setVisibility(View.GONE);
+                binding.btnViewDetail.setVisibility(View.VISIBLE);
+                break;
+            case PAUSED:
+                binding.tvStatus.setText("已暂停");
+                binding.btnRestart.setEnabled(false);
+                binding.btnViewDetail.setVisibility(View.VISIBLE);
+                break;
+            case INTERRUPTED:
+                binding.tvStatus.setText("中断: " + (task.getLastError() != null ? task.getLastError() : ""));
+                binding.btnRestart.setEnabled(false);
+                binding.btnViewDetail.setVisibility(View.VISIBLE);
+                break;
+            case CANCELLED:
+                binding.tvStatus.setText("已取消");
+                binding.btnRestart.setVisibility(View.GONE);
+                binding.btnCancel.setVisibility(View.GONE);
+                break;
+            case IN_PROGRESS:
+                if (!isCurrentTaskActivelyPrinting(task)) {
+                    binding.tvStatus.setText("打印进行中...");
+                }
+                break;
+            case PENDING:
+                if (!isCurrentTaskActivelyPrinting(task)) {
+                    binding.tvStatus.setText("待开始打印");
+                }
+                break;
+            default:
+                break;
+        }
     }
 
     private static String formatSize(float bytes) {
@@ -656,6 +835,7 @@ public class PrintProgressActivity extends BaseActivity {
 
     @Override
     protected void onDestroy() {
+        stopProgressPolling();
         super.onDestroy();
         PrintEngine.getInstance().setPhaseCallback(null);
         // isChangingConfigurations() 为 true 表示 Activity 正在因配置变更重建（如旋转），
