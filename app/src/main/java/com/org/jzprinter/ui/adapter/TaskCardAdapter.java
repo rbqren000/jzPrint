@@ -27,6 +27,7 @@ public class TaskCardAdapter extends RecyclerView.Adapter<TaskCardAdapter.ViewHo
         void onContinue(PrintTaskEntity task);
         void onViewDetail(PrintTaskEntity task);
         void onCancel(PrintTaskEntity task);
+        void onDelete(PrintTaskEntity task);
     }
 
     public void setOnTaskActionListener(OnTaskActionListener listener) {
@@ -55,7 +56,9 @@ public class TaskCardAdapter extends RecyclerView.Adapter<TaskCardAdapter.ViewHo
         ItemTaskCardBinding b = holder.binding;
 
         b.tvStudentName.setText(task.getTargetName() != null ? task.getTargetName() : task.getTargetId());
-        b.tvEditionName.setText(task.getEditionId());
+        String editionDisplay = task.getEditionName() != null && !task.getEditionName().isEmpty()
+            ? task.getEditionName() : task.getEditionId();
+        b.tvEditionName.setText(editionDisplay);
 
         PrintMode mode = PrintMode.fromCode(task.getPrintMode());
         TaskStatus status = TaskStatus.fromCode(task.getStatus());
@@ -113,6 +116,10 @@ public class TaskCardAdapter extends RecyclerView.Adapter<TaskCardAdapter.ViewHo
         b.btnCancelTask.setVisibility(resumable ? View.VISIBLE : View.GONE);
         b.btnCancelTask.setOnClickListener(v -> {
             if (listener != null) listener.onCancel(task);
+        });
+
+        b.btnDelete.setOnClickListener(v -> {
+            if (listener != null) listener.onDelete(task);
         });
     }
 

@@ -20,6 +20,8 @@ public class PrintTaskEntity {
     @NonNull
     private String editionId;
     @NonNull
+    private String editionName;
+    @NonNull
     private String targetId;
     @NonNull
     private String targetName;
@@ -48,6 +50,9 @@ public class PrintTaskEntity {
 
     @NonNull public String getEditionId() { return editionId; }
     public void setEditionId(@NonNull String editionId) { this.editionId = editionId; }
+
+    @NonNull public String getEditionName() { return editionName; }
+    public void setEditionName(@NonNull String editionName) { this.editionName = editionName; }
 
     @NonNull public String getTargetId() { return targetId; }
     public void setTargetId(@NonNull String targetId) { this.targetId = targetId; }

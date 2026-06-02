@@ -16,6 +16,7 @@ import com.mx.mxSdk.ConnectManager;
 import com.org.jzprinter.R;
 import com.org.jzprinter.databinding.ActivityPrintModeSelectBinding;
 import com.org.jzprinter.print.MaterialLoader;
+import com.org.jzprinter.print.PrintConfig;
 import com.org.jzprinter.print.PrintEngine;
 import com.org.jzprinter.print.PrintImagePreparer;
 import com.org.jzprinter.print.PrintMode;
@@ -34,10 +35,11 @@ public class PrintModeSelectActivity extends BaseActivity {
     private static final String EXTRA_TARGET_NAME = "targetName";
     private static final String EXTRA_PAGES_PATH = "pagesPath";
     private static final String EXTRA_BUSINESS_ID = "businessId";
+    private static final String EXTRA_EDITION_NAME = "editionName";
 
     public static Intent newIntent(Context context, String schoolId, String editionId,
                                    String targetId, String targetName, int editionType,
-                                   String pagesPath, String businessId) {
+                                   String pagesPath, String businessId, String editionName) {
         Intent intent = new Intent(context, PrintModeSelectActivity.class);
         intent.putExtra(EXTRA_SCHOOL_ID, schoolId);
         intent.putExtra(EXTRA_EDITION_ID, editionId);
@@ -46,6 +48,7 @@ public class PrintModeSelectActivity extends BaseActivity {
         intent.putExtra(EXTRA_EDITION_TYPE, editionType);
         intent.putExtra(EXTRA_PAGES_PATH, pagesPath);
         intent.putExtra(EXTRA_BUSINESS_ID, businessId != null ? businessId : "");
+        intent.putExtra(EXTRA_EDITION_NAME, editionName != null ? editionName : "");
         return intent;
     }
 
@@ -53,6 +56,7 @@ public class PrintModeSelectActivity extends BaseActivity {
 
     private String schoolId;
     private String editionId;
+    private String editionName;
     private String targetId;
     private String targetName;
     private int editionType;
@@ -77,6 +81,7 @@ public class PrintModeSelectActivity extends BaseActivity {
 
         schoolId = getIntent().getStringExtra(EXTRA_SCHOOL_ID);
         editionId = getIntent().getStringExtra(EXTRA_EDITION_ID);
+        editionName = getIntent().getStringExtra(EXTRA_EDITION_NAME);
         targetId = getIntent().getStringExtra(EXTRA_TARGET_ID);
         targetName = getIntent().getStringExtra(EXTRA_TARGET_NAME);
         editionType = getIntent().getIntExtra(EXTRA_EDITION_TYPE, 1);
@@ -188,6 +193,12 @@ public class PrintModeSelectActivity extends BaseActivity {
         pageAdapter.setItems(items);
         updateFilterHighlight(0);
         updateSelectedCount();
+
+        if (previewPageCode == -1 && !items.isEmpty()) {
+            // 默认预览第一个页面，不管是否选中
+            previewPageCode = items.get(0).pageCode;
+            loadPreviewPage(previewPageCode);
+        }
     }
 
     private void updateFilterHighlight(int mode) {
@@ -248,8 +259,8 @@ public class PrintModeSelectActivity extends BaseActivity {
             }
 
             Bitmap preview = PrintImagePreparer.prepare(page,
-                PrintSettingsActivity.getRotationDirection(this),
-                PrintSettingsActivity.getVerticalAlignment(this));
+                PrintConfig.getRotationForPage(this, pageCode),
+                PrintConfig.getAlignmentForPage(this, pageCode));
             page.recycle();
 
             uiHandler.post(() -> {
@@ -287,14 +298,13 @@ public class PrintModeSelectActivity extends BaseActivity {
 
         PrintEngine engine = PrintEngine.getInstance();
         engine.setUseCustomMerge(isCustomMergeSelected());
-        engine.setRotationDirection(PrintSettingsActivity.getRotationDirection(this));
-        engine.setVerticalAlignment(PrintSettingsActivity.getVerticalAlignment(this));
+        engine.setOddPageOnRight(PrintConfig.isOddPageOnRight(this));
         engine.setCustomTargetPages(selectedPages);
 
         PrintMode printMode = inferPrintMode(selectedPages);
         Intent intent = PrintProgressActivity.newIntent(this,
             schoolId, editionId, targetId, targetName,
-            editionType, printMode.getCode(), pagesPath, -1L, businessId);
+            editionType, printMode.getCode(), pagesPath, -1L, businessId, editionName);
         startActivity(intent);
         finish();
     }

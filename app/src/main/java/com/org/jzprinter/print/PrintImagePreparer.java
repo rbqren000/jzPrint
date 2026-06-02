@@ -54,6 +54,38 @@ public class PrintImagePreparer {
     }
 
     /**
+     * 根据页码和奇偶页设置获取旋转方向
+     *
+     * @param pageCode       页码
+     * @param oddPageOnRight 奇页是否在右边（翻书方向）
+     * @return 旋转方向
+     */
+    public static RotationDirection getRotation(int pageCode, boolean oddPageOnRight) {
+        boolean isOdd = (pageCode % 2 == 1);
+        if (isOdd) {
+            return oddPageOnRight ? RotationDirection.CW_90 : RotationDirection.CCW_90;
+        } else {
+            return oddPageOnRight ? RotationDirection.CCW_90 : RotationDirection.CW_90;
+        }
+    }
+
+    /**
+     * 根据页码和奇偶页设置获取垂直对齐方式
+     *
+     * @param pageCode       页码
+     * @param oddPageOnRight 奇页是否在右边（翻书方向）
+     * @return 垂直对齐方式
+     */
+    public static VerticalAlignment getAlignment(int pageCode, boolean oddPageOnRight) {
+        boolean isOdd = (pageCode % 2 == 1);
+        if (isOdd) {
+            return oddPageOnRight ? VerticalAlignment.TOP : VerticalAlignment.BOTTOM;
+        } else {
+            return oddPageOnRight ? VerticalAlignment.BOTTOM : VerticalAlignment.TOP;
+        }
+    }
+
+    /**
      * 准备打印图片：旋转 + 补白到打印头高度
      *
      * @param source      原图（纵向窄长条，如 360×H）

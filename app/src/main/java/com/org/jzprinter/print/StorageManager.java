@@ -2,19 +2,19 @@ package com.org.jzprinter.print;
 
 import android.content.Context;
 
-import com.org.jzprinter.database.dao.PrintTaskDao;
 import com.org.jzprinter.database.entity.PrintTaskEntity;
+import com.org.jzprinter.repository.PrintTaskRepository;
 
 import java.io.File;
 import java.util.List;
 
 public class StorageManager {
     private final Context context;
-    private final PrintTaskDao taskDao;
+    private final PrintTaskRepository taskRepo;
 
-    public StorageManager(Context context, PrintTaskDao taskDao) {
+    public StorageManager(Context context, PrintTaskRepository taskRepo) {
         this.context = context.getApplicationContext();
-        this.taskDao = taskDao;
+        this.taskRepo = taskRepo;
     }
 
     /**
@@ -29,7 +29,7 @@ public class StorageManager {
      * 清理已完成任务的压缩包
      */
     public void cleanupCompletedMaterials() {
-        List<PrintTaskEntity> completed = taskDao.findByStatus(TaskStatus.COMPLETED.getCode());
+        List<PrintTaskEntity> completed = taskRepo.findByStatus(TaskStatus.COMPLETED.getCode());
         for (PrintTaskEntity task : completed) {
             String zipPath = MaterialPathBuilder.getZipPath(context,
                 task.getSchoolId(), task.getEditionId(),

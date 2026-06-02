@@ -1,9 +1,8 @@
 package com.org.jzprinter.print;
 
-import com.org.jzprinter.database.converter.IntegerListConverter;
-import com.org.jzprinter.database.dao.PrintProgressDao;
 import com.org.jzprinter.database.entity.PrintProgressEntity;
 import com.org.jzprinter.database.entity.PrintTaskEntity;
+import com.org.jzprinter.repository.PrintProgressRepository;
 import com.org.jzprinter.repository.PrintTaskRepository;
 
 import java.util.List;
@@ -11,15 +10,15 @@ import java.util.concurrent.ExecutorService;
 
 public class PrintProgressManager {
     private final PrintTaskRepository taskRepo;
-    private final PrintProgressDao progressDao;
+    private final PrintProgressRepository progressRepo;
     private final ExecutorService dbExecutor;
     private PrintTaskEntity currentTask;
     private List<Integer> targetPages;
 
-    public PrintProgressManager(PrintTaskRepository taskRepo, PrintProgressDao progressDao,
+    public PrintProgressManager(PrintTaskRepository taskRepo, PrintProgressRepository progressRepo,
                                  ExecutorService dbExecutor) {
         this.taskRepo = taskRepo;
-        this.progressDao = progressDao;
+        this.progressRepo = progressRepo;
         this.dbExecutor = dbExecutor;
     }
 
@@ -49,7 +48,7 @@ public class PrintProgressManager {
         progress.setTotalPuzzles(endIndex + 1);
         progress.setStatus(TaskStatus.PENDING.getCode());
         progress.setTimestamp(System.currentTimeMillis());
-        dbExecutor.execute(() -> progressDao.insert(progress));
+        dbExecutor.execute(() -> progressRepo.insert(progress));
     }
 
     public void onSdkPrintComplete(int beginIndex, int endIndex,
@@ -65,7 +64,7 @@ public class PrintProgressManager {
         progress.setStatus(TaskStatus.COMPLETED.getCode());
         progress.setCartridgeId(cartridgeId);
         progress.setTimestamp(System.currentTimeMillis());
-        dbExecutor.execute(() -> progressDao.insert(progress));
+        dbExecutor.execute(() -> progressRepo.insert(progress));
     }
 
     /**
@@ -73,19 +72,7 @@ public class PrintProgressManager {
      * OnPrintListener 回调在主线程，DB 写操作必须在子线程执行
      */
     public void onPageComplete(PrintTaskEntity task, int pageIndex) {
-        List<Integer> printed = IntegerListConverter.fromString(task.getPrintedPages());
-        if (!printed.contains(pageIndex)) {
-            printed.add(pageIndex);
-            task.setPrintedPages(IntegerListConverter.fromList(printed));
-        }
-        task.setUpdatedAt(System.currentTimeMillis());
-
-        List<Integer> target = IntegerListConverter.fromString(task.getTargetPages());
-        if (printed.containsAll(target)) {
-            task.setStatus(TaskStatus.COMPLETED.getCode());
-            task.setCompletedAt(System.currentTimeMillis());
-        }
-
+        taskRepo.addPrintedPage(task, pageIndex);
         dbExecutor.execute(() -> taskRepo.update(task));
     }
 

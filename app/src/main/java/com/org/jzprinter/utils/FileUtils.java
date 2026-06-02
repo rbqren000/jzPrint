@@ -202,7 +202,7 @@ public class FileUtils {
      * @throws RuntimeException if an error occurs while operator FileWriter
      */
     public static boolean writeFile(Context context,String filePath, List<String> contentList, boolean append) {
-        if (com.org.jzprinter.utils.ListUtils.isEmpty(contentList)) {
+        if (ListUtils.isEmpty(contentList)) {
             return false;
         }
 

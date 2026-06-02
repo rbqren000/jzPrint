@@ -19,13 +19,17 @@ import com.org.jzprinter.database.entity.MaterialEntity;
 import com.org.jzprinter.database.entity.PrintProgressEntity;
 import com.org.jzprinter.database.entity.PrintTaskEntity;
 import com.org.jzprinter.database.entity.StudentEntity;
+import com.org.jzprinter.repository.MaterialRepository;
+import com.org.jzprinter.repository.PrintProgressRepository;
+import com.org.jzprinter.repository.PrintTaskRepository;
+import com.org.jzprinter.repository.StudentRepository;
 
 @Database(entities = {
     StudentEntity.class,
     MaterialEntity.class,
     PrintTaskEntity.class,
     PrintProgressEntity.class
-}, version = 3, exportSchema = true)
+}, version = 4, exportSchema = true)
 @TypeConverters({IntegerListConverter.class})
 public abstract class AppDatabase extends RoomDatabase {
     private static volatile AppDatabase INSTANCE;
@@ -45,6 +49,13 @@ public abstract class AppDatabase extends RoomDatabase {
         }
     };
 
+    static final Migration MIGRATION_3_4 = new Migration(3, 4) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL("ALTER TABLE print_task ADD COLUMN editionName TEXT NOT NULL DEFAULT ''");
+        }
+    };
+
     public static AppDatabase getInstance(Context context) {
         if (INSTANCE == null) {
             synchronized (AppDatabase.class) {
@@ -53,7 +64,7 @@ public abstract class AppDatabase extends RoomDatabase {
                         context.getApplicationContext(),
                         AppDatabase.class,
                         "jz_print_db"
-                    ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build();
+                    ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build();
                 }
             }
         }
@@ -64,4 +75,20 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract MaterialDao materialDao();
     public abstract PrintTaskDao printTaskDao();
     public abstract PrintProgressDao printProgressDao();
+
+    public PrintTaskRepository printTaskRepository() {
+        return new PrintTaskRepository(printTaskDao());
+    }
+
+    public StudentRepository studentRepository() {
+        return new StudentRepository(studentDao());
+    }
+
+    public PrintProgressRepository printProgressRepository() {
+        return new PrintProgressRepository(printProgressDao());
+    }
+
+    public MaterialRepository materialRepository() {
+        return new MaterialRepository(materialDao());
+    }
 }

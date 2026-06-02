@@ -68,7 +68,7 @@ public class TaskDetailActivity extends BaseActivity {
     private void loadTask(long taskId) {
         AppDatabase db = AppDatabase.getInstance(this);
         PrintEngine.getInstance().getDbExecutor().execute(() -> {
-            PrintTaskEntity loaded = db.printTaskDao().getById(taskId);
+            PrintTaskEntity loaded = db.printTaskRepository().getById(taskId);
             if (loaded != null) {
                 task = loaded;
                 rbqRunOnUiThread(() -> bindTask());
@@ -237,7 +237,8 @@ public class TaskDetailActivity extends BaseActivity {
         startActivity(PrintProgressActivity.newIntent(this,
             task.getSchoolId(), task.getEditionId(), task.getTargetId(),
             task.getTargetName(), task.getEditionType(), task.getPrintMode(),
-            task.getMaterialPath(), task.getTaskId(), task.getBusinessId()));
+            task.getMaterialPath(), task.getTaskId(), task.getBusinessId(),
+            task.getEditionName()));
         finish();
     }
 }

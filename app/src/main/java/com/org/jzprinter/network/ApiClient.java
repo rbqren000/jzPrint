@@ -1,12 +1,19 @@
 package com.org.jzprinter.network;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
 
 import com.org.jzprinter.network.model.Edition;
 import com.org.jzprinter.network.model.RosterGroup;
 import com.org.jzprinter.network.model.Semester;
 import com.org.jzprinter.network.model.Student;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -27,6 +34,7 @@ public class ApiClient implements Api {
     private static final String TAG = "ApiClient";
     private final Context context;
     private final OkHttpClient httpClient;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     public ApiClient(Context context) {
         this.context = context.getApplicationContext();
@@ -51,13 +59,13 @@ public class ApiClient implements Api {
 
         httpClient.newCall(request).enqueue(new Callback() {
             @Override
-            public void onFailure(Call call, IOException e) {
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 Log.e(TAG, "fetchSemesters onFailure: " + e.getMessage());
                 callback.onError("网络错误: " + e.getMessage());
             }
 
             @Override
-            public void onResponse(Call call, Response response) throws IOException {
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 try {
                     String body = response.body() != null ? response.body().string() : "";
                     Log.d(TAG, "fetchSemesters HTTP=" + response.code() + " body=" + body.substring(0, Math.min(body.length(), 300)));
@@ -65,21 +73,21 @@ public class ApiClient implements Api {
                         callback.onError("请求失败: HTTP " + response.code());
                         return;
                     }
-                    org.json.JSONObject main = new org.json.JSONObject(body);
-                    org.json.JSONArray arr = main.optJSONArray("data");
+                    JSONObject main = new JSONObject(body);
+                    JSONArray arr = main.optJSONArray("data");
                     List<Semester> result = new ArrayList<>();
                     if (arr != null) {
                         for (int i = 0; i < arr.length(); i++) {
-                            org.json.JSONObject semObj = arr.getJSONObject(i);
+                            JSONObject semObj = arr.getJSONObject(i);
                             Semester semester = new Semester();
                             semester.semesterId = String.valueOf(semObj.optInt("semesterId", 0));
                             semester.semesterName = semObj.optString("semesterName", "");
                             semester.editionList = new ArrayList<>();
 
-                            org.json.JSONArray editionsArr = semObj.optJSONArray("editionList");
+                            JSONArray editionsArr = semObj.optJSONArray("editionList");
                             if (editionsArr != null) {
                                 for (int j = 0; j < editionsArr.length(); j++) {
-                                    org.json.JSONObject edObj = editionsArr.getJSONObject(j);
+                                    JSONObject edObj = editionsArr.getJSONObject(j);
                                     Edition edition = new Edition();
                                     edition.editionId = String.valueOf(edObj.optInt("editionId", 0));
                                     edition.editionName = edObj.optString("editionName", "");
@@ -123,7 +131,7 @@ public class ApiClient implements Api {
             }
 
             @Override
-            public void onResponse(Call call, Response response) throws IOException {
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 try {
                     String body = response.body() != null ? response.body().string() : "";
                     Log.d(TAG, "fetchStudents HTTP=" + response.code() + " body=" + body.substring(0, Math.min(body.length(), 300)));
@@ -131,12 +139,12 @@ public class ApiClient implements Api {
                         callback.onError("请求失败: HTTP " + response.code());
                         return;
                     }
-                    org.json.JSONObject main = new org.json.JSONObject(body);
-                    org.json.JSONArray arr = main.optJSONArray("data");
+                    JSONObject main = new JSONObject(body);
+                    JSONArray arr = main.optJSONArray("data");
                     List<RosterGroup> result = new ArrayList<>();
                     if (arr != null) {
                         for (int i = 0; i < arr.length(); i++) {
-                            org.json.JSONObject classObj = arr.getJSONObject(i);
+                            JSONObject classObj = arr.getJSONObject(i);
                             RosterGroup group = new RosterGroup();
                             group.classId = classObj.optString("classId", "");
                             group.className = classObj.optString("className", "");
@@ -146,10 +154,10 @@ public class ApiClient implements Api {
                             group.areaName = classObj.optString("areaName", "");
                             group.studentList = new ArrayList<>();
 
-                            org.json.JSONArray studentsArr = classObj.optJSONArray("studentList");
+                            JSONArray studentsArr = classObj.optJSONArray("studentList");
                             if (studentsArr != null) {
                                 for (int j = 0; j < studentsArr.length(); j++) {
-                                    org.json.JSONObject sObj = studentsArr.getJSONObject(j);
+                                    JSONObject sObj = studentsArr.getJSONObject(j);
                                     Student student = new Student();
                                     student.studentId = sObj.optString("studentId", "");
                                     student.studentName = sObj.optString("studentName", "");
@@ -190,13 +198,13 @@ public class ApiClient implements Api {
 
         httpClient.newCall(request).enqueue(new Callback() {
             @Override
-            public void onFailure(Call call, IOException e) {
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 Log.e(TAG, "downloadMaterial onFailure: " + e.getMessage());
                 callback.onError("下载失败: " + e.getMessage());
             }
 
             @Override
-            public void onResponse(Call call, Response response) throws IOException {
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 if (!response.isSuccessful()) {
                     String errorBody = response.body() != null ? response.body().string() : "";
                     String errorMsg = parseErrorMsg(errorBody);
@@ -224,8 +232,7 @@ public class ApiClient implements Api {
                             if (percent != lastPercent) {
                                 lastPercent = percent;
                                 int finalPercent = percent;
-                                new android.os.Handler(android.os.Looper.getMainLooper())
-                                    .post(() -> callback.onProgress(finalPercent));
+                                mainHandler.post(() -> callback.onProgress(finalPercent));
                             }
                         }
                     }
@@ -233,15 +240,14 @@ public class ApiClient implements Api {
                     callback.onError("写入文件失败: " + e.getMessage());
                     return;
                 }
-                new android.os.Handler(android.os.Looper.getMainLooper())
-                    .post(() -> callback.onSuccess(outFile.getAbsolutePath()));
+                mainHandler.post(() -> callback.onSuccess(outFile.getAbsolutePath()));
             }
         });
     }
 
     private String parseErrorMsg(String errorBody) {
         try {
-            org.json.JSONObject json = new org.json.JSONObject(errorBody);
+            JSONObject json = new JSONObject(errorBody);
             String msg = json.optString("message", "");
             if (!msg.isEmpty()) return msg;
         } catch (Exception ignored) {}

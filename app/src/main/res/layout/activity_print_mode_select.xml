@@ -178,7 +178,9 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:paddingStart="0dp"
+            android:paddingEnd="0dp">
 
             <Button
                 android:id="@+id/btnPrintSettings"
@@ -189,17 +191,18 @@
                 android:textSize="13sp"
                 android:textColor="@color/btn_secondary_text"
                 android:backgroundTint="@color/btn_secondary"
-                android:layout_marginEnd="8dp" />
+                android:layout_marginEnd="4dp" />
 
             <Button
                 android:id="@+id/btnStartPrint"
                 android:layout_width="0dp"
                 android:layout_height="40dp"
-                android:layout_weight="2"
+                android:layout_weight="1"
                 android:text="开始打印"
                 android:textSize="15sp"
                 android:backgroundTint="@color/btn_primary"
-                android:textColor="@color/btn_primary_text" />
+                android:textColor="@color/btn_primary_text"
+                android:layout_marginStart="4dp" />
 
         </LinearLayout>
 

@@ -1,7 +1,8 @@
 package com.org.jzprinter.repository;
 
+import androidx.annotation.NonNull;
+
 import com.org.jzprinter.database.converter.IntegerListConverter;
-import com.org.jzprinter.database.dao.PrintProgressDao;
 import com.org.jzprinter.database.dao.PrintTaskDao;
 import com.org.jzprinter.database.entity.PrintTaskEntity;
 import com.org.jzprinter.print.TaskStatus;
@@ -10,11 +11,9 @@ import java.util.List;
 
 public class PrintTaskRepository {
     private final PrintTaskDao taskDao;
-    private final PrintProgressDao progressDao;
 
-    public PrintTaskRepository(PrintTaskDao taskDao, PrintProgressDao progressDao) {
+    public PrintTaskRepository(PrintTaskDao taskDao) {
         this.taskDao = taskDao;
-        this.progressDao = progressDao;
     }
 
     public long insert(PrintTaskEntity task) {
@@ -58,10 +57,26 @@ public class PrintTaskRepository {
         return taskDao.getAll();
     }
 
+    public List<PrintTaskEntity> findRecent(int limit) {
+        return taskDao.findRecent(limit);
+    }
+
+    public List<PrintTaskEntity> findByTargetId(@NonNull String targetId) {
+        return taskDao.findByTargetId(targetId);
+    }
+
+    public void delete(long taskId) {
+        taskDao.delete(taskId);
+    }
+
     public void addPrintedPage(long taskId, int pageIndex) {
         PrintTaskEntity task = taskDao.getById(taskId);
         if (task == null) return;
+        addPrintedPage(task, pageIndex);
+        taskDao.update(task);
+    }
 
+    public void addPrintedPage(PrintTaskEntity task, int pageIndex) {
         List<Integer> printed = IntegerListConverter.fromString(task.getPrintedPages());
         if (!printed.contains(pageIndex)) {
             printed.add(pageIndex);
@@ -74,7 +89,5 @@ public class PrintTaskRepository {
             task.setStatus(TaskStatus.COMPLETED.getCode());
             task.setCompletedAt(System.currentTimeMillis());
         }
-
-        taskDao.update(task);
     }
 }

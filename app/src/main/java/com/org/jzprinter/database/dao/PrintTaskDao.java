@@ -18,6 +18,9 @@ public interface PrintTaskDao {
     @Update
     void update(PrintTaskEntity task);
 
+    @Query("DELETE FROM print_task WHERE taskId = :taskId")
+    void delete(long taskId);
+
     @Query("SELECT * FROM print_task WHERE taskId = :taskId")
     PrintTaskEntity getById(long taskId);
 

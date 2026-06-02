@@ -46,7 +46,7 @@
             android:exported="false" />
 
         <activity
-            android:name=".ui.activity.EditionListActivity"
+            android:name=".ui.activity.SchoolHomeworkListActivity"
             android:exported="false" />
         <activity
             android:name=".ui.activity.StudentListActivity"

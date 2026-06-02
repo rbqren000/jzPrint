@@ -20,80 +20,39 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="旋转方向"
-                android:textSize="14sp"
-                android:textColor="@color/text_secondary"
-                android:layout_marginBottom="8dp" />
+                android:text="书本排版"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="12dp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="取决于打印机行走方向和纸张方向"
-                android:textSize="12sp"
-                android:textColor="@color/text_placeholder"
-                android:layout_marginBottom="8dp" />
+                android:text="设置你的书本奇数页在左侧还是右侧"
+                android:textSize="13sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginBottom="12dp" />
 
             <RadioGroup
-                android:id="@+id/rgRotation"
+                android:id="@+id/rgBookLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp">
 
                 <RadioButton
-                    android:id="@+id/rbCw90"
+                    android:id="@+id/rbOddOnRight"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="顺时针90°"
+                    android:text="奇数页在右侧（默认）"
                     android:textSize="16sp"
                     android:padding="12dp"
                     android:checked="true" />
 
                 <RadioButton
-                    android:id="@+id/rbCcw90"
+                    android:id="@+id/rbOddOnLeft"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="逆时针90°"
-                    android:textSize="16sp"
-                    android:padding="12dp" />
-
-            </RadioGroup>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="垂直对齐"
-                android:textSize="14sp"
-                android:textColor="@color/text_secondary"
-                android:layout_marginBottom="8dp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="内容靠打印头起始端或结束端放置"
-                android:textSize="12sp"
-                android:textColor="@color/text_placeholder"
-                android:layout_marginBottom="8dp" />
-
-            <RadioGroup
-                android:id="@+id/rgAlignment"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp">
-
-                <RadioButton
-                    android:id="@+id/rbAlignTop"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="顶部对齐（内容贴打印头起始端）"
-                    android:textSize="16sp"
-                    android:padding="12dp"
-                    android:checked="true" />
-
-                <RadioButton
-                    android:id="@+id/rbAlignBottom"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="底部对齐（内容贴打印头结束端）"
+                    android:text="奇数页在左侧"
                     android:textSize="16sp"
                     android:padding="12dp" />
 

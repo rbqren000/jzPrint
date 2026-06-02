@@ -21,6 +21,16 @@ import android.util.Log;
 import com.mx.mxSdk.ConnectManager;
 import com.mx.mxSdk.Utils.RBQLog;
 import com.tencent.bugly.crashreport.CrashReport;
+import com.org.jzprinter.database.AppDatabase;
+import com.org.jzprinter.database.dao.PrintTaskDao;
+import com.org.jzprinter.repository.PrintProgressRepository;
+import com.org.jzprinter.repository.PrintTaskRepository;
+import com.org.jzprinter.print.MaterialLoader;
+import com.org.jzprinter.print.PrintEngine;
+import com.org.jzprinter.print.PrintConfig;
+import com.org.jzprinter.print.PrintProgressManager;
+import com.org.jzprinter.print.TaskRecoveryManager;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -127,31 +137,20 @@ public class RBQAppManager extends Application {
     }
 
     private void initPrintEngine() {
-        com.org.jzprinter.database.AppDatabase db =
-            com.org.jzprinter.database.AppDatabase.getInstance(this);
-        com.org.jzprinter.database.dao.PrintTaskDao taskDao = db.printTaskDao();
-        com.org.jzprinter.database.dao.PrintProgressDao progressDao = db.printProgressDao();
+        AppDatabase db = AppDatabase.getInstance(this);
+        PrintTaskDao taskDao = db.printTaskDao();
+        PrintProgressRepository progressRepo = db.printProgressRepository();
+        PrintTaskRepository taskRepo = new PrintTaskRepository(taskDao);
+        MaterialLoader materialLoader = new MaterialLoader();
 
-        com.org.jzprinter.repository.PrintTaskRepository taskRepo =
-            new com.org.jzprinter.repository.PrintTaskRepository(taskDao, progressDao);
-        com.org.jzprinter.print.MaterialLoader materialLoader =
-            new com.org.jzprinter.print.MaterialLoader();
+        PrintEngine engine = PrintEngine.init(this, taskRepo, materialLoader);
+        engine.setOddPageOnRight(PrintConfig.isOddPageOnRight(this));
 
-        com.org.jzprinter.print.PrintEngine engine =
-            com.org.jzprinter.print.PrintEngine.init(this, taskRepo, materialLoader);
-
-        engine.setRotationDirection(
-            com.org.jzprinter.ui.activity.PrintSettingsActivity.getRotationDirection(this));
-        engine.setVerticalAlignment(
-            com.org.jzprinter.ui.activity.PrintSettingsActivity.getVerticalAlignment(this));
-
-        com.org.jzprinter.print.PrintProgressManager progressManager =
-            new com.org.jzprinter.print.PrintProgressManager(
-                taskRepo, progressDao, engine.getDbExecutor());
+        PrintProgressManager progressManager = new PrintProgressManager(
+            taskRepo, progressRepo, engine.getDbExecutor());
         engine.setProgressManager(progressManager);
 
-        com.org.jzprinter.print.TaskRecoveryManager recoveryManager =
-            new com.org.jzprinter.print.TaskRecoveryManager(taskDao);
+        TaskRecoveryManager recoveryManager = new TaskRecoveryManager(taskRepo);
         recoveryManager.recoverOnStartup();
     }
     /**

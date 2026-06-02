@@ -107,14 +107,14 @@ public class DeepLinkActivity extends BaseActivity {
 
             if (materialReady) {
                 startActivity(PrintModeSelectActivity.newIntent(this,
-                    schoolId, editionId, targetId, targetId, editionType, pagesPath, businessId));
+                    schoolId, editionId, targetId, targetId, editionType, pagesPath, businessId, ""));
             } else {
-                startActivity(StudentListActivity.newIntent(this, schoolId, editionId, editionType));
+                startActivity(StudentListActivity.newIntent(this, schoolId, editionId, editionType, ""));
             }
         } else if (editionId != null && !editionId.isEmpty()) {
-            startActivity(StudentListActivity.newIntent(this, schoolId, editionId, editionType));
+            startActivity(StudentListActivity.newIntent(this, schoolId, editionId, editionType, ""));
         } else {
-            startActivity(EditionListActivity.newIntent(this, schoolId));
+            startActivity(SchoolHomeworkListActivity.newIntent(this, schoolId));
         }
         finish();
     }

@@ -40,6 +40,7 @@ public class PrintProgressActivity extends BaseActivity {
     private static final String EXTRA_IS_RESUME = "isResume";
     private static final String EXTRA_REPRINT_PAGES = "reprintPages";
     private static final String EXTRA_BUSINESS_ID = "businessId";
+    private static final String EXTRA_EDITION_NAME = "editionName";
 
     private ActivityPrintProgressBinding binding;
     private long currentTaskId = -1;
@@ -51,7 +52,7 @@ public class PrintProgressActivity extends BaseActivity {
     public static Intent newIntent(Context context, String schoolId, String editionId,
                                    String targetId, String targetName, int editionType,
                                    int printMode, String pagesPath, long taskId,
-                                   String businessId) {
+                                   String businessId, String editionName) {
         Intent intent = new Intent(context, PrintProgressActivity.class);
         intent.putExtra(EXTRA_SCHOOL_ID, schoolId);
         intent.putExtra(EXTRA_EDITION_ID, editionId);
@@ -62,6 +63,7 @@ public class PrintProgressActivity extends BaseActivity {
         intent.putExtra(EXTRA_PAGES_PATH, pagesPath);
         intent.putExtra(EXTRA_TASK_ID, taskId);
         intent.putExtra(EXTRA_BUSINESS_ID, businessId != null ? businessId : "");
+        intent.putExtra(EXTRA_EDITION_NAME, editionName != null ? editionName : "");
         return intent;
     }
 
@@ -260,7 +262,7 @@ public class PrintProgressActivity extends BaseActivity {
                         currentTask.setUpdatedAt(System.currentTimeMillis());
                         engine.getDbExecutor().execute(() ->
                             AppDatabase.getInstance(PrintProgressActivity.this)
-                                .printTaskDao().update(currentTask));
+                                .printTaskRepository().update(currentTask));
                     }
                     finish();
                 })
@@ -292,7 +294,7 @@ public class PrintProgressActivity extends BaseActivity {
             engine.getDbExecutor().execute(() -> {
                 try {
                     PrintTaskEntity task = AppDatabase.getInstance(PrintProgressActivity.this)
-                        .printTaskDao().getById(existingTaskId);
+                        .printTaskRepository().getById(existingTaskId);
                     if (task == null) {
                         rbqRunOnUiThread(() -> {
                             binding.tvStatus.setText("任务不存在");
@@ -324,7 +326,7 @@ public class PrintProgressActivity extends BaseActivity {
             engine.getDbExecutor().execute(() -> {
                 try {
                     PrintTaskEntity task = AppDatabase.getInstance(PrintProgressActivity.this)
-                        .printTaskDao().getById(existingTaskId);
+                        .printTaskRepository().getById(existingTaskId);
                     if (task == null) {
                         rbqRunOnUiThread(() -> {
                             binding.tvStatus.setText("任务不存在");
@@ -365,6 +367,7 @@ public class PrintProgressActivity extends BaseActivity {
         int printModeCode = getIntent().getIntExtra(EXTRA_PRINT_MODE, 1);
         String pagesPath = getIntent().getStringExtra(EXTRA_PAGES_PATH);
         String businessId = getIntent().getStringExtra(EXTRA_BUSINESS_ID);
+        String editionName = getIntent().getStringExtra(EXTRA_EDITION_NAME);
         PrintMode printMode = PrintMode.fromCode(printModeCode);
 
         binding.tvStatus.setText("准备中...");
@@ -373,7 +376,7 @@ public class PrintProgressActivity extends BaseActivity {
             try {
                 PrintTaskEntity task =
                     engine.startNewTask(schoolId, editionId, targetId, targetName,
-                        editionType, printMode, pagesPath, businessId);
+                        editionType, printMode, pagesPath, businessId, editionName);
                 currentTaskId = task.getTaskId();
                 currentTask = task;
                 engine.execute(task);
@@ -477,7 +480,7 @@ public class PrintProgressActivity extends BaseActivity {
             try {
                 Log.d(TAG, "[restartPrint] dbExecutor: loading task from DB...");
                 PrintTaskEntity task = AppDatabase.getInstance(PrintProgressActivity.this)
-                    .printTaskDao().getById(currentTaskId);
+                    .printTaskRepository().getById(currentTaskId);
                 if (task == null) {
                     Log.e(TAG, "[restartPrint] task not found in DB!");
                     rbqRunOnUiThread(() -> binding.tvStatus.setText("任务不存在"));
@@ -515,7 +518,7 @@ public class PrintProgressActivity extends BaseActivity {
                     }
 
                     AppDatabase db = AppDatabase.getInstance(PrintProgressActivity.this);
-                    PrintTaskEntity task = db.printTaskDao().getById(pollTaskId);
+                    PrintTaskEntity task = db.printTaskRepository().getById(pollTaskId);
                     if (task == null) break;
 
                     TaskStatus status = TaskStatus.fromCode(task.getStatus());
@@ -606,7 +609,7 @@ public class PrintProgressActivity extends BaseActivity {
             currentTask.setStatus(TaskStatus.INTERRUPTED.getCode());
             currentTask.setUpdatedAt(System.currentTimeMillis());
             PrintEngine.getInstance().getDbExecutor().execute(() ->
-                AppDatabase.getInstance(this).printTaskDao().update(currentTask));
+                AppDatabase.getInstance(this).printTaskRepository().update(currentTask));
         }
     }
 }

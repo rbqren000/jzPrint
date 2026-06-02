@@ -12,9 +12,8 @@ import com.mx.mxSdk.MultiRowImageFactory;
 import com.mx.mxSdk.RowLayoutDirection;
 import com.org.jzprinter.database.converter.IntegerListConverter;
 import com.org.jzprinter.database.entity.PrintTaskEntity;
-import com.org.jzprinter.printer.PrinterHeadManager;
-import com.org.jzprinter.print.reprint.ReprintStrategy;
 import com.org.jzprinter.repository.PrintTaskRepository;
+import com.org.jzprinter.service.PrintService;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -30,7 +29,6 @@ public class PrintEngine {
     private final Context context;
     private final PrintTaskRepository taskRepo;
     private final MaterialLoader materialLoader;
-    private final PrintController printController;
     private final ExecutorService dbExecutor = Executors.newSingleThreadExecutor();
     private PrintProgressManager progressManager;
 
@@ -38,10 +36,7 @@ public class PrintEngine {
     private final AtomicBoolean isPrinting = new AtomicBoolean(false);
     private final AtomicBoolean cancelled = new AtomicBoolean(false);
 
-    private PrintImagePreparer.RotationDirection rotationDirection =
-        PrintImagePreparer.RotationDirection.CW_90;
-    private PrintImagePreparer.VerticalAlignment verticalAlignment =
-        PrintImagePreparer.VerticalAlignment.TOP;
+    private boolean oddPageOnRight = true;
     private boolean useCustomMerge = false;
     private PrintPhaseCallback phaseCallback;
 
@@ -50,7 +45,6 @@ public class PrintEngine {
         this.context = context.getApplicationContext();
         this.taskRepo = taskRepo;
         this.materialLoader = materialLoader;
-        this.printController = new PrintController(context);
     }
 
     private static volatile boolean listenersRegistered = false;
@@ -110,12 +104,8 @@ public class PrintEngine {
         this.progressManager = progressManager;
     }
 
-    public void setRotationDirection(PrintImagePreparer.RotationDirection direction) {
-        this.rotationDirection = direction;
-    }
-
-    public void setVerticalAlignment(PrintImagePreparer.VerticalAlignment alignment) {
-        this.verticalAlignment = alignment;
+    public void setOddPageOnRight(boolean oddPageOnRight) {
+        this.oddPageOnRight = oddPageOnRight;
     }
 
     public void setUseCustomMerge(boolean useCustomMerge) {
@@ -159,7 +149,7 @@ public class PrintEngine {
                                          String targetId, String targetName,
                                          int editionType,
                                          PrintMode printMode, String pagesPath,
-                                         String businessId) {
+                                         String businessId, String editionName) {
         PrintTaskEntity existing = taskRepo.findUnfinishedByEditionAndMode(
             targetId, editionId, printMode.getCode());
         if (existing != null) {
@@ -179,6 +169,7 @@ public class PrintEngine {
         PrintTaskEntity task = new PrintTaskEntity();
         task.setSchoolId(schoolId);
         task.setEditionId(editionId);
+        task.setEditionName(editionName != null ? editionName : editionId);
         task.setTargetId(targetId);
         task.setTargetName(targetName != null ? targetName : targetId);
         task.setEditionType(editionType);
@@ -229,7 +220,7 @@ public class PrintEngine {
             progressManager.setTargetPages(remaining);
         }
 
-        com.org.jzprinter.service.PrintService.start(context);
+        PrintService.start(context);
 
         buildAndSendMultiRow(task.getMaterialPath(), remaining);
     }
@@ -267,7 +258,9 @@ public class PrintEngine {
 
             if (phaseCallback != null) phaseCallback.onPreparePageProgress(i + 1, totalPages, pageIndex);
 
-            Bitmap prepared = PrintImagePreparer.prepare(page, rotationDirection, verticalAlignment);
+            PrintImagePreparer.RotationDirection rotation = PrintImagePreparer.getRotation(pageIndex, oddPageOnRight);
+            PrintImagePreparer.VerticalAlignment alignment = PrintImagePreparer.getAlignment(pageIndex, oddPageOnRight);
+            Bitmap prepared = PrintImagePreparer.prepare(page, rotation, alignment);
             page.recycle();
 
             MultiRowImage pageImage = MultiRowImageFactory.image2MultiRowImage(
@@ -421,12 +414,9 @@ public class PrintEngine {
         }
 
         if (currentIndex == endIndex) {
-            currentTask.setStatus(TaskStatus.COMPLETED.getCode());
-            currentTask.setCompletedAt(System.currentTimeMillis());
-            dbExecutor.execute(() -> taskRepo.update(currentTask));
             isPrinting.set(false);
             if (phaseCallback != null) phaseCallback.onPhysicalPrintComplete();
-            com.org.jzprinter.service.PrintService.notifyComplete();
+            PrintService.notifyComplete();
         }
     }
 
@@ -527,27 +517,11 @@ public class PrintEngine {
         }
     }
 
-    private ReprintStrategy reprintStrategy;
-
-    public void setReprintStrategy(ReprintStrategy strategy) {
-        this.reprintStrategy = strategy;
-    }
-
     public void reprintPages(PrintTaskEntity task, List<Integer> pagesToReprint) {
         if (pagesToReprint == null || pagesToReprint.isEmpty()) return;
 
         if (!Boolean.TRUE.equals(ConnectManager.share().isConnected())) {
             throw new IllegalStateException("打印机未连接，请先连接打印机");
-        }
-
-        if (reprintStrategy != null && reprintStrategy.supportsCommandReprint()) {
-            for (int pageIndex : pagesToReprint) {
-                if (!reprintStrategy.reprint(task, pageIndex)) {
-                    fallbackResend(task, pagesToReprint);
-                    return;
-                }
-            }
-            return;
         }
 
         fallbackResend(task, pagesToReprint);
@@ -574,7 +548,7 @@ public class PrintEngine {
             progressManager.setTargetPages(pagesToReprint);
         }
 
-        com.org.jzprinter.service.PrintService.start(context);
+        PrintService.start(context);
         buildAndSendMultiRow(task.getMaterialPath(), pagesToReprint);
     }
 

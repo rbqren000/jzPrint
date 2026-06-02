@@ -13,8 +13,6 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import com.org.jzprinter.R;
 import com.org.jzprinter.database.AppDatabase;
 import com.org.jzprinter.database.converter.IntegerListConverter;
-import com.org.jzprinter.database.dao.PrintTaskDao;
-import com.org.jzprinter.database.dao.StudentDao;
 import com.org.jzprinter.database.entity.PrintTaskEntity;
 import com.org.jzprinter.database.entity.StudentEntity;
 import com.org.jzprinter.databinding.ActivityStudentListBinding;
@@ -26,6 +24,8 @@ import com.org.jzprinter.print.MaterialPathBuilder;
 import com.org.jzprinter.print.PrintEngine;
 import com.org.jzprinter.print.PrintMode;
 import com.org.jzprinter.print.TaskStatus;
+import com.org.jzprinter.repository.PrintTaskRepository;
+import com.org.jzprinter.repository.StudentRepository;
 import com.org.jzprinter.service.DownloadService;
 import com.org.jzprinter.ui.adapter.PrepareCodeAdapter;
 import com.org.jzprinter.ui.adapter.StudentAdapter;
@@ -42,13 +42,16 @@ public class StudentListActivity extends BaseActivity {
     private static final String EXTRA_SCHOOL_ID = "schoolId";
     private static final String EXTRA_EDITION_ID = "editionId";
     private static final String EXTRA_EDITION_TYPE = "editionType";
+    private static final String EXTRA_EDITION_NAME = "editionName";
 
     public static Intent newIntent(Context context, String schoolId,
-                                   String editionId, int editionType) {
+                                   String editionId, int editionType,
+                                   String editionName) {
         Intent intent = new Intent(context, StudentListActivity.class);
         intent.putExtra(EXTRA_SCHOOL_ID, schoolId);
         intent.putExtra(EXTRA_EDITION_ID, editionId);
         intent.putExtra(EXTRA_EDITION_TYPE, editionType);
+        intent.putExtra(EXTRA_EDITION_NAME, editionName != null ? editionName : "");
         return intent;
     }
 
@@ -56,6 +59,7 @@ public class StudentListActivity extends BaseActivity {
     private Api apiClient;
     private String schoolId;
     private String editionId;
+    private String editionName;
     private int editionType;
     private Map<String, String> prepareCodeBusinessIdMap = new HashMap<>();
 
@@ -68,6 +72,7 @@ public class StudentListActivity extends BaseActivity {
 
         schoolId = getIntent().getStringExtra(EXTRA_SCHOOL_ID);
         editionId = getIntent().getStringExtra(EXTRA_EDITION_ID);
+        editionName = getIntent().getStringExtra(EXTRA_EDITION_NAME);
         editionType = getIntent().getIntExtra(EXTRA_EDITION_TYPE, 1);
 
         String title = editionType == 2 ? "预铺码列表" : "学生列表";
@@ -135,23 +140,23 @@ public class StudentListActivity extends BaseActivity {
                     }
 
                     PrintEngine.getInstance().getDbExecutor().execute(() -> {
-                        StudentDao studentDao = AppDatabase.getInstance(StudentListActivity.this)
-                            .studentDao();
+                        StudentRepository studentRepo = AppDatabase.getInstance(StudentListActivity.this)
+                            .studentRepository();
 
                         for (StudentEntity entity : entities) {
                             checkMaterialReady(entity);
-                            StudentEntity existing = studentDao.getById(
+                            StudentEntity existing = studentRepo.getById(
                                 entity.getStudentId(), entity.getSchoolId(), entity.getEditionId());
                             if (existing == null) {
-                                studentDao.insert(entity);
+                                studentRepo.insert(entity);
                             } else {
                                 existing.setMaterialReady(entity.isMaterialReady());
                                 existing.setMaterialPath(entity.getMaterialPath());
                                 existing.setBusinessId(entity.getBusinessId());
-                                studentDao.update(existing);
+                                studentRepo.update(existing);
                             }
                         }
-                        List<StudentEntity> saved = studentDao.getByEdition(schoolId, editionId);
+                        List<StudentEntity> saved = studentRepo.getByEdition(schoolId, editionId);
                         rbqRunOnUiThread(() -> {
                             buildGroupedStudentList(saved);
                             showContent();
@@ -346,9 +351,9 @@ public class StudentListActivity extends BaseActivity {
         String targetId = student.getStudentId();
         PrintEngine.getInstance().getDbExecutor().execute(() -> {
             AppDatabase db = AppDatabase.getInstance(StudentListActivity.this);
-            PrintTaskDao taskDao = db.printTaskDao();
-            List<PrintTaskEntity> allTasks = taskDao.findByTargetId(targetId);
-            List<PrintTaskEntity> resumable = taskDao.findResumableByTargetId(targetId);
+            PrintTaskRepository taskRepo = db.printTaskRepository();
+            List<PrintTaskEntity> allTasks = taskRepo.findByTargetId(targetId);
+            List<PrintTaskEntity> resumable = taskRepo.findResumableByTargetId(targetId);
 
             if (allTasks == null || allTasks.isEmpty()) {
                 rbqRunOnUiThread(() -> navigateToPrintModeSelect(
@@ -389,8 +394,8 @@ public class StudentListActivity extends BaseActivity {
 
         PrintEngine.getInstance().getDbExecutor().execute(() -> {
             AppDatabase db = AppDatabase.getInstance(StudentListActivity.this);
-            PrintTaskDao taskDao = db.printTaskDao();
-            List<PrintTaskEntity> resumable = taskDao.findResumableByTargetId(targetId);
+            PrintTaskRepository taskRepo = db.printTaskRepository();
+            List<PrintTaskEntity> resumable = taskRepo.findResumableByTargetId(targetId);
 
             if (resumable == null || resumable.isEmpty()) {
                 rbqRunOnUiThread(() -> navigateToPrintModeSelect(prepareCode, prepareCode, finalMaterialPath, businessId));
@@ -414,7 +419,7 @@ public class StudentListActivity extends BaseActivity {
                                             String materialPath, String businessId) {
         if (materialPath == null) materialPath = "";
         startActivity(PrintModeSelectActivity.newIntent(this,
-            schoolId, editionId, targetId, targetName, editionType, materialPath, businessId));
+            schoolId, editionId, targetId, targetName, editionType, materialPath, businessId, editionName));
     }
 
     private void showSingleTaskResumeDialog(String name, PrintTaskEntity task,
@@ -435,7 +440,7 @@ public class StudentListActivity extends BaseActivity {
                 task.setStatus(TaskStatus.CANCELLED.getCode());
                 task.setUpdatedAt(System.currentTimeMillis());
                 PrintEngine.getInstance().getDbExecutor().execute(() ->
-                    AppDatabase.getInstance(this).printTaskDao().update(task));
+                    AppDatabase.getInstance(this).printTaskRepository().update(task));
             })
             .show();
     }

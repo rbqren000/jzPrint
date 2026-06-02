@@ -120,7 +120,7 @@ public class MainActivity extends BaseActivity {
                 showNoSchoolIdHint();
                 return;
             }
-            startActivity(EditionListActivity.newIntent(this, schoolId));
+            startActivity(SchoolHomeworkListActivity.newIntent(this, schoolId));
         });
 
         binding.llUnfinishedEntry.setOnClickListener(v -> {
@@ -169,10 +169,26 @@ public class MainActivity extends BaseActivity {
                         task.setStatus(TaskStatus.CANCELLED.getCode());
                         task.setUpdatedAt(System.currentTimeMillis());
                         PrintEngine.getInstance().getDbExecutor().execute(() ->
-                            AppDatabase.getInstance(MainActivity.this).printTaskDao().update(task));
+                            AppDatabase.getInstance(MainActivity.this).printTaskRepository().update(task));
                         updateTaskCards();
                     })
                     .setNegativeButton("返回", null)
+                    .show();
+            }
+
+            @Override
+            public void onDelete(PrintTaskEntity task) {
+                new AlertDialog.Builder(MainActivity.this, R.style.mAlertDialog)
+                    .setTitle("删除任务")
+                    .setMessage(String.format("确定删除「%s」的打印任务？\n删除后不可恢复。",
+                        task.getTargetName() != null ? task.getTargetName() : task.getTargetId()))
+                    .setPositiveButton("删除", (d, w) -> {
+                        PrintEngine.getInstance().getDbExecutor().execute(() -> {
+                            AppDatabase.getInstance(MainActivity.this).printTaskRepository().delete(task.getTaskId());
+                            rbqRunOnUiThread(MainActivity.this::updateTaskCards);
+                        });
+                    })
+                    .setNegativeButton("取消", null)
                     .show();
             }
         });
@@ -190,7 +206,7 @@ public class MainActivity extends BaseActivity {
     private void updateTaskCards() {
         PrintEngine.getInstance().getDbExecutor().execute(() -> {
             AppDatabase db = AppDatabase.getInstance(this);
-            List<PrintTaskEntity> allTasks = db.printTaskDao().findRecent(50);
+            List<PrintTaskEntity> allTasks = db.printTaskRepository().findRecent(50);
             List<PrintTaskEntity> resumable = new java.util.ArrayList<>();
             if (allTasks != null) {
                 for (PrintTaskEntity t : allTasks) {
@@ -288,7 +304,7 @@ public class MainActivity extends BaseActivity {
     private void showStorageInfo() {
         StorageManager storageManager =
             new StorageManager(this,
-                AppDatabase.getInstance(this).printTaskDao());
+                AppDatabase.getInstance(this).printTaskRepository());
         long totalSize = storageManager.getMaterialTotalSize();
         String sizeStr = android.text.format.Formatter.formatFileSize(this, totalSize);
 
