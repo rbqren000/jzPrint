@@ -54,35 +54,63 @@ public class PrintImagePreparer {
     }
 
     /**
-     * 根据页码和奇偶页设置获取旋转方向
+     * 根据页码、奇偶页设置和打印方向获取旋转方向。
      *
-     * @param pageCode       页码
-     * @param oddPageOnRight 奇页是否在右边（翻书方向）
+     * 决策逻辑：
+     * 1. 先根据 pageCode + oddPageOnRight 确定该页所属侧（左/右）的基准旋转
+     * 2. 再根据该侧的滑动方向决定是否取反（下→上时取反）
+     *
+     * @param pageCode         页码
+     * @param oddPageOnRight   奇数页是否在右侧
+     * @param leftBottomToTop  左侧页滑动方向是否为下→上
+     * @param rightBottomToTop 右侧页滑动方向是否为下→上
      * @return 旋转方向
      */
-    public static RotationDirection getRotation(int pageCode, boolean oddPageOnRight) {
+    public static RotationDirection getRotation(int pageCode, boolean oddPageOnRight,
+                                                 boolean leftBottomToTop, boolean rightBottomToTop) {
         boolean isOdd = (pageCode % 2 == 1);
-        if (isOdd) {
-            return oddPageOnRight ? RotationDirection.CW_90 : RotationDirection.CCW_90;
-        } else {
-            return oddPageOnRight ? RotationDirection.CCW_90 : RotationDirection.CW_90;
-        }
+        boolean isRightPage = isOdd == oddPageOnRight;
+
+        // 基准旋转：实测确认两侧均为 CCW_90（仅对齐方式不同：右侧=TOP，左侧=BOTTOM）
+        RotationDirection base = RotationDirection.CCW_90;
+
+        // 该侧实际滑动方向
+        boolean btoT = isRightPage ? rightBottomToTop : leftBottomToTop;
+
+        return btoT ? opposite(base) : base;
     }
 
     /**
-     * 根据页码和奇偶页设置获取垂直对齐方式
+     * 根据页码、奇偶页设置和打印方向获取垂直对齐方式。
      *
-     * @param pageCode       页码
-     * @param oddPageOnRight 奇页是否在右边（翻书方向）
+     * 决策逻辑同 getRotation，基准对齐：右侧=TOP，左侧=BOTTOM。
+     *
+     * @param pageCode         页码
+     * @param oddPageOnRight   奇数页是否在右侧
+     * @param leftBottomToTop  左侧页滑动方向是否为下→上
+     * @param rightBottomToTop 右侧页滑动方向是否为下→上
      * @return 垂直对齐方式
      */
-    public static VerticalAlignment getAlignment(int pageCode, boolean oddPageOnRight) {
+    public static VerticalAlignment getAlignment(int pageCode, boolean oddPageOnRight,
+                                                  boolean leftBottomToTop, boolean rightBottomToTop) {
         boolean isOdd = (pageCode % 2 == 1);
-        if (isOdd) {
-            return oddPageOnRight ? VerticalAlignment.TOP : VerticalAlignment.BOTTOM;
-        } else {
-            return oddPageOnRight ? VerticalAlignment.BOTTOM : VerticalAlignment.TOP;
-        }
+        boolean isRightPage = isOdd == oddPageOnRight;
+
+        // 基准对齐：右侧=TOP，左侧=BOTTOM
+        VerticalAlignment base = isRightPage ? VerticalAlignment.TOP : VerticalAlignment.BOTTOM;
+
+        // 该侧实际滑动方向
+        boolean btoT = isRightPage ? rightBottomToTop : leftBottomToTop;
+
+        return btoT ? opposite(base) : base;
+    }
+
+    private static RotationDirection opposite(RotationDirection dir) {
+        return dir == RotationDirection.CW_90 ? RotationDirection.CCW_90 : RotationDirection.CW_90;
+    }
+
+    private static VerticalAlignment opposite(VerticalAlignment align) {
+        return align == VerticalAlignment.TOP ? VerticalAlignment.BOTTOM : VerticalAlignment.TOP;
     }
 
     /**

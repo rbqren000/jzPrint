@@ -44,6 +44,8 @@ public class PrintEngine {
     private final AtomicBoolean cancelled = new AtomicBoolean(false);
 
     private boolean oddPageOnRight = true;
+    private boolean leftBottomToTop = false;
+    private boolean rightBottomToTop = false;
     private boolean useCustomMerge = false;
     private PrintPhaseCallback phaseCallback;
 
@@ -117,6 +119,14 @@ public class PrintEngine {
 
     public void setOddPageOnRight(boolean oddPageOnRight) {
         this.oddPageOnRight = oddPageOnRight;
+    }
+
+    public void setLeftBottomToTop(boolean leftBottomToTop) {
+        this.leftBottomToTop = leftBottomToTop;
+    }
+
+    public void setRightBottomToTop(boolean rightBottomToTop) {
+        this.rightBottomToTop = rightBottomToTop;
     }
 
     public void setUseCustomMerge(boolean useCustomMerge) {
@@ -276,8 +286,8 @@ public class PrintEngine {
 
             if (phaseCallback != null) phaseCallback.onPreparePageProgress(i + 1, totalPages, pageIndex);
 
-            PrintImagePreparer.RotationDirection rotation = PrintImagePreparer.getRotation(pageIndex, oddPageOnRight);
-            PrintImagePreparer.VerticalAlignment alignment = PrintImagePreparer.getAlignment(pageIndex, oddPageOnRight);
+            PrintImagePreparer.RotationDirection rotation = PrintImagePreparer.getRotation(pageIndex, oddPageOnRight, leftBottomToTop, rightBottomToTop);
+            PrintImagePreparer.VerticalAlignment alignment = PrintImagePreparer.getAlignment(pageIndex, oddPageOnRight, leftBottomToTop, rightBottomToTop);
             Bitmap prepared = PrintImagePreparer.prepare(page, rotation, alignment);
             page.recycle();
 

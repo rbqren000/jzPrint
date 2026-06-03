@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
@@ -20,6 +21,7 @@ import com.org.jzprinter.database.entity.PrintTaskEntity;
 import com.org.jzprinter.databinding.ActivityPrintProgressBinding;
 import com.org.jzprinter.print.PrintEngine;
 import com.org.jzprinter.print.PrintMode;
+import com.org.jzprinter.print.PrintConfig;
 import com.org.jzprinter.print.PrintPhaseCallback;
 import com.org.jzprinter.print.TaskStatus;
 import com.org.jzprinter.ui.adapter.PageChipAdapter;
@@ -28,6 +30,9 @@ import com.org.jzprinter.ui.adapter.PageChipAdapter.State;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+
+import androidx.activity.OnBackPressedCallback;
 
 public class PrintProgressActivity extends BaseActivity {
 
@@ -108,7 +113,7 @@ public class PrintProgressActivity extends BaseActivity {
         @Override
         public void onPhaseChanged(PrintPhaseCallback.Phase phase) {
             currentPhase = phase;
-            rbqRunOnUiThread(() -> updateRestartButton());
+            rbqRunOnUiThread(PrintProgressActivity.this::updateRestartButton);
         }
 
         @Override
@@ -117,8 +122,8 @@ public class PrintProgressActivity extends BaseActivity {
             rbqRunOnUiThread(() -> {
                 binding.pbPrepare.setMax(totalPages);
                 binding.pbPrepare.setProgress(0);
-                binding.tvPrepareStatus.setText("0/" + totalPages + " 页");
-                binding.tvStatus.setText("准备数据中...");
+                binding.tvPrepareStatus.setText(getString(R.string.progress_prepare_counter, 0, totalPages));
+                binding.tvStatus.setText(R.string.progress_preparing);
                 setPhaseActive(0);
             });
         }
@@ -127,7 +132,7 @@ public class PrintProgressActivity extends BaseActivity {
         public void onPreparePageProgress(int currentPage, int totalPages, int pageIndex) {
             rbqRunOnUiThread(() -> {
                 binding.pbPrepare.setProgress(currentPage);
-                binding.tvPrepareStatus.setText(currentPage + "/" + totalPages + " 页 (page_" + pageIndex + ")");
+                binding.tvPrepareStatus.setText(getString(R.string.progress_prepare_page_detail, currentPage, totalPages, pageIndex));
             });
         }
 
@@ -135,8 +140,8 @@ public class PrintProgressActivity extends BaseActivity {
         public void onPrepareComplete() {
             rbqRunOnUiThread(() -> {
                 binding.pbPrepare.setProgress(prepareTotal);
-                binding.tvPrepareStatus.setText("完成 ✓");
-                binding.tvStatus.setText("正在发送 " + prepareTotal + " 页数据...");
+                binding.tvPrepareStatus.setText(R.string.progress_prepare_done);
+                binding.tvStatus.setText(getString(R.string.progress_sending_pages, prepareTotal));
                 setPhaseActive(1);
             });
         }
@@ -146,7 +151,7 @@ public class PrintProgressActivity extends BaseActivity {
             String sizeStr = formatSize(totalSize);
             rbqRunOnUiThread(() -> {
                 binding.pbTransfer.setProgress(0);
-                binding.tvTransferStatus.setText("0% (" + sizeStr + ")");
+                binding.tvTransferStatus.setText(getString(R.string.progress_transfer_with_size, sizeStr));
             });
         }
 
@@ -154,7 +159,7 @@ public class PrintProgressActivity extends BaseActivity {
         public void onDataTransferProgress(int percentage) {
             rbqRunOnUiThread(() -> {
                 binding.pbTransfer.setProgress(percentage);
-                binding.tvTransferStatus.setText(percentage + "%");
+                binding.tvTransferStatus.setText(getString(R.string.progress_transfer_pct, percentage));
             });
         }
 
@@ -162,8 +167,8 @@ public class PrintProgressActivity extends BaseActivity {
         public void onDataTransferComplete() {
             rbqRunOnUiThread(() -> {
                 binding.pbTransfer.setProgress(100);
-                binding.tvTransferStatus.setText("完成 ✓");
-                binding.tvStatus.setText("请在打印机上操作...");
+                binding.tvTransferStatus.setText(R.string.progress_transfer_done);
+                binding.tvStatus.setText(R.string.progress_wait_user);
                 setPhaseActive(2);
             });
         }
@@ -174,7 +179,7 @@ public class PrintProgressActivity extends BaseActivity {
             rbqRunOnUiThread(() -> {
                 binding.pbPrint.setMax(totalPages);
                 binding.pbPrint.setProgress(0);
-                binding.tvPrintStatus.setText("0/" + totalPages + " 页");
+                binding.tvPrintStatus.setText(getString(R.string.progress_prepare_counter, 0, totalPages));
             });
         }
 
@@ -182,7 +187,7 @@ public class PrintProgressActivity extends BaseActivity {
         public void onPhysicalPrintPageProgress(int printedPages, int totalPages, int pageIndex) {
             rbqRunOnUiThread(() -> {
                 binding.pbPrint.setProgress(printedPages);
-                binding.tvPrintStatus.setText(printedPages + "/" + totalPages + " 页");
+                binding.tvPrintStatus.setText(getString(R.string.progress_print_counter, printedPages, totalPages));
                 refreshPageChipsFromMemory();
             });
         }
@@ -191,8 +196,8 @@ public class PrintProgressActivity extends BaseActivity {
         public void onPhysicalPrintComplete() {
             rbqRunOnUiThread(() -> {
                 binding.pbPrint.setProgress(printTotal);
-                binding.tvPrintStatus.setText(printTotal + "/" + printTotal + " 页 ✓");
-                binding.tvStatus.setText("打印完成");
+                binding.tvPrintStatus.setText(getString(R.string.progress_print_counter_done, printTotal, printTotal));
+                binding.tvStatus.setText(R.string.progress_print_done);
                 refreshPageChipsFromMemory();
                 binding.btnRestart.setVisibility(View.GONE);
                 binding.btnPauseOrCancel.setVisibility(View.GONE);
@@ -203,7 +208,7 @@ public class PrintProgressActivity extends BaseActivity {
         @Override
         public void onPhaseError(String phase, String error) {
             rbqRunOnUiThread(() -> {
-                binding.tvStatus.setText("失败: " + error);
+                binding.tvStatus.setText(getString(R.string.progress_error_fmt, error));
                 binding.btnRestart.setEnabled(false);
                 binding.btnViewDetail.setVisibility(View.VISIBLE);
             });
@@ -217,13 +222,19 @@ public class PrintProgressActivity extends BaseActivity {
         setContentView(binding.getRoot());
         setupStatusBarWithCustomColorResId(R.color.primary_blue);
 
+        // 打印过程中保持屏幕常亮，避免发送数据或等待按键时手机黑屏
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        // 显示当前打印设置摘要
+        binding.tvSettingsSummary.setText(PrintConfig.getSettingsSummary(this));
+
         // 初始化页码 Chip RecyclerView
         binding.rvPageChips.setLayoutManager(
             new GridLayoutManager(this, 7, RecyclerView.VERTICAL, false));
         pageChipAdapter = new PageChipAdapter(binding.rvPageChips);
         binding.rvPageChips.setAdapter(pageChipAdapter);
 
-        binding.commonAppBar.titleTextView.setText("打印进度");
+        binding.commonAppBar.titleTextView.setText(R.string.progress_title);
         binding.commonAppBar.leftMenuLayout.setOnClickListener(v -> {
             if (PrintEngine.getInstance().isPrinting()) {
                 new android.app.AlertDialog.Builder(this)
@@ -240,7 +251,7 @@ public class PrintProgressActivity extends BaseActivity {
             }
         });
 
-        /**
+        /*
          * btnRestart 按钮点击逻辑：
          *
          * 本打印机为手持移动打印机，打印流程分三个阶段：
@@ -314,6 +325,19 @@ public class PrintProgressActivity extends BaseActivity {
         // 重打指定页按钮：仅 PRINT 阶段可用，弹出页面选择弹窗
         binding.btnReprintSpecifiedPage.setOnClickListener(v -> showReprintPageSelector());
 
+        // 返回键处理：打印中弹出确认，否则直接退出
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (binding.btnPauseOrCancel.getVisibility() == View.VISIBLE) {
+                    binding.btnPauseOrCancel.performClick();
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                }
+            }
+        });
+
         PrintEngine.getInstance().setPhaseCallback(phaseCallback);
         startOrResumePrint();
     }
@@ -323,18 +347,24 @@ public class PrintProgressActivity extends BaseActivity {
         boolean isResume = getIntent().getBooleanExtra(EXTRA_IS_RESUME, false);
         long existingTaskId = getIntent().getLongExtra(EXTRA_TASK_ID, -1);
 
+        // 重打/续打路径不会经过 PrintModeSelectActivity 设置引擎参数，
+        // 在此统一从 PrintConfig 读取当前设置，确保设置页与进度页行为一致
+        PrintEngine engine = PrintEngine.getInstance();
+        engine.setOddPageOnRight(PrintConfig.isOddPageOnRight(this));
+        engine.setLeftBottomToTop(PrintConfig.isLeftBottomToTop(this));
+        engine.setRightBottomToTop(PrintConfig.isRightBottomToTop(this));
+
         if (isReprint && existingTaskId > 0) {
             currentTaskId = existingTaskId;
             List<Integer> reprintPages = getIntent().getIntegerArrayListExtra(EXTRA_REPRINT_PAGES);
-            binding.tvStatus.setText("准备重打...");
-            PrintEngine engine = PrintEngine.getInstance();
+            binding.tvStatus.setText(R.string.progress_preparing_reprint);
             engine.getDbExecutor().execute(() -> {
                 try {
                     PrintTaskEntity task = AppDatabase.getInstance(PrintProgressActivity.this)
                         .printTaskRepository().getById(existingTaskId);
                     if (task == null) {
                         rbqRunOnUiThread(() -> {
-                            binding.tvStatus.setText("任务不存在");
+                            binding.tvStatus.setText(R.string.progress_task_not_found);
                             binding.btnRestart.setEnabled(false);
                         });
                         return;
@@ -345,10 +375,10 @@ public class PrintProgressActivity extends BaseActivity {
                     } else {
                         engine.reprintAll(task);
                     }
-                    rbqRunOnUiThread(() -> startProgressPolling());
+                    rbqRunOnUiThread(this::startProgressPolling);
                 } catch (Exception e) {
                     rbqRunOnUiThread(() -> {
-                        binding.tvStatus.setText("重打失败: " + e.getMessage());
+                        binding.tvStatus.setText(getString(R.string.progress_retry_failed, e.getMessage()));
                         binding.btnRestart.setEnabled(false);
                     });
                 }
@@ -358,25 +388,24 @@ public class PrintProgressActivity extends BaseActivity {
 
         if (isResume && existingTaskId > 0) {
             currentTaskId = existingTaskId;
-            binding.tvStatus.setText("准备继续...");
-            PrintEngine engine = PrintEngine.getInstance();
+            binding.tvStatus.setText(R.string.progress_preparing_resume);
             engine.getDbExecutor().execute(() -> {
                 try {
                     PrintTaskEntity task = AppDatabase.getInstance(PrintProgressActivity.this)
                         .printTaskRepository().getById(existingTaskId);
                     if (task == null) {
                         rbqRunOnUiThread(() -> {
-                            binding.tvStatus.setText("任务不存在");
+                            binding.tvStatus.setText(R.string.progress_task_not_found);
                             binding.btnRestart.setEnabled(false);
                         });
                         return;
                     }
                     currentTask = task;
                     engine.resumeFromBreakpoint(task);
-                    rbqRunOnUiThread(() -> startProgressPolling());
+                    rbqRunOnUiThread(this::startProgressPolling);
                 } catch (Exception e) {
                     rbqRunOnUiThread(() -> {
-                        binding.tvStatus.setText("继续失败: " + e.getMessage());
+                        binding.tvStatus.setText(getString(R.string.progress_resume_failed, e.getMessage()));
                         binding.btnRestart.setEnabled(false);
                     });
                 }
@@ -386,11 +415,11 @@ public class PrintProgressActivity extends BaseActivity {
 
         if (existingTaskId > 0) {
             currentTaskId = existingTaskId;
-            binding.tvStatus.setText("查看进度...");
+            binding.tvStatus.setText(R.string.progress_viewing);
             binding.pbPrepare.setProgress(binding.pbPrepare.getMax());
-            binding.tvPrepareStatus.setText("已完成");
+            binding.tvPrepareStatus.setText(R.string.progress_completed);
             binding.pbTransfer.setProgress(binding.pbTransfer.getMax());
-            binding.tvTransferStatus.setText("已完成");
+            binding.tvTransferStatus.setText(R.string.progress_completed);
             setPhaseActive(2);
             startProgressPolling();
             return;
@@ -407,8 +436,7 @@ public class PrintProgressActivity extends BaseActivity {
         String editionName = getIntent().getStringExtra(EXTRA_EDITION_NAME);
         PrintMode printMode = PrintMode.fromCode(printModeCode);
 
-        binding.tvStatus.setText("准备中...");
-        PrintEngine engine = PrintEngine.getInstance();
+        binding.tvStatus.setText(R.string.progress_generic_preparing);
         engine.getDbExecutor().execute(() -> {
             try {
                 PrintTaskEntity task =
@@ -417,10 +445,10 @@ public class PrintProgressActivity extends BaseActivity {
                 currentTaskId = task.getTaskId();
                 currentTask = task;
                 engine.execute(task);
-                rbqRunOnUiThread(() -> startProgressPolling());
+                rbqRunOnUiThread(this::startProgressPolling);
             } catch (Exception e) {
                 rbqRunOnUiThread(() -> {
-                    binding.tvStatus.setText("打印失败: " + e.getMessage());
+                    binding.tvStatus.setText(getString(R.string.progress_execute_failed, e.getMessage()));
                     binding.btnRestart.setEnabled(false);
                 });
             }
@@ -469,23 +497,23 @@ public class PrintProgressActivity extends BaseActivity {
         if (currentPhase == null) return;
         switch (currentPhase) {
             case PREPARE:
-                binding.btnRestart.setText("重新发送");
+                binding.btnRestart.setText(R.string.progress_resend);
                 binding.btnRestart.setEnabled(false);
                 binding.btnReprintSpecifiedPage.setVisibility(View.GONE);
-                binding.btnPauseOrCancel.setText("取消打印");
+                binding.btnPauseOrCancel.setText(R.string.progress_cancel_print);
                 break;
             case TRANSFER:
-                binding.btnRestart.setText("停止发送");
+                binding.btnRestart.setText(R.string.progress_stop_send);
                 binding.btnRestart.setEnabled(true);
                 binding.btnReprintSpecifiedPage.setVisibility(View.GONE);
-                binding.btnPauseOrCancel.setText("取消打印");
+                binding.btnPauseOrCancel.setText(R.string.progress_cancel_print);
                 break;
             case STOPPED:
-                binding.btnRestart.setText("重新发送");
+                binding.btnRestart.setText(R.string.progress_resend);
                 binding.btnRestart.setEnabled(false);
                 binding.btnReprintSpecifiedPage.setVisibility(View.GONE);
-                binding.btnPauseOrCancel.setText("取消打印");
-                binding.tvStatus.setText("发送已停止");
+                binding.btnPauseOrCancel.setText(R.string.progress_cancel_print);
+                binding.tvStatus.setText(R.string.progress_send_stopped);
                 new Handler(Looper.getMainLooper()).postDelayed(() -> {
                     if (currentPhase == PrintPhaseCallback.Phase.STOPPED) {
                         binding.btnRestart.setEnabled(true);
@@ -493,10 +521,10 @@ public class PrintProgressActivity extends BaseActivity {
                 }, 5000);
                 break;
             case PRINT:
-                binding.btnRestart.setText("重新发送");
+                binding.btnRestart.setText(R.string.progress_resend);
                 binding.btnRestart.setEnabled(false);
                 binding.btnReprintSpecifiedPage.setVisibility(View.VISIBLE);
-                binding.btnPauseOrCancel.setText("暂存退出");
+                binding.btnPauseOrCancel.setText(R.string.progress_pause_exit);
                 break;
         }
     }
@@ -517,7 +545,7 @@ public class PrintProgressActivity extends BaseActivity {
         binding.tvPrepareStatus.setText("");
         binding.pbTransfer.setProgress(0);
         binding.tvTransferStatus.setText("");
-        binding.tvStatus.setText("准备中...");
+        binding.tvStatus.setText(R.string.progress_generic_preparing);
         setPhaseActive(0);
 
         PrintEngine engine = PrintEngine.getInstance();
@@ -528,7 +556,7 @@ public class PrintProgressActivity extends BaseActivity {
                     .printTaskRepository().getById(currentTaskId);
                 if (task == null) {
                     Log.e(TAG, "[restartPrint] task not found in DB!");
-                    rbqRunOnUiThread(() -> binding.tvStatus.setText("任务不存在"));
+                    rbqRunOnUiThread(() -> binding.tvStatus.setText(R.string.progress_task_not_found));
                     return;
                 }
                 Log.d(TAG, "[restartPrint] task loaded, status=" + task.getStatus()
@@ -537,10 +565,10 @@ public class PrintProgressActivity extends BaseActivity {
                 currentTask = task;
                 engine.resumeFromBreakpoint(task);
                 Log.d(TAG, "[restartPrint] resumeFromBreakpoint returned, starting polling");
-                rbqRunOnUiThread(() -> startProgressPolling());
+                rbqRunOnUiThread(this::startProgressPolling);
             } catch (Exception e) {
                 Log.e(TAG, "[restartPrint] exception: " + e.getMessage(), e);
-                rbqRunOnUiThread(() -> binding.tvStatus.setText("重启失败: " + e.getMessage()));
+                rbqRunOnUiThread(() -> binding.tvStatus.setText(getString(R.string.progress_restart_failed, e.getMessage())));
             }
         });
     }
@@ -580,7 +608,7 @@ public class PrintProgressActivity extends BaseActivity {
 
         String[] items = new String[reprintablePages.size()];
         for (int i = 0; i < reprintablePages.size(); i++) {
-            items[i] = "第 " + reprintablePages.get(i) + " 页";
+            items[i] = getString(R.string.reprint_page_item, reprintablePages.get(i));
         }
 
         final int[] selectedIndex = {reprintablePages.size() - 1};
@@ -599,7 +627,7 @@ public class PrintProgressActivity extends BaseActivity {
                     engine.reprintSpecifiedPage(puzzleIndex);
                     refreshPageChipsFromMemory();
                     android.widget.Toast.makeText(PrintProgressActivity.this,
-                        "已发送重打指令，请按打印机按钮重打第 " + page + " 页",
+                        getString(R.string.reprint_toast, page),
                         android.widget.Toast.LENGTH_SHORT).show();
                 } catch (IllegalStateException | IllegalArgumentException e) {
                     android.widget.Toast.makeText(PrintProgressActivity.this,
@@ -734,7 +762,7 @@ public class PrintProgressActivity extends BaseActivity {
                 }
                 if (finalSnapshot == null) {
                     stopProgressPolling();
-                    binding.tvStatus.setText("任务不存在");
+                    binding.tvStatus.setText(R.string.progress_task_not_found);
                     binding.btnRestart.setEnabled(false);
                     return;
                 }
@@ -773,9 +801,9 @@ public class PrintProgressActivity extends BaseActivity {
         binding.pbPrint.setProgress(done);
 
         if (isTerminalStatus(TaskStatus.fromCode(task.getStatus())) && total > 0 && done >= total) {
-            binding.tvPrintStatus.setText(total + "/" + total + " 页 ✓");
+            binding.tvPrintStatus.setText(getString(R.string.progress_print_counter_done, total, total));
         } else {
-            binding.tvPrintStatus.setText(done + "/" + total + " 页");
+            binding.tvPrintStatus.setText(getString(R.string.progress_print_counter, done, total));
         }
     }
 
@@ -810,11 +838,11 @@ public class PrintProgressActivity extends BaseActivity {
         return task != null && PrintEngine.getInstance().hasLiveTaskState(task.getTaskId());
     }
 
-    private boolean isCurrentTaskActivelyPrinting(PrintTaskEntity task) {
+    private boolean isCurrentTaskNotActivelyPrinting(PrintTaskEntity task) {
         PrintEngine engine = PrintEngine.getInstance();
         PrintTaskEntity engineTask = engine.getCurrentTask();
-        return engine.isPrinting() && engineTask != null && task != null
-            && engineTask.getTaskId() == task.getTaskId();
+        return !engine.isPrinting() || engineTask == null || task == null
+            || engineTask.getTaskId() != task.getTaskId();
     }
 
     private boolean isTerminalStatus(TaskStatus status) {
@@ -827,34 +855,35 @@ public class PrintProgressActivity extends BaseActivity {
     private void applyTaskStatus(PrintTaskEntity task, TaskStatus status) {
         switch (status) {
             case COMPLETED:
-                binding.tvStatus.setText("打印完成");
+                binding.tvStatus.setText(R.string.progress_print_done);
                 binding.btnRestart.setVisibility(View.GONE);
                 binding.btnPauseOrCancel.setVisibility(View.GONE);
                 binding.btnViewDetail.setVisibility(View.VISIBLE);
                 break;
             case PAUSED:
-                binding.tvStatus.setText("已暂停");
+                binding.tvStatus.setText(R.string.progress_paused);
                 binding.btnRestart.setEnabled(false);
                 binding.btnViewDetail.setVisibility(View.VISIBLE);
                 break;
             case INTERRUPTED:
-                binding.tvStatus.setText("中断: " + (task.getLastError() != null ? task.getLastError() : ""));
+                binding.tvStatus.setText(getString(R.string.progress_interrupted,
+                    task.getLastError() != null ? task.getLastError() : ""));
                 binding.btnRestart.setEnabled(false);
                 binding.btnViewDetail.setVisibility(View.VISIBLE);
                 break;
             case CANCELLED:
-                binding.tvStatus.setText("已取消");
+                binding.tvStatus.setText(R.string.progress_cancelled);
                 binding.btnRestart.setVisibility(View.GONE);
                 binding.btnPauseOrCancel.setVisibility(View.GONE);
                 break;
             case IN_PROGRESS:
-                if (!isCurrentTaskActivelyPrinting(task)) {
-                    binding.tvStatus.setText("打印进行中...");
+                if (isCurrentTaskNotActivelyPrinting(task)) {
+                    binding.tvStatus.setText(R.string.progress_in_progress);
                 }
                 break;
             case PENDING:
-                if (!isCurrentTaskActivelyPrinting(task)) {
-                    binding.tvStatus.setText("待开始打印");
+                if (isCurrentTaskNotActivelyPrinting(task)) {
+                    binding.tvStatus.setText(R.string.progress_pending);
                 }
                 break;
             default:
@@ -862,19 +891,10 @@ public class PrintProgressActivity extends BaseActivity {
         }
     }
 
-    private static String formatSize(float bytes) {
-        if (bytes < 1024) return String.format("%.0f B", bytes);
-        if (bytes < 1024 * 1024) return String.format("%.1f KB", bytes / 1024);
-        return String.format("%.1f MB", bytes / (1024 * 1024));
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (binding.btnPauseOrCancel.getVisibility() == View.VISIBLE) {
-            binding.btnPauseOrCancel.performClick();
-        } else {
-            super.onBackPressed();
-        }
+    private String formatSize(float bytes) {
+        if (bytes < 1024) return String.format(Locale.US, getString(R.string.size_byte), bytes);
+        if (bytes < 1024 * 1024) return String.format(Locale.US, getString(R.string.size_kb), bytes / 1024);
+        return String.format(Locale.US, getString(R.string.size_mb), bytes / (1024 * 1024));
     }
 
     @Override

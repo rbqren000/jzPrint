@@ -132,4 +132,72 @@
     <string name="language_english">English</string>
     <string name="error_split_image_failed">分割图片失败: </string>
     <string name="error_generate_print_data_failed">生成打印数据失败: </string>
+
+    <!-- 打印设置 - 选项文案（UI 和进度页摘要共用） -->
+    <string name="print_setting_odd_right">奇数页在右侧</string>
+    <string name="print_setting_odd_left">奇数页在左侧</string>
+    <string name="print_setting_direction_ttob">从上往下滑动</string>
+    <string name="print_setting_direction_btot">从下往上滑动</string>
+
+    <!-- 打印设置 - 选项带默认标记（仅设置页 UI 用） -->
+    <string name="print_setting_odd_right_default">奇数页在右侧（默认）</string>
+    <string name="print_setting_direction_ttob_default">从上往下滑动（默认）</string>
+
+    <!-- 打印设置 - UI 标题 -->
+    <string name="print_setting_book_layout">书本排版</string>
+    <string name="print_setting_book_layout_desc">设置你的书本奇数页在左侧还是右侧</string>
+    <string name="print_setting_direction_title">打印方向</string>
+    <string name="print_setting_direction_desc">设置左右页面的滑动方向，确保内容对齐正确</string>
+    <string name="print_setting_left_page">左侧页面</string>
+    <string name="print_setting_right_page">右侧页面</string>
+
+    <!-- 打印设置摘要模板 -->
+    <string name="print_setting_summary_fmt">排版：%1$s | 左侧：%2$s滑动 | 右侧：%3$s滑动</string>
+
+    <!-- 打印进度：带占位符的格式字符串 -->
+    <string name="progress_prepare_counter">%1$d/%2$d 页</string>
+    <string name="progress_prepare_page_detail">%1$d/%2$d 页 (page_%3$d)</string>
+    <string name="progress_sending_pages">正在发送 %1$d 页数据…</string>
+    <string name="progress_transfer_with_size">0%% (%1$s)</string>
+    <string name="progress_transfer_pct">%1$d%%</string>
+    <string name="progress_print_counter">%1$d/%2$d 页</string>
+    <string name="progress_print_counter_done">%1$d/%2$d 页 ✓</string>
+    <string name="progress_error_fmt">失败: %1$s</string>
+    <string name="progress_retry_failed">重打失败: %1$s</string>
+    <string name="progress_resume_failed">继续失败: %1$s</string>
+    <string name="progress_execute_failed">打印失败: %1$s</string>
+    <string name="progress_restart_failed">重启失败: %1$s</string>
+    <string name="progress_interrupted">中断: %1$s</string>
+
+    <!-- 打印进度：固定状态文案 -->
+    <string name="progress_preparing">准备数据中…</string>
+    <string name="progress_prepare_done">完成 ✓</string>
+    <string name="progress_transfer_done">完成 ✓</string>
+    <string name="progress_wait_user">请在打印机上操作…</string>
+    <string name="progress_print_done">打印完成</string>
+    <string name="progress_title">打印进度</string>
+    <string name="progress_preparing_reprint">准备重打…</string>
+    <string name="progress_task_not_found">任务不存在</string>
+    <string name="progress_preparing_resume">准备继续…</string>
+    <string name="progress_viewing">查看进度…</string>
+    <string name="progress_completed">已完成</string>
+    <string name="progress_generic_preparing">准备中…</string>
+    <string name="progress_paused">已暂停</string>
+    <string name="progress_cancelled">已取消</string>
+    <string name="progress_in_progress">打印进行中…</string>
+    <string name="progress_pending">待开始打印</string>
+    <string name="progress_send_stopped">发送已停止</string>
+    <string name="progress_resend">重新发送</string>
+    <string name="progress_stop_send">停止发送</string>
+    <string name="progress_cancel_print">取消打印</string>
+    <string name="progress_pause_exit">暂存退出</string>
+
+    <!-- 重打 -->
+    <string name="reprint_page_item">第 %1$d 页</string>
+    <string name="reprint_toast">已发送重打指令，请按打印机按钮重打第 %1$d 页</string>
+
+    <!-- 文件大小格式化 -->
+    <string name="size_byte">%.0f B</string>
+    <string name="size_kb">%.1f KB</string>
+    <string name="size_mb">%.1f MB</string>
 </resources>

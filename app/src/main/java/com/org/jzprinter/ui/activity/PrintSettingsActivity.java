@@ -35,5 +35,21 @@ public class PrintSettingsActivity extends BaseActivity {
             boolean oddOnRight = checkedId == R.id.rbOddOnRight;
             PrintConfig.setOddPageOnRight(this, oddOnRight);
         });
+
+        // 左侧页面打印方向
+        boolean leftBtoT = PrintConfig.isLeftBottomToTop(this);
+        binding.rgLeftDirection.check(leftBtoT ? R.id.rbLeftBtoT : R.id.rbLeftTtoB);
+
+        binding.rgLeftDirection.setOnCheckedChangeListener((group, checkedId) -> {
+            PrintConfig.setLeftBottomToTop(this, checkedId == R.id.rbLeftBtoT);
+        });
+
+        // 右侧页面打印方向
+        boolean rightBtoT = PrintConfig.isRightBottomToTop(this);
+        binding.rgRightDirection.check(rightBtoT ? R.id.rbRightBtoT : R.id.rbRightTtoB);
+
+        binding.rgRightDirection.setOnCheckedChangeListener((group, checkedId) -> {
+            PrintConfig.setRightBottomToTop(this, checkedId == R.id.rbRightBtoT);
+        });
     }
 }

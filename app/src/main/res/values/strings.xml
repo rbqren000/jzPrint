@@ -134,4 +134,72 @@
     <string name="language_english">English</string>
     <string name="error_split_image_failed">Split image failed: </string>
     <string name="error_generate_print_data_failed">Generate print data failed: </string>
+
+    <!-- Print Settings options (shared by settings UI and progress summary) -->
+    <string name="print_setting_odd_right">Odd pages on right</string>
+    <string name="print_setting_odd_left">Odd pages on left</string>
+    <string name="print_setting_direction_ttob">Top to bottom</string>
+    <string name="print_setting_direction_btot">Bottom to top</string>
+
+    <!-- Print Settings options with "(default)" suffix (settings UI only) -->
+    <string name="print_setting_odd_right_default">Odd pages on right (default)</string>
+    <string name="print_setting_direction_ttob_default">Top to bottom (default)</string>
+
+    <!-- Print Settings UI labels -->
+    <string name="print_setting_book_layout">Book Layout</string>
+    <string name="print_setting_book_layout_desc">Set whether odd pages are on the left or right side</string>
+    <string name="print_setting_direction_title">Print Direction</string>
+    <string name="print_setting_direction_desc">Set the slide direction for each page side</string>
+    <string name="print_setting_left_page">Left Page</string>
+    <string name="print_setting_right_page">Right Page</string>
+
+    <!-- Print Settings summary template, %1$s=odd page side, %2$s=left direction, %3$s=right direction -->
+    <string name="print_setting_summary_fmt">Layout: %1$s | Left: %2$s | Right: %3$s</string>
+
+    <!-- Print progress: format strings with placeholders -->
+    <string name="progress_prepare_counter">%1$d/%2$d pages</string>
+    <string name="progress_prepare_page_detail">%1$d/%2$d pages (page_%3$d)</string>
+    <string name="progress_sending_pages">Sending %1$d pages…</string>
+    <string name="progress_transfer_with_size">0%% (%1$s)</string>
+    <string name="progress_transfer_pct">%1$d%%</string>
+    <string name="progress_print_counter">%1$d/%2$d pages</string>
+    <string name="progress_print_counter_done">%1$d/%2$d pages ✓</string>
+    <string name="progress_error_fmt">Failed: %1$s</string>
+    <string name="progress_retry_failed">Retry failed: %1$s</string>
+    <string name="progress_resume_failed">Resume failed: %1$s</string>
+    <string name="progress_execute_failed">Execution failed: %1$s</string>
+    <string name="progress_restart_failed">Restart failed: %1$s</string>
+    <string name="progress_interrupted">Interrupted: %1$s</string>
+
+    <!-- Print progress: literal status messages -->
+    <string name="progress_preparing">Preparing data…</string>
+    <string name="progress_prepare_done">Done ✓</string>
+    <string name="progress_transfer_done">Done ✓</string>
+    <string name="progress_wait_user">Operate on the printer…</string>
+    <string name="progress_print_done">Print completed</string>
+    <string name="progress_title">Print Progress</string>
+    <string name="progress_preparing_reprint">Preparing to reprint…</string>
+    <string name="progress_task_not_found">Task not found</string>
+    <string name="progress_preparing_resume">Preparing to resume…</string>
+    <string name="progress_viewing">Viewing progress…</string>
+    <string name="progress_completed">Completed</string>
+    <string name="progress_generic_preparing">Preparing…</string>
+    <string name="progress_paused">Paused</string>
+    <string name="progress_cancelled">Cancelled</string>
+    <string name="progress_in_progress">Printing…</string>
+    <string name="progress_pending">Pending print</string>
+    <string name="progress_send_stopped">Send stopped</string>
+    <string name="progress_resend">Resend</string>
+    <string name="progress_stop_send">Stop sending</string>
+    <string name="progress_cancel_print">Cancel print</string>
+    <string name="progress_pause_exit">Save &amp; exit</string>
+
+    <!-- Reprint -->
+    <string name="reprint_page_item">Page %1$d</string>
+    <string name="reprint_toast">Reprint sent. Press button on printer to reprint page %1$d</string>
+
+    <!-- Size format -->
+    <string name="size_byte">%.0f B</string>
+    <string name="size_kb">%.1f KB</string>
+    <string name="size_mb">%.1f MB</string>
 </resources>

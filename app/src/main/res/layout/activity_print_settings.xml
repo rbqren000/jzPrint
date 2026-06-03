@@ -20,7 +20,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="书本排版"
+                android:text="@string/print_setting_book_layout"
                 android:textSize="16sp"
                 android:textColor="@color/text_primary"
                 android:layout_marginBottom="12dp" />
@@ -28,7 +28,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="设置你的书本奇数页在左侧还是右侧"
+                android:text="@string/print_setting_book_layout_desc"
                 android:textSize="13sp"
                 android:textColor="@color/text_secondary"
                 android:layout_marginBottom="12dp" />
@@ -43,7 +43,7 @@
                     android:id="@+id/rbOddOnRight"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="奇数页在右侧（默认）"
+                    android:text="@string/print_setting_odd_right_default"
                     android:textSize="16sp"
                     android:padding="12dp"
                     android:checked="true" />
@@ -52,7 +52,98 @@
                     android:id="@+id/rbOddOnLeft"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="奇数页在左侧"
+                    android:text="@string/print_setting_odd_left"
+                    android:textSize="16sp"
+                    android:padding="12dp" />
+
+            </RadioGroup>
+
+            <!-- 分割线 -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/text_secondary"
+                android:alpha="0.2"
+                android:layout_marginBottom="20dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/print_setting_direction_title"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="12dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/print_setting_direction_desc"
+                android:textSize="13sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginBottom="16dp" />
+
+            <!-- 左侧页面方向 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/print_setting_left_page"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="8dp" />
+
+            <RadioGroup
+                android:id="@+id/rgLeftDirection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp">
+
+                <RadioButton
+                    android:id="@+id/rbLeftTtoB"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/print_setting_direction_ttob_default"
+                    android:textSize="16sp"
+                    android:padding="12dp"
+                    android:checked="true" />
+
+                <RadioButton
+                    android:id="@+id/rbLeftBtoT"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/print_setting_direction_btot"
+                    android:textSize="16sp"
+                    android:padding="12dp" />
+
+            </RadioGroup>
+
+            <!-- 右侧页面方向 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/print_setting_right_page"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="8dp" />
+
+            <RadioGroup
+                android:id="@+id/rgRightDirection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <RadioButton
+                    android:id="@+id/rbRightTtoB"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/print_setting_direction_ttob_default"
+                    android:textSize="16sp"
+                    android:padding="12dp"
+                    android:checked="true" />
+
+                <RadioButton
+                    android:id="@+id/rbRightBtoT"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/print_setting_direction_btot"
                     android:textSize="16sp"
                     android:padding="12dp" />
 

@@ -299,6 +299,8 @@ public class PrintModeSelectActivity extends BaseActivity {
         PrintEngine engine = PrintEngine.getInstance();
         engine.setUseCustomMerge(isCustomMergeSelected());
         engine.setOddPageOnRight(PrintConfig.isOddPageOnRight(this));
+        engine.setLeftBottomToTop(PrintConfig.isLeftBottomToTop(this));
+        engine.setRightBottomToTop(PrintConfig.isRightBottomToTop(this));
         engine.setCustomTargetPages(selectedPages);
 
         PrintMode printMode = inferPrintMode(selectedPages);
