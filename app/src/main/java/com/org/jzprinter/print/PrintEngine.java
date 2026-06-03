@@ -581,15 +581,15 @@ public class PrintEngine {
             throw new IllegalStateException("打印机未连接，请先连接打印机");
         }
 
-        List<Integer> target = IntegerListConverter.fromString(currentTask.getTargetPages());
-        if (puzzleIndex < 0 || puzzleIndex >= target.size()) {
+        List<Integer> sessionPages = getCurrentSessionPages();
+        if (puzzleIndex < 0 || puzzleIndex >= sessionPages.size()) {
             throw new IllegalArgumentException("重打页索引无效");
         }
 
-        int page = target.get(puzzleIndex);
+        int page = sessionPages.get(puzzleIndex);
         List<Integer> printed = IntegerListConverter.fromString(currentTask.getPrintedPages());
         if (!printed.contains(page)) {
-            throw new IllegalStateException("仅支持重打已完成页");
+            throw new IllegalStateException("仅支持重打本次发送过的已完成页");
         }
 
         clearReprintState();
@@ -610,6 +610,18 @@ public class PrintEngine {
 
     public int getReprintTargetPuzzleIndex() {
         return reprintTargetPuzzleIndex;
+    }
+
+    /**
+     * 获取本次会话实际发送到打印机内存的页面列表。
+     * 当断点续打时，这部分页面仅包含剩余未打印的页。
+     * 这决定了重打指定页时，只能重打这部分存在于打印机内存中的页面。
+     */
+    public List<Integer> getCurrentSessionPages() {
+        if (progressManager != null && progressManager.getTargetPages() != null) {
+            return progressManager.getTargetPages();
+        }
+        return new ArrayList<>();
     }
 
     public void reprintPages(PrintTaskEntity task, List<Integer> pagesToReprint) {

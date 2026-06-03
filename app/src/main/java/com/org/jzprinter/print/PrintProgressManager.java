@@ -26,6 +26,10 @@ public class PrintProgressManager {
         this.targetPages = targetPages;
     }
 
+    public List<Integer> getTargetPages() {
+        return targetPages;
+    }
+
     public int getPageByPuzzleIndex(int puzzleIndex) {
         if (targetPages != null && puzzleIndex >= 0 && puzzleIndex < targetPages.size()) {
             return targetPages.get(puzzleIndex);

@@ -555,14 +555,17 @@ public class PrintProgressActivity extends BaseActivity {
         PrintTaskEntity task = engine.getCurrentTask();
         if (task == null) return;
 
-        List<Integer> targetPages = IntegerListConverter.fromString(task.getTargetPages());
+        // 获取本次会话实际下发给打印机的目标页面（断点续打时，这仅包含剩下的页，而不是全部 targetPages）
+        List<Integer> sessionPages = engine.getCurrentSessionPages();
         List<Integer> printedPages = IntegerListConverter.fromString(task.getPrintedPages());
-        if (targetPages.isEmpty()) return;
+        if (sessionPages.isEmpty()) return;
 
         List<Integer> reprintablePages = new ArrayList<>();
         List<Integer> reprintablePuzzleIndexes = new ArrayList<>();
-        for (int i = 0; i < targetPages.size(); i++) {
-            int page = targetPages.get(i);
+        // 只有本次实际下发给打印机（sessionPages）并且已经打印完成的页（printedPages）才能重打
+        // i 就是在打印机内存中的 puzzleIndex (0-based)
+        for (int i = 0; i < sessionPages.size(); i++) {
+            int page = sessionPages.get(i);
             if (printedPages.contains(page)) {
                 reprintablePages.add(page);
                 reprintablePuzzleIndexes.add(i);
@@ -570,7 +573,7 @@ public class PrintProgressActivity extends BaseActivity {
         }
 
         if (reprintablePages.isEmpty()) {
-            android.widget.Toast.makeText(this, "当前没有可重打的已完成页",
+            android.widget.Toast.makeText(this, "当前会话内没有可重打的已完成页",
                 android.widget.Toast.LENGTH_SHORT).show();
             return;
         }
@@ -650,8 +653,12 @@ public class PrintProgressActivity extends BaseActivity {
         PrintEngine engine = PrintEngine.getInstance();
         boolean reprintPending = engine.hasLiveTaskState(task.getTaskId()) && engine.isReprintPending();
         int reprintPuzzleIndex = reprintPending ? engine.getReprintTargetPuzzleIndex() : -1;
-        int reprintPage = (reprintPuzzleIndex >= 0 && reprintPuzzleIndex < target.size())
-            ? target.get(reprintPuzzleIndex) : -1;
+        
+        List<Integer> sessionPages = engine.getCurrentSessionPages();
+        int reprintPage = -1;
+        if (reprintPuzzleIndex >= 0 && reprintPuzzleIndex < sessionPages.size()) {
+            reprintPage = sessionPages.get(reprintPuzzleIndex);
+        }
 
         List<ChipItem> chipItems = new ArrayList<>();
         for (int page : target) {
