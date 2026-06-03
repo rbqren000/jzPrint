@@ -195,7 +195,7 @@ public class PrintProgressActivity extends BaseActivity {
                 binding.tvStatus.setText("打印完成");
                 refreshPageChipsFromMemory();
                 binding.btnRestart.setVisibility(View.GONE);
-                binding.btnCancel.setVisibility(View.GONE);
+                binding.btnPauseOrCancel.setVisibility(View.GONE);
                 binding.btnViewDetail.setVisibility(View.VISIBLE);
             });
         }
@@ -268,26 +268,40 @@ public class PrintProgressActivity extends BaseActivity {
             }
         });
 
-        binding.btnCancel.setOnClickListener(v -> {
-            new android.app.AlertDialog.Builder(this)
-                .setTitle("取消打印")
-                .setMessage("确定取消本次打印？取消后需重新开始。")
-                .setPositiveButton("取消打印", (d, w) -> {
-                    PrintEngine engine = PrintEngine.getInstance();
-                    if (engine.isPrinting()) {
-                        engine.pause();
-                    }
-                    if (currentTask != null) {
-                        currentTask.setStatus(TaskStatus.CANCELLED.getCode());
-                        currentTask.setUpdatedAt(System.currentTimeMillis());
-                        engine.getDbExecutor().execute(() ->
-                            AppDatabase.getInstance(PrintProgressActivity.this)
-                                .printTaskRepository().update(currentTask));
-                    }
-                    finish();
-                })
-                .setNegativeButton("继续打印", null)
-                .show();
+        binding.btnPauseOrCancel.setOnClickListener(v -> {
+            if (currentPhase == PrintPhaseCallback.Phase.PRINT) {
+                // 物理打印阶段，提示暂存
+                new android.app.AlertDialog.Builder(this)
+                    .setTitle("暂存并退出")
+                    .setMessage("数据已发送完毕，设备可在进行打印。\n\n退出将暂存此任务，后续可从详情页继续打印或重打。")
+                    .setPositiveButton("暂存退出", (d, w) -> {
+                        PrintEngine.getInstance().pause();
+                        finish();
+                    })
+                    .setNegativeButton("取消", null)
+                    .show();
+            } else {
+                // PREPARE / TRANSFER 阶段，彻底取消
+                new android.app.AlertDialog.Builder(this)
+                    .setTitle("取消打印")
+                    .setMessage("确定取消本次打印？数据发送将终止，取消后需重新开始。")
+                    .setPositiveButton("取消打印", (d, w) -> {
+                        PrintEngine engine = PrintEngine.getInstance();
+                        if (engine.isPrinting()) {
+                            engine.pause();
+                        }
+                        if (currentTask != null) {
+                            currentTask.setStatus(TaskStatus.CANCELLED.getCode());
+                            currentTask.setUpdatedAt(System.currentTimeMillis());
+                            engine.getDbExecutor().execute(() ->
+                                AppDatabase.getInstance(PrintProgressActivity.this)
+                                    .printTaskRepository().update(currentTask));
+                        }
+                        finish();
+                    })
+                    .setNegativeButton("继续打印", null)
+                    .show();
+            }
         });
 
         binding.btnViewDetail.setOnClickListener(v -> {
@@ -458,16 +472,19 @@ public class PrintProgressActivity extends BaseActivity {
                 binding.btnRestart.setText("重新发送");
                 binding.btnRestart.setEnabled(false);
                 binding.btnReprintSpecifiedPage.setVisibility(View.GONE);
+                binding.btnPauseOrCancel.setText("取消打印");
                 break;
             case TRANSFER:
                 binding.btnRestart.setText("停止发送");
                 binding.btnRestart.setEnabled(true);
                 binding.btnReprintSpecifiedPage.setVisibility(View.GONE);
+                binding.btnPauseOrCancel.setText("取消打印");
                 break;
             case STOPPED:
                 binding.btnRestart.setText("重新发送");
                 binding.btnRestart.setEnabled(false);
                 binding.btnReprintSpecifiedPage.setVisibility(View.GONE);
+                binding.btnPauseOrCancel.setText("取消打印");
                 binding.tvStatus.setText("发送已停止");
                 new Handler(Looper.getMainLooper()).postDelayed(() -> {
                     if (currentPhase == PrintPhaseCallback.Phase.STOPPED) {
@@ -479,6 +496,7 @@ public class PrintProgressActivity extends BaseActivity {
                 binding.btnRestart.setText("重新发送");
                 binding.btnRestart.setEnabled(false);
                 binding.btnReprintSpecifiedPage.setVisibility(View.VISIBLE);
+                binding.btnPauseOrCancel.setText("暂存退出");
                 break;
         }
     }
@@ -804,7 +822,7 @@ public class PrintProgressActivity extends BaseActivity {
             case COMPLETED:
                 binding.tvStatus.setText("打印完成");
                 binding.btnRestart.setVisibility(View.GONE);
-                binding.btnCancel.setVisibility(View.GONE);
+                binding.btnPauseOrCancel.setVisibility(View.GONE);
                 binding.btnViewDetail.setVisibility(View.VISIBLE);
                 break;
             case PAUSED:
@@ -820,7 +838,7 @@ public class PrintProgressActivity extends BaseActivity {
             case CANCELLED:
                 binding.tvStatus.setText("已取消");
                 binding.btnRestart.setVisibility(View.GONE);
-                binding.btnCancel.setVisibility(View.GONE);
+                binding.btnPauseOrCancel.setVisibility(View.GONE);
                 break;
             case IN_PROGRESS:
                 if (!isCurrentTaskActivelyPrinting(task)) {
@@ -845,16 +863,8 @@ public class PrintProgressActivity extends BaseActivity {
 
     @Override
     public void onBackPressed() {
-        if (PrintEngine.getInstance().isPrinting()) {
-            new android.app.AlertDialog.Builder(this)
-                .setTitle("打印正在进行")
-                .setMessage("当前正在打印，退出将暂停任务。下次可继续打印。")
-                .setPositiveButton("暂停并退出", (d, w) -> {
-                    PrintEngine.getInstance().pause();
-                    finish();
-                })
-                .setNegativeButton("继续打印", null)
-                .show();
+        if (binding.btnPauseOrCancel.getVisibility() == View.VISIBLE) {
+            binding.btnPauseOrCancel.performClick();
         } else {
             super.onBackPressed();
         }

@@ -136,7 +136,7 @@
             android:visibility="gone" />
 
         <Button
-            android:id="@+id/btnCancel"
+            android:id="@+id/btnPauseOrCancel"
             android:layout_width="wrap_content"
             android:layout_height="40dp"
             android:text="取消打印"
