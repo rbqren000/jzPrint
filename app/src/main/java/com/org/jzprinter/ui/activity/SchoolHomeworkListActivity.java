@@ -43,7 +43,7 @@ public class SchoolHomeworkListActivity extends BaseActivity {
         setContentView(binding.getRoot());
         setupStatusBarWithCustomColorResId(R.color.primary_blue);
 
-        binding.commonAppBar.titleTextView.setText("校本作业");
+        binding.commonAppBar.titleTextView.setText(R.string.school_homework_title);
         binding.commonAppBar.leftMenuLayout.setOnClickListener(v -> finish());
 
         schoolId = getIntent().getStringExtra(EXTRA_SCHOOL_ID);
@@ -58,7 +58,7 @@ public class SchoolHomeworkListActivity extends BaseActivity {
             if (edition.supportsStudent() && edition.supportsPrepareCode()) {
                 new android.app.AlertDialog.Builder(this, R.style.mAlertDialog)
                     .setTitle(edition.editionName)
-                    .setItems(new String[]{"学生列表", "预铺码列表"}, (d, which) -> {
+                    .setItems(new String[]{getString(R.string.title_student_list), getString(R.string.title_prepare_code_list)}, (d, which) -> {
                         int type = which == 0 ? 1 : 2;
                         startActivity(StudentListActivity.newIntent(this,
                             schoolId, edition.editionId, type, edition.editionName));
@@ -108,7 +108,7 @@ public class SchoolHomeworkListActivity extends BaseActivity {
 
                 @Override
                 public void onError(String error) {
-                    rbqRunOnUiThread(() -> showEmpty("认证失败: " + error));
+                    rbqRunOnUiThread(() -> showEmpty(getString(R.string.error_load_failed, error)));
                 }
             });
             return;
@@ -132,14 +132,14 @@ public class SchoolHomeworkListActivity extends BaseActivity {
                         adapter.setItems(semesters);
                         showContent();
                     } else {
-                        showEmpty("暂无校本作业数据");
+                        showEmpty(getString(R.string.empty_no_homework));
                     }
                 });
             }
 
             @Override
             public void onError(String error) {
-                rbqRunOnUiThread(() -> showEmpty("加载失败: " + error));
+                rbqRunOnUiThread(() -> showEmpty(getString(R.string.error_load_failed, error)));
             }
         });
     }

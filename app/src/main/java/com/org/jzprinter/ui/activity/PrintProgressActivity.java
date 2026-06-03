@@ -238,13 +238,13 @@ public class PrintProgressActivity extends BaseActivity {
         binding.commonAppBar.leftMenuLayout.setOnClickListener(v -> {
             if (PrintEngine.getInstance().isPrinting()) {
                 new android.app.AlertDialog.Builder(this)
-                    .setTitle("打印正在进行")
-                    .setMessage("退出后任务将保留，可从任务详情重新开始。")
-                    .setPositiveButton("退出", (d, w) -> {
+                    .setTitle(R.string.progress_printing_title)
+                    .setMessage(R.string.progress_exit_confirm_msg)
+                    .setPositiveButton(R.string.progress_exit_btn, (d, w) -> {
                         PrintEngine.getInstance().pause();
                         finish();
                     })
-                    .setNegativeButton("留在此页", null)
+                    .setNegativeButton(R.string.progress_stay_btn, null)
                     .show();
             } else {
                 finish();
@@ -283,20 +283,20 @@ public class PrintProgressActivity extends BaseActivity {
             if (currentPhase == PrintPhaseCallback.Phase.PRINT) {
                 // 物理打印阶段，提示暂存
                 new android.app.AlertDialog.Builder(this)
-                    .setTitle("暂存并退出")
-                    .setMessage("数据已发送完毕，设备可在进行打印。\n\n退出将暂存此任务，后续可从详情页继续打印或重打。")
-                    .setPositiveButton("暂存退出", (d, w) -> {
+                    .setTitle(R.string.progress_pause_title)
+                    .setMessage(R.string.progress_pause_msg)
+                    .setPositiveButton(R.string.progress_pause_exit, (d, w) -> {
                         PrintEngine.getInstance().pause();
                         finish();
                     })
-                    .setNegativeButton("取消", null)
+                    .setNegativeButton(R.string.dialog_cancel, null)
                     .show();
             } else {
                 // PREPARE / TRANSFER 阶段，彻底取消
                 new android.app.AlertDialog.Builder(this)
-                    .setTitle("取消打印")
-                    .setMessage("确定取消本次打印？数据发送将终止，取消后需重新开始。")
-                    .setPositiveButton("取消打印", (d, w) -> {
+                    .setTitle(R.string.progress_cancel_print)
+                    .setMessage(R.string.progress_cancel_msg)
+                    .setPositiveButton(R.string.progress_cancel_print, (d, w) -> {
                         PrintEngine engine = PrintEngine.getInstance();
                         if (engine.isPrinting()) {
                             engine.pause();
@@ -310,7 +310,7 @@ public class PrintProgressActivity extends BaseActivity {
                         }
                         finish();
                     })
-                    .setNegativeButton("继续打印", null)
+                    .setNegativeButton(R.string.main_continue_print, null)
                     .show();
             }
         });
@@ -601,7 +601,7 @@ public class PrintProgressActivity extends BaseActivity {
         }
 
         if (reprintablePages.isEmpty()) {
-            android.widget.Toast.makeText(this, "当前会话内没有可重打的已完成页",
+            android.widget.Toast.makeText(this, R.string.progress_no_reprintable,
                 android.widget.Toast.LENGTH_SHORT).show();
             return;
         }
@@ -614,12 +614,12 @@ public class PrintProgressActivity extends BaseActivity {
         final int[] selectedIndex = {reprintablePages.size() - 1};
 
         new android.app.AlertDialog.Builder(this)
-            .setTitle("重打指定页")
+            .setTitle(R.string.progress_btn_reprint_page)
             .setSingleChoiceItems(items, selectedIndex[0], (dialog, which) -> {
                 selectedIndex[0] = which;
             })
-            .setNegativeButton("取消", null)
-            .setPositiveButton("确认重打", (dialog, which) -> {
+            .setNegativeButton(R.string.dialog_cancel, null)
+            .setPositiveButton(R.string.task_detail_reprint_confirm_title, (dialog, which) -> {
                 int index = selectedIndex[0];
                 int puzzleIndex = reprintablePuzzleIndexes.get(index);
                 int page = reprintablePages.get(index);

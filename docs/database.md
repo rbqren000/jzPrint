@@ -226,8 +226,10 @@ public interface MaterialDao {
 | taskId | long | PK, AUTO | 自增主键 |
 | schoolId | String | NOT NULL | 学校标识 |
 | editionId | String | NOT NULL | 校本作业标识 |
+| editionName | String | NOT NULL | 校本作业名称 |
 | targetId | String | NOT NULL | 学生ID 或 预铺码 |
-| targetMode | int | NOT NULL | 1=学生 2=预铺码 |
+| targetName | String | NOT NULL | 目标名称 |
+| targetMode | int | NOT NULL | 1=学生 2=预铺码（字段名 editionType） |
 | materialPath | String | NOT NULL | 素材 pages 目录路径 |
 | totalPages | int | NOT NULL | 总页数 |
 | printMode | int | NOT NULL | 1=全部 2=奇数 3=偶数 |
@@ -238,6 +240,7 @@ public interface MaterialDao {
 | updatedAt | long | NOT NULL | 更新时间 |
 | completedAt | long | DEFAULT 0 | 完成时间 |
 | lastError | String | | 最近错误信息 |
+| businessId | String | | 业务 ID（用于素材下载） |
 
 **索引**：`targetId`、`(targetId, editionId)`、`status`（用于查找未完成任务）
 
@@ -253,26 +256,24 @@ public interface MaterialDao {
 public class PrintTaskEntity {
     @PrimaryKey(autoGenerate = true)
     private long taskId;
-    @NonNull
-    private String schoolId;
-    @NonNull
-    private String editionId;
-    @NonNull
-    private String targetId;
-    private int targetMode;
-    @NonNull
-    private String materialPath;
+    @NonNull private String schoolId;
+    @NonNull private String editionId;
+    @NonNull private String editionName;
+    @NonNull private String targetId;
+    @NonNull private String targetName;
+    @ColumnInfo(name = "targetMode")
+    private int editionType;
+    @NonNull private String materialPath;
     private int totalPages;
     private int printMode;
-    @NonNull
-    private String targetPages;    // JSON: [85,87,89]
-    @NonNull
-    private String printedPages;   // JSON: [85,87]
+    @NonNull private String targetPages;    // JSON: [85,87,89]
+    @NonNull private String printedPages;   // JSON: [85,87]
     private int status;
     private long createdAt;
     private long updatedAt;
     private long completedAt;
     private String lastError;
+    private String businessId;
 }
 ```
 

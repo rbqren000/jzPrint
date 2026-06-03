@@ -75,7 +75,7 @@ public class StudentListActivity extends BaseActivity {
         editionName = getIntent().getStringExtra(EXTRA_EDITION_NAME);
         editionType = getIntent().getIntExtra(EXTRA_EDITION_TYPE, 1);
 
-        String title = editionType == 2 ? "预铺码列表" : "学生列表";
+        String title = editionType == 2 ? getString(R.string.title_prepare_code_list) : getString(R.string.title_student_list);
         binding.commonAppBar.titleTextView.setText(title);
         binding.commonAppBar.leftMenuLayout.setOnClickListener(v -> finish());
 
@@ -119,7 +119,7 @@ public class StudentListActivity extends BaseActivity {
                 @Override
                 public void onSuccess(List<RosterGroup> classes) {
                     if (classes.isEmpty()) {
-                        showEmpty("暂无学生数据");
+                        showEmpty(getString(R.string.empty_no_student));
                         return;
                     }
 
@@ -166,7 +166,7 @@ public class StudentListActivity extends BaseActivity {
 
                 @Override
                 public void onError(String error) {
-                    rbqRunOnUiThread(() -> showEmpty("加载失败: " + error));
+                    rbqRunOnUiThread(() -> showEmpty(getString(R.string.error_load_failed, error)));
                 }
             });
     }
@@ -218,7 +218,7 @@ public class StudentListActivity extends BaseActivity {
                         }
                     }
                     if (codes.isEmpty()) {
-                        showEmpty("暂无预铺码数据");
+                        showEmpty(getString(R.string.empty_no_prepare_code));
                         return;
                     }
 
@@ -244,7 +244,7 @@ public class StudentListActivity extends BaseActivity {
 
                 @Override
                 public void onError(String error) {
-                    rbqRunOnUiThread(() -> showEmpty("加载失败: " + error));
+                    rbqRunOnUiThread(() -> showEmpty(getString(R.string.error_load_failed, error)));
                 }
             });
     }
@@ -267,9 +267,9 @@ public class StudentListActivity extends BaseActivity {
             + " businessId=" + businessId + " editionType=" + editionType);
         if (businessId == null) {
             new android.app.AlertDialog.Builder(this, R.style.mAlertDialog)
-                .setTitle("下载失败")
-                .setMessage("无法获取素材信息")
-                .setPositiveButton("确定", null)
+                .setTitle(R.string.download_failed)
+                .setMessage(R.string.download_no_material_info)
+                .setPositiveButton(R.string.dialog_ok, null)
                 .show();
             return;
         }
@@ -284,7 +284,7 @@ public class StudentListActivity extends BaseActivity {
         Log.d("StudentList", "[downloadAndThen] targetId=" + targetId
             + " businessId=" + businessId + " editionType=" + editionType);
         progressDialog = new RBQProgressDialog();
-        progressDialog.show(this, "正在下载素材", "请稍候...");
+        progressDialog.show(this, getString(R.string.downloading_material), getString(R.string.please_wait));
 
         DownloadService.downloadAndExtract(this, schoolId, businessId, editionType,
             editionId, targetId,
@@ -318,9 +318,9 @@ public class StudentListActivity extends BaseActivity {
                         dismissProgress();
                         if (!isFinishing()) {
                             new android.app.AlertDialog.Builder(StudentListActivity.this, R.style.mAlertDialog)
-                                .setTitle("下载失败")
+                                .setTitle(R.string.download_failed)
                                 .setMessage(error)
-                                .setPositiveButton("确定", null)
+                                .setPositiveButton(R.string.dialog_ok, null)
                                 .show();
                         }
                     });
@@ -426,17 +426,17 @@ public class StudentListActivity extends BaseActivity {
                                              Runnable onRestart) {
         int printed = IntegerListConverter.fromString(task.getPrintedPages()).size();
         int total = IntegerListConverter.fromString(task.getTargetPages()).size();
-        String modeLabel = PrintMode.fromCode(task.getPrintMode()).getLabel();
+        String modeLabel = PrintMode.fromCode(task.getPrintMode()).getLabel(this);
 
         new android.app.AlertDialog.Builder(this, R.style.mAlertDialog)
-            .setTitle(name + " 有未完成的打印")
-            .setMessage(String.format("%s，已打印 %d/%d 页", modeLabel, printed, total))
-            .setPositiveButton("继续打印", (d, w) -> {
+            .setTitle(getString(R.string.student_has_unfinished, name))
+            .setMessage(getString(R.string.student_task_info, modeLabel, printed, total))
+            .setPositiveButton(R.string.main_continue_print, (d, w) -> {
                 PrintEngine.getInstance().switchToNewTarget();
                 startActivity(TaskDetailActivity.newIntent(this, task.getTaskId()));
             })
-            .setNegativeButton("重新开始", (d, w) -> onRestart.run())
-            .setNeutralButton("取消任务", (d, w) -> {
+            .setNegativeButton(R.string.dialog_resume_restart, (d, w) -> onRestart.run())
+            .setNeutralButton(R.string.main_cancel_task_btn, (d, w) -> {
                 task.setStatus(TaskStatus.CANCELLED.getCode());
                 task.setUpdatedAt(System.currentTimeMillis());
                 PrintEngine.getInstance().getDbExecutor().execute(() ->
@@ -454,17 +454,17 @@ public class StudentListActivity extends BaseActivity {
             PrintMode mode = PrintMode.fromCode(t.getPrintMode());
             int printed = IntegerListConverter.fromString(t.getPrintedPages()).size();
             int total = IntegerListConverter.fromString(t.getTargetPages()).size();
-            names[i] = mode.getLabel() + " (" + printed + "/" + total + "页)";
+            names[i] = getString(R.string.task_card_progress, printed, total, mode.getLabel(this));
         }
 
         new android.app.AlertDialog.Builder(this, R.style.mAlertDialog)
-            .setTitle(name + " 有多个未完成任务")
+            .setTitle(getString(R.string.student_multi_unfinished, name))
             .setItems(names, (d, which) -> {
                 PrintTaskEntity selected = tasks.get(which);
                 PrintEngine.getInstance().switchToNewTarget();
                 startActivity(TaskDetailActivity.newIntent(this, selected.getTaskId()));
             })
-            .setNegativeButton("重新开始", (d, w) -> onRestart.run())
+            .setNegativeButton(R.string.dialog_resume_restart, (d, w) -> onRestart.run())
             .show();
     }
 
@@ -478,11 +478,11 @@ public class StudentListActivity extends BaseActivity {
             TaskStatus status = TaskStatus.fromCode(t.getStatus());
             int printed = IntegerListConverter.fromString(t.getPrintedPages()).size();
             int total = IntegerListConverter.fromString(t.getTargetPages()).size();
-            items[i] = mode.getLabel() + " " + printed + "/" + total + "页 " + status.getLabel();
+            items[i] = getString(R.string.task_card_progress, printed, total, mode.getLabel(this)) + " " + status.getLabel(this);
         }
 
         new android.app.AlertDialog.Builder(this, R.style.mAlertDialog)
-            .setTitle(name + " 的打印记录")
+            .setTitle(getString(R.string.label_print_records, name))
             .setItems(items, (d, which) -> {
                 PrintTaskEntity selected = tasks.get(which);
                 startActivity(TaskDetailActivity.newIntent(this, selected.getTaskId()));

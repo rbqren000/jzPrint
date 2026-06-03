@@ -48,7 +48,7 @@ public class TaskDetailActivity extends BaseActivity {
         setContentView(binding.getRoot());
         setupStatusBarWithCustomColorResId(R.color.primary_blue);
 
-        binding.commonAppBar.titleTextView.setText("任务详情");
+        binding.commonAppBar.titleTextView.setText(R.string.task_detail_title);
         binding.commonAppBar.leftMenuLayout.setOnClickListener(v -> finish());
 
         long taskId = getIntent().getLongExtra(EXTRA_TASK_ID, -1);
@@ -85,9 +85,9 @@ public class TaskDetailActivity extends BaseActivity {
         List<Integer> targetPages = IntegerListConverter.fromString(task.getTargetPages());
         List<Integer> printedPages = IntegerListConverter.fromString(task.getPrintedPages());
 
-        binding.tvTaskInfo.setText(String.format("目标：%s\n校本：%s\n模式：%s (%d页)\n状态：%s",
+        binding.tvTaskInfo.setText(getString(R.string.task_detail_info_fmt,
             task.getTargetId(), task.getEditionId(),
-            mode.getLabel(), targetPages.size(), status.getLabel()));
+            mode.getLabel(this), targetPages.size(), status.getLabel(this)));
 
         pageAdapter.setPages(targetPages, printedPages);
 
@@ -109,7 +109,7 @@ public class TaskDetailActivity extends BaseActivity {
                 break;
             case PENDING:
                 binding.btnContinue.setVisibility(View.VISIBLE);
-                binding.btnContinue.setText("开始打印");
+                binding.btnContinue.setText(R.string.task_detail_start_print);
                 binding.btnReprintAll.setVisibility(View.VISIBLE);
                 break;
             case IN_PROGRESS:
@@ -128,11 +128,11 @@ public class TaskDetailActivity extends BaseActivity {
     private boolean checkPrinterConnection() {
         if (!Boolean.TRUE.equals(ConnectManager.share().isConnected())) {
             new android.app.AlertDialog.Builder(this)
-                .setTitle("打印机未连接")
-                .setMessage("请先连接打印机")
-                .setPositiveButton("去连接", (d, w) ->
+                .setTitle(R.string.main_no_printer_title)
+                .setMessage(R.string.main_no_printer_msg)
+                .setPositiveButton(R.string.btn_go_connect, (d, w) ->
                     startActivity(new Intent(this, DeviceSelectActivity.class)))
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.dialog_cancel, null)
                 .show();
             return false;
         }
@@ -143,9 +143,9 @@ public class TaskDetailActivity extends BaseActivity {
         String pagesPath = task.getMaterialPath();
         if (pagesPath == null || !new File(pagesPath).exists()) {
             new android.app.AlertDialog.Builder(this)
-                .setTitle("素材不存在")
-                .setMessage("素材文件已丢失，请重新下载素材后再打印")
-                .setPositiveButton("确定", null)
+                .setTitle(R.string.main_no_material_title)
+                .setMessage(R.string.main_no_material_msg)
+                .setPositiveButton(R.string.dialog_ok, null)
                 .show();
             return false;
         }
@@ -161,13 +161,13 @@ public class TaskDetailActivity extends BaseActivity {
         if (status == TaskStatus.PENDING) {
             List<Integer> target = IntegerListConverter.fromString(task.getTargetPages());
             new android.app.AlertDialog.Builder(this)
-                .setTitle("开始打印")
-                .setMessage(String.format("将发送 %d 页数据给打印机，是否开始？", target.size()))
-                .setPositiveButton("开始", (d, w) -> {
+                .setTitle(R.string.task_detail_start_print)
+                .setMessage(getString(R.string.task_detail_start_pending_msg, target.size()))
+                .setPositiveButton(R.string.task_detail_start_btn, (d, w) -> {
                     startActivity(PrintProgressActivity.newResumeIntent(this, task.getTaskId()));
                     finish();
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.dialog_cancel, null)
                 .show();
         } else {
             List<Integer> printed = IntegerListConverter.fromString(task.getPrintedPages());
@@ -175,20 +175,20 @@ public class TaskDetailActivity extends BaseActivity {
             int remaining = target.size() - printed.size();
 
             new android.app.AlertDialog.Builder(this)
-                .setTitle("继续打印")
-                .setMessage(String.format("将重新发送剩余 %d 页数据给打印机，是否继续？", remaining))
-                .setPositiveButton("继续", (d, w) -> {
+                .setTitle(R.string.main_continue_print)
+                .setMessage(getString(R.string.main_resume_prompt, remaining))
+                .setPositiveButton(R.string.main_continue_btn, (d, w) -> {
                     startActivity(PrintProgressActivity.newResumeIntent(this, task.getTaskId()));
                     finish();
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.dialog_cancel, null)
                 .show();
         }
     }
 
     private void onReprintSelected() {
         if (selectedPages.isEmpty()) {
-            showToast("请选择需要重打的已完成页面");
+            showToast(getString(R.string.task_detail_select_reprint_pages));
             return;
         }
         if (task == null) return;
@@ -199,16 +199,16 @@ public class TaskDetailActivity extends BaseActivity {
         Collections.sort(pagesToReprint);
 
         new android.app.AlertDialog.Builder(this)
-            .setTitle("确认重打")
-            .setMessage(String.format("将重新发送 %d 页数据给打印机（耗时与正常打印相同），是否继续？\n\n重打页码：%s",
+            .setTitle(R.string.task_detail_reprint_confirm_title)
+            .setMessage(getString(R.string.task_detail_reprint_confirm_msg,
                 pagesToReprint.size(), pagesToReprint))
-            .setPositiveButton("重打", (d, w) -> {
+            .setPositiveButton(R.string.task_detail_reprint_btn, (d, w) -> {
                 PrintEngine.getInstance().switchToNewTarget();
                 startActivity(PrintProgressActivity.newReprintPagesIntent(
                     this, task.getTaskId(), new ArrayList<>(pagesToReprint)));
                 finish();
             })
-            .setNegativeButton("取消", null)
+            .setNegativeButton(R.string.dialog_cancel, null)
             .show();
     }
 
@@ -220,15 +220,14 @@ public class TaskDetailActivity extends BaseActivity {
         List<Integer> allTarget = IntegerListConverter.fromString(task.getTargetPages());
 
         new android.app.AlertDialog.Builder(this)
-            .setTitle("确认全部重打")
-            .setMessage(String.format("将重新发送全部 %d 页数据给打印机（耗时与正常打印相同），是否继续？",
-                allTarget.size()))
-            .setPositiveButton("全部重打", (d, w) -> {
+            .setTitle(R.string.task_detail_reprint_all_title)
+            .setMessage(getString(R.string.task_detail_reprint_all_msg, allTarget.size()))
+            .setPositiveButton(R.string.task_detail_reprint_all_btn, (d, w) -> {
                 PrintEngine.getInstance().switchToNewTarget();
                 startActivity(PrintProgressActivity.newReprintIntent(this, task.getTaskId()));
                 finish();
             })
-            .setNegativeButton("取消", null)
+            .setNegativeButton(R.string.dialog_cancel, null)
             .show();
     }
 

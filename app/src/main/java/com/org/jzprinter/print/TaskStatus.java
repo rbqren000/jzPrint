@@ -1,27 +1,41 @@
 package com.org.jzprinter.print;
 
+import android.content.Context;
+
+import com.org.jzprinter.R;
+
 public enum TaskStatus {
-    PENDING(0, "待打印"),
-    IN_PROGRESS(1, "进行中"),
-    COMPLETED(2, "已完成"),
-    CANCELLED(3, "已取消"),
-    INTERRUPTED(4, "异常中断"),
-    PAUSED(5, "已暂停");
+    PENDING(0),
+    IN_PROGRESS(1),
+    COMPLETED(2),
+    CANCELLED(3),
+    INTERRUPTED(4),
+    PAUSED(5);
 
     private final int code;
-    private final String label;
 
-    TaskStatus(int code, String label) {
+    TaskStatus(int code) {
         this.code = code;
-        this.label = label;
     }
 
     public int getCode() {
         return code;
     }
 
-    public String getLabel() {
-        return label;
+    public String getLabel(Context context) {
+        return context.getString(getLabelRes());
+    }
+
+    public int getLabelRes() {
+        switch (this) {
+            case PENDING: return R.string.task_status_pending;
+            case IN_PROGRESS: return R.string.task_status_in_progress;
+            case COMPLETED: return R.string.task_status_completed;
+            case CANCELLED: return R.string.task_status_cancelled;
+            case INTERRUPTED: return R.string.task_status_interrupted;
+            case PAUSED: return R.string.task_status_paused;
+            default: throw new IllegalStateException("Unknown status: " + this);
+        }
     }
 
     public static TaskStatus fromCode(int code) {

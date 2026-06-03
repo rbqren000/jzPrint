@@ -7,6 +7,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.activity.OnBackPressedCallback;
 import androidx.core.view.GravityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -75,15 +76,6 @@ public class MainActivity extends BaseActivity {
         });
     }
 
-    @Override
-    public void onBackPressed() {
-        if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            binding.drawerLayout.closeDrawer(GravityCompat.START);
-        } else {
-            super.onBackPressed();
-        }
-    }
-
     private void ensureDevSchoolId() {
         String current = PreferencesUtils.getString(this, PREFS_KEY_SCHOOL_ID, "");
         if (current.isEmpty()) {
@@ -110,6 +102,18 @@ public class MainActivity extends BaseActivity {
         });
 
         binding.tvDeviceState.setOnClickListener(v -> openDeviceSelect());
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    binding.drawerLayout.closeDrawer(GravityCompat.START);
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                }
+            }
+        });
     }
 
     private void initContentViews() {
@@ -144,14 +148,14 @@ public class MainActivity extends BaseActivity {
                 int remaining = target.size() - printed.size();
 
                 new AlertDialog.Builder(MainActivity.this, R.style.mAlertDialog)
-                    .setTitle("继续打印")
-                    .setMessage(String.format("将发送剩余 %d 页数据给打印机，是否继续？", remaining))
-                    .setPositiveButton("继续", (d, w) -> {
+                    .setTitle(R.string.main_continue_print)
+                    .setMessage(getString(R.string.main_resume_prompt, remaining))
+                    .setPositiveButton(R.string.main_continue_btn, (d, w) -> {
                         PrintEngine.getInstance().switchToNewTarget();
                         startActivity(PrintProgressActivity.newResumeIntent(
                             MainActivity.this, task.getTaskId()));
                     })
-                    .setNegativeButton("取消", null)
+                    .setNegativeButton(R.string.dialog_cancel, null)
                     .show();
             }
 
@@ -163,32 +167,32 @@ public class MainActivity extends BaseActivity {
             @Override
             public void onCancel(PrintTaskEntity task) {
                 new AlertDialog.Builder(MainActivity.this, R.style.mAlertDialog)
-                    .setTitle("取消打印")
-                    .setMessage("确定取消此打印任务？取消后不可恢复。")
-                    .setPositiveButton("取消任务", (d, w) -> {
+                    .setTitle(R.string.main_cancel_task_title)
+                    .setMessage(R.string.main_cancel_task_confirm)
+                    .setPositiveButton(R.string.main_cancel_task_btn, (d, w) -> {
                         task.setStatus(TaskStatus.CANCELLED.getCode());
                         task.setUpdatedAt(System.currentTimeMillis());
                         PrintEngine.getInstance().getDbExecutor().execute(() ->
                             AppDatabase.getInstance(MainActivity.this).printTaskRepository().update(task));
                         updateTaskCards();
                     })
-                    .setNegativeButton("返回", null)
+                    .setNegativeButton(R.string.main_back, null)
                     .show();
             }
 
             @Override
             public void onDelete(PrintTaskEntity task) {
                 new AlertDialog.Builder(MainActivity.this, R.style.mAlertDialog)
-                    .setTitle("删除任务")
-                    .setMessage(String.format("确定删除「%s」的打印任务？\n删除后不可恢复。",
+                    .setTitle(R.string.main_delete_task_title)
+                    .setMessage(getString(R.string.main_delete_task_confirm,
                         task.getTargetName() != null ? task.getTargetName() : task.getTargetId()))
-                    .setPositiveButton("删除", (d, w) -> {
+                    .setPositiveButton(R.string.main_delete_btn, (d, w) -> {
                         PrintEngine.getInstance().getDbExecutor().execute(() -> {
                             AppDatabase.getInstance(MainActivity.this).printTaskRepository().delete(task.getTaskId());
                             rbqRunOnUiThread(MainActivity.this::updateTaskCards);
                         });
                     })
-                    .setNegativeButton("取消", null)
+                    .setNegativeButton(R.string.dialog_cancel, null)
                     .show();
             }
         });
@@ -197,9 +201,9 @@ public class MainActivity extends BaseActivity {
 
     private void showNoSchoolIdHint() {
         new AlertDialog.Builder(this, R.style.mAlertDialog)
-            .setTitle("尚未关联学校")
-            .setMessage("请通过微信小程序分享学校信息进入本应用，即可使用校本作业打印功能。")
-            .setPositiveButton("知道了", null)
+            .setTitle(R.string.main_no_school_title)
+            .setMessage(R.string.main_no_school_msg)
+            .setPositiveButton(R.string.main_got_it, null)
             .show();
     }
 
@@ -249,26 +253,27 @@ public class MainActivity extends BaseActivity {
     }
 
     private void showStartupResumeDialog(List<PrintTaskEntity> resumable) {
-        StringBuilder message = new StringBuilder("以下任务尚未完成，是否继续打印？\n\n");
+        StringBuilder message = new StringBuilder(getString(R.string.main_resume_tasks_prompt) + "\n\n");
         for (PrintTaskEntity task : resumable) {
             List<Integer> printed = com.org.jzprinter.database.converter.IntegerListConverter
                 .fromString(task.getPrintedPages());
             List<Integer> target = com.org.jzprinter.database.converter.IntegerListConverter
                 .fromString(task.getTargetPages());
-            String modeLabel = PrintMode.fromCode(task.getPrintMode()).getLabel();
-            message.append(String.format(Locale.getDefault(),
-                "● %s - %s (%d/%d页)\n", task.getTargetId(), modeLabel, printed.size(), target.size()));
+            String modeLabel = PrintMode.fromCode(task.getPrintMode()).getLabel(MainActivity.this);
+            message.append(getString(R.string.main_resume_task_item,
+                task.getTargetId(), modeLabel, printed.size(), target.size()));
+            message.append("\n");
         }
 
         new AlertDialog.Builder(this, R.style.mAlertDialog)
-            .setTitle("发现未完成的打印任务")
+            .setTitle(R.string.main_resume_tasks_title)
             .setMessage(message.toString())
-            .setPositiveButton("继续打印", (d, w) -> {
+            .setPositiveButton(R.string.main_continue_print, (d, w) -> {
                 PrintTaskEntity latest = resumable.get(0);
                 PrintEngine.getInstance().switchToNewTarget();
                 startActivity(TaskDetailActivity.newIntent(this, latest.getTaskId()));
             })
-            .setNegativeButton("稍后处理", null)
+            .setNegativeButton(R.string.main_later, null)
             .show();
     }
 
@@ -309,13 +314,12 @@ public class MainActivity extends BaseActivity {
         String sizeStr = android.text.format.Formatter.formatFileSize(this, totalSize);
 
         new AlertDialog.Builder(this, R.style.mAlertDialog)
-            .setTitle("存储管理")
-            .setMessage(String.format(Locale.getDefault(),
-                "素材占用空间：%s\n\n清理已完成任务的素材可释放空间。", sizeStr))
-            .setPositiveButton("清理已完成", (d, w) -> {
+            .setTitle(R.string.main_storage_title)
+            .setMessage(getString(R.string.main_storage_info, sizeStr))
+            .setPositiveButton(R.string.main_storage_cleanup, (d, w) -> {
                 PrintEngine.getInstance().getDbExecutor().execute(() -> {
                     storageManager.cleanupCompletedMaterials();
-                    rbqRunOnUiThread(() -> showToast("清理完成"));
+                    rbqRunOnUiThread(() -> showToast(getString(R.string.main_storage_cleaned)));
                 });
             })
             .setNegativeButton(android.R.string.cancel, null)
@@ -344,10 +348,10 @@ public class MainActivity extends BaseActivity {
     private boolean checkPrinterConnection() {
         if (!Boolean.TRUE.equals(ConnectManager.share().isConnected())) {
             new AlertDialog.Builder(this, R.style.mAlertDialog)
-                .setTitle("打印机未连接")
-                .setMessage("请先连接打印机")
-                .setPositiveButton("去连接", (d, w) -> openDeviceSelect())
-                .setNegativeButton("取消", null)
+                .setTitle(R.string.main_no_printer_title)
+                .setMessage(R.string.main_no_printer_msg)
+                .setPositiveButton(R.string.btn_go_connect, (d, w) -> openDeviceSelect())
+                .setNegativeButton(R.string.dialog_cancel, null)
                 .show();
             return false;
         }
@@ -358,9 +362,9 @@ public class MainActivity extends BaseActivity {
         String pagesPath = task.getMaterialPath();
         if (pagesPath == null || !new java.io.File(pagesPath).exists()) {
             new AlertDialog.Builder(this, R.style.mAlertDialog)
-                .setTitle("素材不存在")
-                .setMessage("素材文件已丢失，请重新下载素材后再打印")
-                .setPositiveButton("确定", null)
+                .setTitle(R.string.main_no_material_title)
+                .setMessage(R.string.main_no_material_msg)
+                .setPositiveButton(R.string.dialog_ok, null)
                 .show();
             return false;
         }

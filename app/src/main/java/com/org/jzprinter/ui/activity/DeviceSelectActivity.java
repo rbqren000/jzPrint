@@ -363,7 +363,7 @@ public class DeviceSelectActivity extends BaseActivity implements ConnectManager
 					.setNegativeButton(R.string.custom_dialog_cancel, new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
-							showToast("蓝牙未打开可能无使用打印机");
+							showToast(getString(R.string.bluetooth_not_enabled));
 						}
 					})
 					.setPositiveButton(R.string.custom_dialog_ok, new DialogInterface.OnClickListener() {

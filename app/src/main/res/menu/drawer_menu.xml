@@ -4,11 +4,11 @@
         <item
             android:id="@+id/nav_print_settings"
             android:icon="@android:drawable/ic_menu_preferences"
-            android:title="打印设置" />
+            android:title="@string/print_settings_title" />
         <item
             android:id="@+id/nav_storage"
             android:icon="@android:drawable/ic_menu_save"
-            android:title="存储管理" />
+            android:title="@string/main_storage_title" />
         <item
             android:id="@+id/nav_language"
             android:icon="@android:drawable/ic_menu_manage"

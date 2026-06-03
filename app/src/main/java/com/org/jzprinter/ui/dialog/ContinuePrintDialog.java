@@ -54,8 +54,9 @@ public class ContinuePrintDialog extends Dialog {
         List<Integer> target = com.org.jzprinter.database.converter.IntegerListConverter
             .fromString(task.getTargetPages());
 
-        tvMessage.setText(String.format("%s，已打印 %d/%d 页",
-            printMode.getLabel(), printed.size(), target.size()));
+        Context ctx = getContext();
+        tvMessage.setText(ctx.getString(R.string.student_task_info,
+            printMode.getLabel(ctx), printed.size(), target.size()));
 
         btnContinue.setOnClickListener(v -> {
             if (listener != null) listener.onContinue(task);

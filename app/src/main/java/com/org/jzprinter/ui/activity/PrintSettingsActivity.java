@@ -25,7 +25,7 @@ public class PrintSettingsActivity extends BaseActivity {
         setContentView(binding.getRoot());
         setupStatusBarWithCustomColorResId(R.color.primary_blue);
 
-        binding.commonAppBar.titleTextView.setText("打印设置");
+        binding.commonAppBar.titleTextView.setText(R.string.print_settings_title);
         binding.commonAppBar.leftMenuLayout.setOnClickListener(v -> finish());
 
         boolean oddPageRight = PrintConfig.isOddPageOnRight(this);

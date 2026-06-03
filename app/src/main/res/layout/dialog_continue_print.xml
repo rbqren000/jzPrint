@@ -9,7 +9,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="发现未完成的打印任务"
+        android:text="@string/main_resume_tasks_title"
         android:textSize="18sp"
         android:textStyle="bold"
         android:layout_marginBottom="12dp" />
@@ -31,7 +31,7 @@
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"
-            android:text="继续打印"
+            android:text="@string/main_continue_print"
             android:textSize="14sp"
             android:layout_marginEnd="4dp" />
 
@@ -40,7 +40,7 @@
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"
-            android:text="重新开始"
+            android:text="@string/dialog_resume_restart"
             android:textSize="14sp"
             android:layout_marginStart="4dp"
             android:layout_marginEnd="4dp" />
@@ -50,7 +50,7 @@
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"
-            android:text="取消任务"
+            android:text="@string/main_cancel_task_btn"
             android:textSize="14sp"
             android:layout_marginStart="4dp" />
 

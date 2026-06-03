@@ -88,7 +88,7 @@ public class PrintModeSelectActivity extends BaseActivity {
         pagesPath = getIntent().getStringExtra(EXTRA_PAGES_PATH);
         businessId = getIntent().getStringExtra(EXTRA_BUSINESS_ID);
 
-        binding.commonAppBar.titleTextView.setText("选择打印页");
+        binding.commonAppBar.titleTextView.setText(R.string.select_pages_title);
         binding.commonAppBar.leftMenuLayout.setOnClickListener(v -> finish());
 
         initViews();
@@ -155,7 +155,7 @@ public class PrintModeSelectActivity extends BaseActivity {
         materialLoader = new MaterialLoader();
 
         if (pagesPath == null || pagesPath.isEmpty()) {
-            showMaterialError("素材路径为空，请重新下载素材");
+            showMaterialError(getString(R.string.select_pages_material_missing));
             return;
         }
 
@@ -163,7 +163,7 @@ public class PrintModeSelectActivity extends BaseActivity {
             availablePages = materialLoader.getAvailablePages(pagesPath);
             uiHandler.post(() -> {
                 if (availablePages == null || availablePages.isEmpty()) {
-                    showMaterialError("素材未就绪，请先下载素材");
+                    showMaterialError(getString(R.string.select_pages_material_not_ready));
                     return;
                 }
                 buildPageList();
@@ -182,7 +182,7 @@ public class PrintModeSelectActivity extends BaseActivity {
     private void buildPageList() {
         int start = availablePages.get(0);
         int end = availablePages.get(availablePages.size() - 1);
-        binding.tvPageRange.setText(String.format("页码 %d~%d，共 %d 页", start, end, availablePages.size()));
+        binding.tvPageRange.setText(getString(R.string.select_pages_range, start, end, availablePages.size()));
         binding.tvPageRange.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
 
         List<PageSelectAdapter.PageItem> items = new ArrayList<>();
@@ -213,11 +213,11 @@ public class PrintModeSelectActivity extends BaseActivity {
         List<Integer> selected = pageAdapter.getSelectedPageCodes();
         int total = pageAdapter.getItemCount();
         if (selected.size() == total) {
-            binding.tvSelectedCount.setText("全选");
+            binding.tvSelectedCount.setText(R.string.select_pages_all_selected);
         } else if (selected.isEmpty()) {
-            binding.tvSelectedCount.setText("未选");
+            binding.tvSelectedCount.setText(R.string.select_pages_none_selected);
         } else {
-            binding.tvSelectedCount.setText(String.format("已选 %d/%d", selected.size(), total));
+            binding.tvSelectedCount.setText(getString(R.string.select_pages_selected_count, selected.size(), total));
         }
         binding.btnStartPrint.setEnabled(!selected.isEmpty());
     }
@@ -230,10 +230,10 @@ public class PrintModeSelectActivity extends BaseActivity {
     private void loadPreviewPage(int pageCode) {
         int myVersion = previewVersion.incrementAndGet();
         binding.tvPreviewLoading.setVisibility(View.VISIBLE);
-        binding.tvPreviewLoading.setText("加载预览...");
+        binding.tvPreviewLoading.setText(R.string.select_pages_loading_preview);
         binding.ivPreview.setImageBitmap(null);
         binding.tvPreviewPageInfo.setVisibility(View.VISIBLE);
-        binding.tvPreviewPageInfo.setText(String.format("page_%d", pageCode));
+        binding.tvPreviewPageInfo.setText(getString(R.string.preview_page_info, pageCode));
 
         final boolean useCustomMerge = isCustomMergeSelected();
         new Thread(() -> {
@@ -247,7 +247,7 @@ public class PrintModeSelectActivity extends BaseActivity {
             if (page == null) {
                 uiHandler.post(() -> {
                     if (myVersion != previewVersion.get()) return;
-                    binding.tvPreviewLoading.setText("页面加载失败");
+                    binding.tvPreviewLoading.setText(R.string.select_pages_preview_failed);
                     binding.ivPreview.setImageBitmap(null);
                 });
                 return;
@@ -292,7 +292,7 @@ public class PrintModeSelectActivity extends BaseActivity {
 
         List<Integer> selectedPages = pageAdapter.getSelectedPageCodes();
         if (selectedPages.isEmpty()) {
-            showToast("请至少选择一页");
+            showToast(getString(R.string.select_pages_min_one));
             return;
         }
 
@@ -325,11 +325,11 @@ public class PrintModeSelectActivity extends BaseActivity {
     private boolean checkPrinterConnection() {
         if (!Boolean.TRUE.equals(ConnectManager.share().isConnected())) {
             new android.app.AlertDialog.Builder(this)
-                .setTitle("打印机未连接")
-                .setMessage("请先连接打印机后再开始打印")
-                .setPositiveButton("去连接", (d, w) ->
+                .setTitle(R.string.main_no_printer_title)
+                .setMessage(R.string.select_pages_connect_first)
+                .setPositiveButton(R.string.btn_go_connect, (d, w) ->
                     startActivity(new Intent(this, DeviceSelectActivity.class)))
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.dialog_cancel, null)
                 .show();
             return false;
         }
@@ -338,11 +338,11 @@ public class PrintModeSelectActivity extends BaseActivity {
 
     private boolean checkMaterialValid() {
         if (pagesPath == null || pagesPath.isEmpty()) {
-            showToast("素材路径无效，请重新下载");
+            showToast(getString(R.string.select_pages_path_invalid));
             return false;
         }
         if (availablePages == null || availablePages.isEmpty()) {
-            showToast("素材未就绪，请先下载");
+            showToast(getString(R.string.select_pages_not_ready));
             return false;
         }
         return true;

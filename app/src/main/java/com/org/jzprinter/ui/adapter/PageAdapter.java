@@ -1,5 +1,6 @@
 package com.org.jzprinter.ui.adapter;
 
+import android.content.Context;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
@@ -45,19 +46,20 @@ public class PageAdapter extends RecyclerView.Adapter<PageAdapter.ViewHolder> {
         boolean isPrinted = printedPages.contains(pageNum);
         ItemPageBinding b = holder.binding;
 
-        b.tvPageNumber.setText("page_" + pageNum);
+        Context ctx = b.getRoot().getContext();
+        b.tvPageNumber.setText(ctx.getString(R.string.preview_page_info, pageNum));
 
         if (isPrinted) {
-            b.tvPageStatus.setText("已完成");
+            b.tvPageStatus.setText(R.string.page_status_completed);
             b.tvPageStatus.setTextColor(
-                ContextCompat.getColor(b.getRoot().getContext(), R.color.status_success));
+                ContextCompat.getColor(ctx, R.color.status_success));
             b.cbPage.setEnabled(true);
             b.cbPage.setAlpha(1.0f);
             b.tvPageNumber.setAlpha(1.0f);
         } else {
-            b.tvPageStatus.setText("待打印");
+            b.tvPageStatus.setText(R.string.page_status_pending);
             b.tvPageStatus.setTextColor(
-                ContextCompat.getColor(b.getRoot().getContext(), R.color.text_disabled));
+                ContextCompat.getColor(ctx, R.color.text_disabled));
             b.cbPage.setEnabled(false);
             b.cbPage.setAlpha(0.4f);
             b.tvPageNumber.setAlpha(0.5f);

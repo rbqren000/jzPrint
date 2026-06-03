@@ -153,6 +153,7 @@
 
     <!-- 打印设置摘要模板 -->
     <string name="print_setting_summary_fmt">排版：%1$s | 左侧：%2$s滑动 | 右侧：%3$s滑动</string>
+    <string name="print_settings_title">打印设置</string>
 
     <!-- 打印进度：带占位符的格式字符串 -->
     <string name="progress_prepare_counter">%1$d/%2$d 页</string>
@@ -200,4 +201,133 @@
     <string name="size_byte">%.0f B</string>
     <string name="size_kb">%.1f KB</string>
     <string name="size_mb">%.1f MB</string>
+
+    <!-- 主界面 -->
+    <string name="main_continue_print">继续打印</string>
+    <string name="main_continue_btn">继续</string>
+    <string name="main_resume_prompt">将发送剩余 %1$d 页数据给打印机，是否继续？</string>
+    <string name="main_cancel_task_title">取消打印</string>
+    <string name="main_cancel_task_confirm">确定取消此打印任务？取消后不可恢复。</string>
+    <string name="main_cancel_task_btn">取消任务</string>
+    <string name="main_back">返回</string>
+    <string name="main_delete_task_title">删除任务</string>
+    <string name="main_delete_task_confirm">确定删除「%1$s」的打印任务？\n删除后不可恢复。</string>
+    <string name="main_delete_btn">删除</string>
+    <string name="main_no_school_title">尚未关联学校</string>
+    <string name="main_no_school_msg">请通过微信小程序分享学校信息进入本应用，即可使用校本作业打印功能。</string>
+    <string name="main_got_it">知道了</string>
+    <string name="main_resume_tasks_title">发现未完成的打印任务</string>
+    <string name="main_resume_tasks_prompt">以下任务尚未完成，是否继续打印？</string>
+    <string name="main_resume_task_item">● %1$s - %2$s (%3$d/%4$d页)</string>
+    <string name="main_later">稍后处理</string>
+    <string name="main_storage_title">存储管理</string>
+    <string name="main_storage_info">素材占用空间：%1$s\n\n清理已完成任务的素材可释放空间。</string>
+    <string name="main_storage_cleanup">清理已完成</string>
+    <string name="main_storage_cleaned">清理完成</string>
+    <string name="main_no_printer_title">打印机未连接</string>
+    <string name="main_no_printer_msg">请先连接打印机</string>
+    <string name="main_no_material_title">素材不存在</string>
+    <string name="main_no_material_msg">素材文件已丢失，请重新下载素材后再打印</string>
+
+    <!-- 打印页选择 -->
+    <string name="select_pages_title">选择打印页</string>
+    <string name="select_pages_material_missing">素材路径为空，请重新下载素材</string>
+    <string name="select_pages_material_not_ready">素材未就绪，请先下载素材</string>
+    <string name="select_pages_range">页码 %1$d~%2$d，共 %3$d 页</string>
+    <string name="select_pages_all_selected">全选</string>
+    <string name="select_pages_none_selected">未选</string>
+    <string name="select_pages_selected_count">已选 %1$d/%2$d</string>
+    <string name="select_pages_loading_preview">加载预览…</string>
+    <string name="select_pages_preview_failed">页面加载失败</string>
+    <string name="select_pages_min_one">请至少选择一页</string>
+    <string name="select_pages_connect_first">请先连接打印机后再开始打印</string>
+    <string name="select_pages_path_invalid">素材路径无效，请重新下载</string>
+    <string name="select_pages_not_ready">素材未就绪，请先下载</string>
+    <string name="preview_page_info">page_%1$d</string>
+
+    <!-- 任务详情 -->
+    <string name="task_detail_title">任务详情</string>
+    <string name="task_detail_info_fmt">目标：%1$s\n校本：%2$s\n模式：%3$s (%4$d页)\n状态：%5$s</string>
+    <string name="task_detail_start_print">开始打印</string>
+    <string name="task_detail_start_btn">开始</string>
+    <string name="task_detail_start_pending_msg">将发送 %1$d 页数据给打印机，是否开始？</string>
+    <string name="task_detail_reprint_confirm_title">确认重打</string>
+    <string name="task_detail_reprint_confirm_msg">将重新发送 %1$d 页数据给打印机（耗时与正常打印相同），是否继续？\n\n重打页码：%2$s</string>
+    <string name="task_detail_reprint_btn">重打</string>
+    <string name="task_detail_reprint_all_title">确认全部重打</string>
+    <string name="task_detail_reprint_all_msg">将重新发送全部 %1$d 页数据给打印机（耗时与正常打印相同），是否继续？</string>
+    <string name="task_detail_reprint_all_btn">全部重打</string>
+    <string name="task_detail_select_reprint_pages">请选择需要重打的已完成页面</string>
+    <string name="school_homework_title">校本作业</string>
+    <string name="download_failed">下载失败</string>
+    <string name="download_no_material_info">无法获取素材信息</string>
+
+    <!-- XML 布局标签 -->
+    <string name="label_prepare_data">准备数据</string>
+    <string name="label_send_data">发送数据</string>
+    <string name="label_print_progress">打印进度</string>
+    <string name="label_print_settings">打印设置</string>
+    <string name="main_school_homework">校本作业</string>
+    <string name="main_print_tasks">打印任务</string>
+    <string name="select_pages_all">全部</string>
+    <string name="select_pages_odd">奇数</string>
+    <string name="select_pages_even">偶数</string>
+    <string name="select_pages_preview_label">预览</string>
+    <string name="select_pages_preview_desc">打印预览</string>
+    <string name="select_pages_preview_hint">点击列表项预览</string>
+    <string name="select_pages_pre_merged">预拼接</string>
+    <string name="select_pages_custom_merge">手动拼接</string>
+    <string name="select_pages_print_settings">打印设置</string>
+    <string name="select_pages_start_print">开始打印</string>
+    <string name="task_card_detail">详情/重打</string>
+    <string name="progress_btn_reprint_page">重打指定页</string>
+    <string name="progress_btn_view_detail">查看详情</string>
+    <string name="task_detail_btn_reprint_selected">重打选中</string>
+    <string name="task_detail_btn_view_progress">查看进度</string>
+    <string name="dialog_resume_restart">重新开始</string>
+    <string name="item_download_material">下载素材</string>
+    <string name="progress_printing_title">打印正在进行</string>
+    <string name="progress_exit_confirm_msg">退出后任务将保留，可从任务详情重新开始。</string>
+    <string name="progress_exit_btn">退出</string>
+    <string name="progress_stay_btn">留在此页</string>
+    <string name="progress_pause_title">暂存并退出</string>
+    <string name="progress_pause_msg">数据已发送完毕，设备可在进行打印。\n\n退出将暂存此任务，后续可从详情页继续打印或重打。</string>
+    <string name="progress_cancel_msg">确定取消本次打印？数据发送将终止，取消后需重新开始。</string>
+    <string name="progress_no_reprintable">当前会话内没有可重打的已完成页</string>
+    <string name="material_ready">素材已就绪</string>
+    <string name="material_not_downloaded">素材未下载</string>
+    <string name="page_status_completed">已完成</string>
+    <string name="page_status_pending">待打印</string>
+    <string name="code_count">%1$d码</string>
+    <string name="print_mode_all">全部页</string>
+    <string name="print_mode_odd">奇数页</string>
+    <string name="print_mode_even">偶数页</string>
+    <string name="task_status_pending">待打印</string>
+    <string name="task_status_in_progress">进行中</string>
+    <string name="task_status_completed">已完成</string>
+    <string name="task_status_cancelled">已取消</string>
+    <string name="task_status_interrupted">异常中断</string>
+    <string name="task_status_paused">已暂停</string>
+    <string name="time_just_now">刚刚</string>
+    <string name="time_minutes_ago">%d分钟前</string>
+    <string name="time_hours_ago">%d小时前</string>
+    <string name="time_days_ago">%d天前</string>
+    <string name="task_card_progress">%1$d/%2$d页 %3$s</string>
+    <string name="student_has_unfinished">%1$s 有未完成的打印</string>
+    <string name="student_task_info">%1$s，已打印 %2$d/%3$d 页</string>
+    <string name="student_multi_unfinished">%1$s 有多个未完成任务</string>
+    <string name="edition_type_student_prepare">学生 / 预铺码</string>
+    <string name="edition_type_prepare">预铺码</string>
+    <string name="edition_type_student">学生</string>
+    <string name="title_student_list">学生列表</string>
+    <string name="title_prepare_code_list">预铺码列表</string>
+    <string name="empty_no_student">暂无学生数据</string>
+    <string name="empty_no_prepare_code">暂无预铺码数据</string>
+    <string name="empty_no_homework">暂无校本作业数据</string>
+    <string name="error_load_failed">加载失败: %1$s</string>
+    <string name="downloading_material">正在下载素材</string>
+    <string name="please_wait">请稍候…</string>
+    <string name="label_print_records">%1$s 的打印记录</string>
+    <string name="btn_new_print">新打印</string>
+    <string name="bluetooth_not_enabled">蓝牙未打开可能无法使用打印机</string>
 </resources>

@@ -60,12 +60,12 @@ public class PrepareCodeAdapter extends RecyclerView.Adapter<PrepareCodeAdapter.
 
         boolean ready = position < readyStates.size() && readyStates.get(position);
         if (ready) {
-            holder.tvMaterialStatus.setText("素材已就绪");
+            holder.tvMaterialStatus.setText(R.string.material_ready);
             holder.tvMaterialStatus.setTextColor(
                 ContextCompat.getColor(holder.itemView.getContext(), R.color.status_success));
             holder.tvDownload.setVisibility(View.GONE);
         } else {
-            holder.tvMaterialStatus.setText("素材未下载");
+            holder.tvMaterialStatus.setText(R.string.material_not_downloaded);
             holder.tvMaterialStatus.setTextColor(
                 ContextCompat.getColor(holder.itemView.getContext(), R.color.status_error));
             holder.tvDownload.setVisibility(View.VISIBLE);

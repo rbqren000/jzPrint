@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">简作</string>
+    <string name="app_name">Jian Zuo</string>
     <string name="I_know">Acknowledged</string>
     <string name="add">Add</string>
     <string name="add_device">Add Device</string>
@@ -114,7 +114,7 @@
     <string name="select_language">Select Language</string>
 <string name="preview">Preview</string>
     <string name="print">Print</string>
-    <string name="about_message">简作\nVersion: 1.0.0\n\n校本作业打印应用。</string>
+    <string name="about_message">Jian Zuo\nVersion: 1.0.0\n\nSchool homework printing app.</string>
     <string name="back">Back</string>
 <string name="dialog_ok">OK</string>
     <string name="dialog_cancel">Cancel</string>
@@ -155,6 +155,7 @@
 
     <!-- Print Settings summary template, %1$s=odd page side, %2$s=left direction, %3$s=right direction -->
     <string name="print_setting_summary_fmt">Layout: %1$s | Left: %2$s | Right: %3$s</string>
+    <string name="print_settings_title">Print Settings</string>
 
     <!-- Print progress: format strings with placeholders -->
     <string name="progress_prepare_counter">%1$d/%2$d pages</string>
@@ -202,4 +203,133 @@
     <string name="size_byte">%.0f B</string>
     <string name="size_kb">%.1f KB</string>
     <string name="size_mb">%.1f MB</string>
+
+    <!-- MainActivity -->
+    <string name="main_continue_print">Continue</string>
+    <string name="main_continue_btn">Continue</string>
+    <string name="main_resume_prompt">Send remaining %1$d page(s) to printer. Continue?</string>
+    <string name="main_cancel_task_title">Cancel printing</string>
+    <string name="main_cancel_task_confirm">Cancel this task? This cannot be undone.</string>
+    <string name="main_cancel_task_btn">Cancel task</string>
+    <string name="main_back">Back</string>
+    <string name="main_delete_task_title">Delete task</string>
+    <string name="main_delete_task_confirm">Delete task for \"%1$s\"?\nThis cannot be undone.</string>
+    <string name="main_delete_btn">Delete</string>
+    <string name="main_no_school_title">Not linked to school</string>
+    <string name="main_no_school_msg">Please share school info via WeChat Mini Program to use the printing feature.</string>
+    <string name="main_got_it">Got it</string>
+    <string name="main_resume_tasks_title">Found unfinished tasks</string>
+    <string name="main_resume_tasks_prompt">The following tasks are unfinished. Continue?</string>
+    <string name="main_resume_task_item">● %1$s - %2$s (%3$d/%4$dp)</string>
+    <string name="main_later">Later</string>
+    <string name="main_storage_title">Storage</string>
+    <string name="main_storage_info">Used: %1$s\n\nCleaning completed tasks will free up space.</string>
+    <string name="main_storage_cleanup">Clean completed</string>
+    <string name="main_storage_cleaned">Cleaned</string>
+    <string name="main_no_printer_title">Printer not connected</string>
+    <string name="main_no_printer_msg">Please connect the printer first</string>
+    <string name="main_no_material_title">Material missing</string>
+    <string name="main_no_material_msg">Material lost. Please download again.</string>
+
+    <!-- PrintModeSelectActivity -->
+    <string name="select_pages_title">Select pages</string>
+    <string name="select_pages_material_missing">Material path is empty. Please download again.</string>
+    <string name="select_pages_material_not_ready">Material not ready. Please download first.</string>
+    <string name="select_pages_range">Pages %1$d–%2$d, %3$d total</string>
+    <string name="select_pages_all_selected">All</string>
+    <string name="select_pages_none_selected">None</string>
+    <string name="select_pages_selected_count">%1$d/%2$d selected</string>
+    <string name="select_pages_loading_preview">Loading preview…</string>
+    <string name="select_pages_preview_failed">Page load failed</string>
+    <string name="select_pages_min_one">Please select at least one page</string>
+    <string name="select_pages_connect_first">Please connect the printer first</string>
+    <string name="select_pages_path_invalid">Material path invalid. Please download again.</string>
+    <string name="select_pages_not_ready">Material not ready. Please download first.</string>
+    <string name="preview_page_info">page_%1$d</string>
+
+    <!-- TaskDetailActivity -->
+    <string name="task_detail_title">Task Detail</string>
+    <string name="task_detail_info_fmt">Target: %1$s\nEdition: %2$s\nMode: %3$s (%4$dp)\nStatus: %5$s</string>
+    <string name="task_detail_start_print">Start printing</string>
+    <string name="task_detail_start_btn">Start</string>
+    <string name="task_detail_start_pending_msg">Send %1$d page(s) to printer. Begin?</string>
+    <string name="task_detail_reprint_confirm_title">Confirm reprint</string>
+    <string name="task_detail_reprint_confirm_msg">Re-send %1$d page(s) to printer. Continue?\n\nPages: %2$s</string>
+    <string name="task_detail_reprint_btn">Reprint</string>
+    <string name="task_detail_reprint_all_title">Reprint all</string>
+    <string name="task_detail_reprint_all_msg">Re-send all %1$d page(s) to printer. Continue?</string>
+    <string name="task_detail_reprint_all_btn">Reprint all</string>
+    <string name="task_detail_select_reprint_pages">Please select completed pages to reprint</string>
+    <string name="school_homework_title">School Homework</string>
+    <string name="download_failed">Download failed</string>
+    <string name="download_no_material_info">Unable to get material info</string>
+
+    <!-- XML layout labels -->
+    <string name="label_prepare_data">Prepare data</string>
+    <string name="label_send_data">Send data</string>
+    <string name="label_print_progress">Print progress</string>
+    <string name="label_print_settings">Print settings</string>
+    <string name="main_school_homework">School Homework</string>
+    <string name="main_print_tasks">Print tasks</string>
+    <string name="select_pages_all">All</string>
+    <string name="select_pages_odd">Odd</string>
+    <string name="select_pages_even">Even</string>
+    <string name="select_pages_preview_label">Preview</string>
+    <string name="select_pages_preview_desc">Print preview</string>
+    <string name="select_pages_preview_hint">Tap a page to preview</string>
+    <string name="select_pages_pre_merged">Pre-merged</string>
+    <string name="select_pages_custom_merge">Custom merge</string>
+    <string name="select_pages_print_settings">Print settings</string>
+    <string name="select_pages_start_print">Start printing</string>
+    <string name="task_card_detail">Detail/Reprint</string>
+    <string name="progress_btn_reprint_page">Reprint page</string>
+    <string name="progress_btn_view_detail">View detail</string>
+    <string name="task_detail_btn_reprint_selected">Reprint selected</string>
+    <string name="task_detail_btn_view_progress">View progress</string>
+    <string name="dialog_resume_restart">Restart</string>
+    <string name="item_download_material">Download</string>
+    <string name="progress_printing_title">Printing in progress</string>
+    <string name="progress_exit_confirm_msg">Exiting will keep the task. Resume from task detail later.</string>
+    <string name="progress_exit_btn">Exit</string>
+    <string name="progress_stay_btn">Stay</string>
+    <string name="progress_pause_title">Save &amp; exit</string>
+    <string name="progress_pause_msg">Data sent. You can continue printing. Exiting will save this task.</string>
+    <string name="progress_cancel_msg">Cancel this print? Data transfer will stop and you\'ll need to restart.</string>
+    <string name="progress_no_reprintable">No completed pages available for reprint in this session</string>
+    <string name="material_ready">Material ready</string>
+    <string name="material_not_downloaded">Not downloaded</string>
+    <string name="page_status_completed">Completed</string>
+    <string name="page_status_pending">Pending</string>
+    <string name="code_count">%1$d code(s)</string>
+    <string name="print_mode_all">All pages</string>
+    <string name="print_mode_odd">Odd pages</string>
+    <string name="print_mode_even">Even pages</string>
+    <string name="task_status_pending">Pending</string>
+    <string name="task_status_in_progress">In progress</string>
+    <string name="task_status_completed">Completed</string>
+    <string name="task_status_cancelled">Cancelled</string>
+    <string name="task_status_interrupted">Interrupted</string>
+    <string name="task_status_paused">Paused</string>
+    <string name="time_just_now">Just now</string>
+    <string name="time_minutes_ago">%d min ago</string>
+    <string name="time_hours_ago">%d hr ago</string>
+    <string name="time_days_ago">%d days ago</string>
+    <string name="task_card_progress">%1$d/%2$dp %3$s</string>
+    <string name="student_has_unfinished">%1$s has an unfinished task</string>
+    <string name="student_task_info">%1$s, %2$d/%3$d pages printed</string>
+    <string name="student_multi_unfinished">%1$s has multiple unfinished tasks</string>
+    <string name="edition_type_student_prepare">Student / Prepare code</string>
+    <string name="edition_type_prepare">Prepare code</string>
+    <string name="edition_type_student">Student</string>
+    <string name="title_student_list">Student list</string>
+    <string name="title_prepare_code_list">Prepare code list</string>
+    <string name="empty_no_student">No student data</string>
+    <string name="empty_no_prepare_code">No prepare code data</string>
+    <string name="empty_no_homework">No homework data</string>
+    <string name="error_load_failed">Load failed: %1$s</string>
+    <string name="downloading_material">Downloading material</string>
+    <string name="please_wait">Please wait...</string>
+    <string name="label_print_records">%1$s print records</string>
+    <string name="btn_new_print">New print</string>
+    <string name="bluetooth_not_enabled">Bluetooth not enabled, printer may not work</string>
 </resources>

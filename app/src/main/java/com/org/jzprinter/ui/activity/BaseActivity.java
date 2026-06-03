@@ -29,18 +29,29 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import android.content.res.Configuration;
 
+import com.org.jzprinter.utils.Storage.PreferencesUtils;
+
+import java.util.Locale;
+
 public abstract class BaseActivity extends AppCompatActivity implements StatusBarColorProvider {
+
+    private static final String KEY_APP_LANGUAGE = "app_language";
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        // ★ 恢复保存的语言设置（必须在 super.onCreate 之前）
+        String lang = PreferencesUtils.getString(this, KEY_APP_LANGUAGE, "zh");
+        Locale locale = "en".equals(lang) ? Locale.ENGLISH : Locale.SIMPLIFIED_CHINESE;
+        Locale.setDefault(locale);
+        Configuration config = getResources().getConfiguration();
+        config.setLocale(locale);
+        getResources().updateConfiguration(config, getResources().getDisplayMetrics());
+
         super.onCreate(savedInstanceState);
 
         RBQAppManager.share().addActivity(this);
-
-
-
     }
 
     private void applyStatusBarColor(int color) {

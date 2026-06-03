@@ -1,5 +1,6 @@
 package com.org.jzprinter.ui.adapter;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -60,9 +61,10 @@ public class TaskCardAdapter extends RecyclerView.Adapter<TaskCardAdapter.ViewHo
             ? task.getEditionName() : task.getEditionId();
         b.tvEditionName.setText(editionDisplay);
 
+        Context ctx = b.getRoot().getContext();
         PrintMode mode = PrintMode.fromCode(task.getPrintMode());
         TaskStatus status = TaskStatus.fromCode(task.getStatus());
-        b.tvPrintMode.setText(mode.getLabel());
+        b.tvPrintMode.setText(mode.getLabel(ctx));
 
         List<Integer> printed = IntegerListConverter.fromString(task.getPrintedPages());
         List<Integer> target = IntegerListConverter.fromString(task.getTargetPages());
@@ -79,27 +81,23 @@ public class TaskCardAdapter extends RecyclerView.Adapter<TaskCardAdapter.ViewHo
         int statusColor;
         switch (status) {
             case COMPLETED:
-                statusLabel = "已完成";
-                statusColor = ContextCompat.getColor(b.getRoot().getContext(), R.color.status_success);
+                statusLabel = ctx.getString(R.string.task_status_completed);
+                statusColor = ContextCompat.getColor(ctx, R.color.status_success);
                 break;
             case CANCELLED:
-                statusLabel = "已取消";
-                statusColor = ContextCompat.getColor(b.getRoot().getContext(), R.color.text_disabled);
-                break;
-            case IN_PROGRESS:
-                statusLabel = "打印中";
-                statusColor = ContextCompat.getColor(b.getRoot().getContext(), R.color.accent_blue);
+                statusLabel = ctx.getString(R.string.task_status_cancelled);
+                statusColor = ContextCompat.getColor(ctx, R.color.text_disabled);
                 break;
             default:
-                statusLabel = status.getLabel();
-                statusColor = ContextCompat.getColor(b.getRoot().getContext(), R.color.text_secondary);
+                statusLabel = status.getLabel(ctx);
+                statusColor = ContextCompat.getColor(ctx, R.color.text_secondary);
                 break;
         }
-        b.tvProgressText.setText(String.format("%d/%d页 %s", done, total, statusLabel));
+        b.tvProgressText.setText(ctx.getString(R.string.task_card_progress, done, total, statusLabel));
         b.tvProgressText.setTextColor(statusColor);
 
         long elapsedMs = System.currentTimeMillis() - task.getUpdatedAt();
-        b.tvTimeAgo.setText(formatTimeAgo(elapsedMs));
+        b.tvTimeAgo.setText(formatTimeAgo(ctx, elapsedMs));
 
         boolean resumable = TaskStatus.isResumable(task.getStatus());
         b.btnContinue.setVisibility(resumable ? View.VISIBLE : View.GONE);
@@ -128,14 +126,14 @@ public class TaskCardAdapter extends RecyclerView.Adapter<TaskCardAdapter.ViewHo
         return tasks.size();
     }
 
-    private static String formatTimeAgo(long elapsedMs) {
+    private static String formatTimeAgo(Context ctx, long elapsedMs) {
         long minutes = elapsedMs / 60000;
-        if (minutes < 1) return "刚刚";
-        if (minutes < 60) return minutes + "分钟前";
+        if (minutes < 1) return ctx.getString(R.string.time_just_now);
+        if (minutes < 60) return ctx.getString(R.string.time_minutes_ago, minutes);
         long hours = minutes / 60;
-        if (hours < 24) return hours + "小时前";
+        if (hours < 24) return ctx.getString(R.string.time_hours_ago, hours);
         long days = hours / 24;
-        return days + "天前";
+        return ctx.getString(R.string.time_days_ago, days);
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {

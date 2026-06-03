@@ -85,7 +85,7 @@ public class DeepLinkActivity extends BaseActivity {
 
                 @Override
                 public void onError(String error) {
-                    showToast("认证失败: " + error);
+                    showToast(getString(R.string.error_load_failed, error));
                     finish();
                 }
             });

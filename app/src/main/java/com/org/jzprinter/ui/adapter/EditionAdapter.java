@@ -63,15 +63,15 @@ public class EditionAdapter extends RecyclerView.Adapter<EditionAdapter.ViewHold
         } else {
             Edition edition = item.edition;
             holder.tvEditionName.setText(edition.editionName);
-            String typeLabel;
+            int typeRes;
             if (edition.supportsStudent() && edition.supportsPrepareCode()) {
-                typeLabel = "学生 / 预铺码";
+                typeRes = R.string.edition_type_student_prepare;
             } else if (edition.supportsPrepareCode()) {
-                typeLabel = "预铺码";
+                typeRes = R.string.edition_type_prepare;
             } else {
-                typeLabel = "学生";
+                typeRes = R.string.edition_type_student;
             }
-            holder.tvEditionType.setText(typeLabel);
+            holder.tvEditionType.setText(typeRes);
             holder.itemView.setOnClickListener(v -> {
                 if (listener != null) {
                     listener.onEditionClick(edition);

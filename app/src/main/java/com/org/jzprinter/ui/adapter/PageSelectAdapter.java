@@ -86,8 +86,8 @@ public class PageSelectAdapter extends RecyclerView.Adapter<PageSelectAdapter.Vi
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         PageItem item = items.get(position);
-        holder.tvPageCode.setText("page_" + item.pageCode);
-        holder.tvCodeCount.setText(item.codeCount + "码");
+        holder.tvPageCode.setText(holder.itemView.getContext().getString(R.string.preview_page_info, item.pageCode));
+        holder.tvCodeCount.setText(holder.itemView.getContext().getString(R.string.code_count, item.codeCount));
         holder.cbPage.setOnCheckedChangeListener(null);
         holder.cbPage.setChecked(item.selected);
         holder.cbPage.setOnCheckedChangeListener((btn, checked) -> {

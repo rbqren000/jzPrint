@@ -48,8 +48,8 @@ com.org.jzprinter
 │   ├── MaterialLoader.java             # 素材加载（两种模式）
 │   ├── ImageMerger.java                # 单点阵纵向拼接
 │   ├── PrintProgressManager.java       # 打印进度管理（监听SDK回调）
-│   ├── PrintImagePreparer.java         # 旋转90°+补白到552px+对齐方式
-│   ├── PrintConfig.java                # 打印配置中心（奇偶页方向）
+│   ├── PrintImagePreparer.java         # 旋转90°+补白到552px（根据页面侧+方向自动决策旋转/对齐）
+│   ├── PrintConfig.java                # 打印设置中心（奇数页位置+左右侧滑动方向+设置摘要）
 │   └── StorageManager.java             # 存储空间管理
 │
 ├── service/                            # 后台服务
@@ -364,6 +364,15 @@ public class PrintEngine {
     private PrintTaskEntity currentTask;
     private final AtomicBoolean isPrinting = new AtomicBoolean(false);  // ★ 线程安全
 
+    // ★ 打印设置（从 PrintConfig 读取，重打/续打时也在 PrintProgressActivity 中重新设置）
+    private boolean oddPageOnRight = true;
+    private boolean leftBottomToTop = false;
+    private boolean rightBottomToTop = false;
+
+    public void setOddPageOnRight(boolean v) { this.oddPageOnRight = v; }
+    public void setLeftBottomToTop(boolean v) { this.leftBottomToTop = v; }
+    public void setRightBottomToTop(boolean v) { this.rightBottomToTop = v; }
+
     /**
      * 开始新任务
      */
@@ -611,108 +620,66 @@ public class PrintEngine {
 1. 原图纵向窄长条 (360×H)，旋转 90° 变为横向 (H×360)
 2. 旋转后高度=360px < 打印头 552px，**需补白到 552px**（不是缩放！）
 3. 创建 552px 高度的白色画布，将旋转后的图放上去
-4. 支持两种对齐方式：**顶部对齐**（靠打印头起始端）和**底部对齐**（靠打印头结束端）
+4. 旋转方向和对齐方式由页面侧 + 滑动方向自动决策
 
 **为什么不能缩放**：SDK 的 `MultiRowDataFactory.bitmap2MultiRowData` 内部会自动缩放非 552px 高度的图片，但缩放会变形导致 Anoto 点阵失真。必须手动补白到恰好 552px，让 SDK 不再做缩放。
 
 ```java
 public class PrintImagePreparer {
-    public static final int PRINT_HEAD_HEIGHT = 552;  // 打印头高度(px)
+    public static final int PRINT_HEAD_HEIGHT = 552;
 
-    public enum RotationDirection {
-        CW_90,    // 顺时针90°
-        CCW_90    // 逆时针90°
-    }
-
-    public enum VerticalAlignment {
-        TOP,     // 靠顶部对齐（内容贴打印头起始端，底部留白）
-        BOTTOM   // 靠底部对齐（内容贴打印头结束端，顶部留白）
-    }
+    public enum RotationDirection { CW_90, CCW_90 }
+    public enum VerticalAlignment { TOP, BOTTOM }
 
     /**
-     * 准备打印图片：旋转 + 补白到打印头高度552px
+     * 根据配置决策旋转方向。
      *
-     * @param source      原图（纵向窄长条，如 360×1186）
-     * @param rotation    旋转方向：CW_90=顺时针90°，CCW_90=逆时针90°
-     * @param alignment   垂直对齐方式：TOP=靠顶部，BOTTOM=靠底部
-     * @return 处理后的 Bitmap（横向，宽度=原图高度，高度=552px）
+     * @param pageCode         页码
+     * @param oddPageOnRight   奇数页是否在右侧
+     * @param leftBottomToTop  左侧页滑动方向是否为下→上
+     * @param rightBottomToTop 右侧页滑动方向是否为下→上
+     * @return 旋转方向
      *
-     * 流程：
-     *   1. 旋转：360×1186 → 1186×360
-     *   2. 创建白色画布：1186×552
-     *   3. 将旋转后的图放到画布上（按 alignment 对齐）
-     *      TOP:    y=0（图贴顶，底部 552-360=192px 留白）
-     *      BOTTOM: y=552-360=192（图贴底，顶部 192px 留白）
+     * 决策逻辑：
+     *   基准旋转：两侧均为 CCW_90（实测确认）
+     *   基准对齐：右侧=TOP，左侧=BOTTOM
+     *   当该侧方向为「下→上」时，旋转与对齐同时取反
      */
+    public static RotationDirection getRotation(int pageCode, boolean oddPageOnRight,
+                                                 boolean leftBottomToTop, boolean rightBottomToTop) {
+        boolean isRightPage = (pageCode % 2 == 1) == oddPageOnRight;
+        boolean btoT = isRightPage ? rightBottomToTop : leftBottomToTop;
+        return btoT ? RotationDirection.CW_90 : RotationDirection.CCW_90;
+    }
+
+    /** 对齐方式的决策逻辑同 getRotation */
+    public static VerticalAlignment getAlignment(...);
+
     public static Bitmap prepare(Bitmap source, RotationDirection rotation,
                                   VerticalAlignment alignment) {
-        if (source == null) return null;
-
-        // Step 1: 旋转
-        Matrix matrix = new Matrix();
-        switch (rotation) {
-            case CW_90:
-                matrix.postRotate(90);
-                break;
-            case CCW_90:
-                matrix.postRotate(-90);
-                break;
-        }
-        Bitmap rotated = Bitmap.createBitmap(source, 0, 0,
-            source.getWidth(), source.getHeight(), matrix, true);
-
-        int width = rotated.getWidth();   // = 原图高度
-        int height = rotated.getHeight(); // = 原图宽度(360)
-
-        // Step 2: 如果高度已经等于552，直接返回
-        if (height == PRINT_HEAD_HEIGHT) {
-            return rotated;
-        }
-
-        // Step 3: 创建552高度的白色画布，放置图片
-        Bitmap canvas = Bitmap.createBitmap(width, PRINT_HEAD_HEIGHT,
-            Bitmap.Config.ARGB_8888);
-        Canvas c = new Canvas(canvas);
-        c.drawColor(Color.WHITE);
-
-        if (height > PRINT_HEAD_HEIGHT) {
-            // ★ 旋转后高度超过打印头高度，说明原图宽度超过552px，违反约束
-            // 不能静默裁剪（会丢失 Anoto 点阵数据），必须抛异常尽早发现问题
-            rotated.recycle();
-            canvas.recycle();
-            throw new IllegalArgumentException(
-                "旋转后图片高度 " + height + "px 超过打印头高度 " + PRINT_HEAD_HEIGHT + "px，" +
-                "原图宽度应为360px，请检查素材");
-        }
-
-        int y;
-        switch (alignment) {
-            case TOP:
-                y = 0;
-                break;
-            case BOTTOM:
-                y = PRINT_HEAD_HEIGHT - height;
-                break;
-            default:
-                y = 0;
-                break;
-        }
-        c.drawBitmap(rotated, 0, y, null);
-
-        rotated.recycle();
-        return canvas;
+        // Step 1: 旋转（CW_90→postRotate(90), CCW_90→postRotate(-90)）
+        // Step 2: 高度=552 直接返回，>552 抛异常，<552 创建白色画布补白
+        // Step 3: TOP→y=0, BOTTOM→y=552-height
     }
 }
 ```
 
-**可配置项**（由用户在设置中选择，影响所有打印任务）：
+**旋转+对齐决策表**（以 oddPageOnRight=true 为例）：
 
-| 配置项 | 选项 | 说明 |
-|--------|------|------|
-| **旋转方向** | 顺时针90° / 逆时针90° | 取决于打印机行走方向和纸张方向 |
-| **垂直对齐** | 顶部对齐 / 底部对齐 | 内容靠打印头起始端或结束端 |
+| # | 页面侧 | 滑动方向 | 旋转 | 对齐 |
+|---|--------|---------|------|------|
+| 1 | 左侧 | 上→下 | CCW_90 | BOTTOM |
+| 2 | 左侧 | 下→上 | CW_90 | TOP |
+| 3 | 右侧 | 上→下 | CCW_90 | TOP |
+| 4 | 右侧 | 下→上 | CW_90 | BOTTOM |
 
-**默认值**：顺时针90° + 顶部对齐（可根据实际打印测试调整）
+**用户配置项**（PrintSettingActivity + PrintConfig 管理）：
+
+| 配置项 | Key | 默认值 | 说明 |
+|--------|-----|--------|------|
+| 奇数页位置 | `odd_page_on_right` | true | true=奇数在右，false=奇数在左 |
+| 左侧打印方向 | `left_print_direction_btt` | false | false=上→下，true=下→上 |
+| 右侧打印方向 | `right_print_direction_btt` | false | false=上→下，true=下→上 |
 
 ### 4.4 PrintProgressManager 进度管理
 
@@ -1283,32 +1250,21 @@ public class PrintProgressActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // 1. 检查是否有可续打任务
-        List<PrintTaskEntity> resumable = taskRecoveryManager.getResumableTasks();
-        if (!resumable.isEmpty()) {
-            showContinuePrintDialog(resumable);
-        }
-    }
+        // ★ 保持屏幕常亮，避免发送数据时黑屏
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-    /**
-     * 用户按返回键 → 弹出确认对话框
-     * 场景 C：防止用户误退出丢失当前打印进度
-     */
-    @Override
-    public void onBackPressed() {
-        if (printEngine.isPrinting()) {
-            new AlertDialog.Builder(this)
-                .setTitle("打印正在进行")
-                .setMessage("当前正在打印，退出将暂停任务。下次可继续打印。")
-                .setPositiveButton("暂停并退出", (d, w) -> {
-                    printEngine.pause();
-                    finish();
-                })
-                .setNegativeButton("继续打印", null)
-                .show();
-        } else {
-            super.onBackPressed();
-        }
+        // ★ 使用 OnBackPressedDispatcher（替代弃用的 onBackPressed）
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (binding.btnPauseOrCancel.getVisibility() == View.VISIBLE) {
+                    binding.btnPauseOrCancel.performClick();
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                }
+            }
+        });
     }
 
     /**

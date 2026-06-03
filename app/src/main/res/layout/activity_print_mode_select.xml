@@ -30,7 +30,7 @@
             android:id="@+id/tvFilterAll"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="全部"
+            android:text="@string/select_pages_all"
             android:textSize="13sp"
             android:textColor="@color/accent_blue"
             android:background="@drawable/bg_filter_tag"
@@ -44,7 +44,7 @@
             android:id="@+id/tvFilterOdd"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="奇数"
+            android:text="@string/select_pages_odd"
             android:textSize="13sp"
             android:textColor="@color/text_secondary"
             android:background="@drawable/bg_filter_tag"
@@ -58,7 +58,7 @@
             android:id="@+id/tvFilterEven"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="偶数"
+            android:text="@string/select_pages_even"
             android:textSize="13sp"
             android:textColor="@color/text_secondary"
             android:background="@drawable/bg_filter_tag"
@@ -104,7 +104,7 @@
             android:id="@+id/tvPreviewLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="预览"
+            android:text="@string/select_pages_preview_label"
             android:textSize="13sp"
             android:textColor="@color/text_secondary"
             android:layout_marginBottom="4dp"
@@ -123,14 +123,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:scaleType="centerInside"
-                android:contentDescription="打印预览" />
+                android:contentDescription="@string/select_pages_preview_desc" />
 
             <TextView
                 android:id="@+id/tvPreviewLoading"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="点击列表项预览"
+                android:text="@string/select_pages_preview_hint"
                 android:textSize="13sp"
                 android:textColor="@color/text_secondary" />
 
@@ -161,7 +161,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="预拼接"
+                android:text="@string/select_pages_pre_merged"
                 android:textSize="14sp"
                 android:checked="true" />
 
@@ -170,7 +170,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="手动拼接"
+                android:text="@string/select_pages_custom_merge"
                 android:textSize="14sp" />
 
         </RadioGroup>
@@ -187,7 +187,7 @@
                 android:layout_width="0dp"
                 android:layout_height="40dp"
                 android:layout_weight="1"
-                android:text="打印设置"
+                android:text="@string/select_pages_print_settings"
                 android:textSize="13sp"
                 android:textColor="@color/btn_secondary_text"
                 android:backgroundTint="@color/btn_secondary"
@@ -198,7 +198,7 @@
                 android:layout_width="0dp"
                 android:layout_height="40dp"
                 android:layout_weight="1"
-                android:text="开始打印"
+                android:text="@string/select_pages_start_print"
                 android:textSize="15sp"
                 android:backgroundTint="@color/btn_primary"
                 android:textColor="@color/btn_primary_text"

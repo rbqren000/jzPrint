@@ -100,12 +100,12 @@ public class StudentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             vh.tvClassName.setText(student.getClassName());
 
             if (student.isMaterialReady()) {
-                vh.tvMaterialStatus.setText("素材已就绪");
+                vh.tvMaterialStatus.setText(R.string.material_ready);
                 vh.tvMaterialStatus.setTextColor(
                     ContextCompat.getColor(vh.itemView.getContext(), R.color.status_success));
                 vh.tvDownload.setVisibility(View.GONE);
             } else {
-                vh.tvMaterialStatus.setText("素材未下载");
+                vh.tvMaterialStatus.setText(R.string.material_not_downloaded);
                 vh.tvMaterialStatus.setTextColor(
                     ContextCompat.getColor(vh.itemView.getContext(), R.color.status_error));
                 vh.tvDownload.setVisibility(View.VISIBLE);
