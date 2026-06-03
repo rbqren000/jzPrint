@@ -541,40 +541,49 @@ public class PrintProgressActivity extends BaseActivity {
         List<Integer> printedPages = IntegerListConverter.fromString(task.getPrintedPages());
         if (targetPages.isEmpty()) return;
 
-        // 构建选项列表：✅ page_85 / ⬜ page_87 ...
-        String[] items = new String[targetPages.size()];
-        int defaultSelectedIndex = -1;
-        // 从后往前找最后打印的页，作为默认选中
-        for (int i = targetPages.size() - 1; i >= 0; i--) {
-            if (printedPages.contains(targetPages.get(i))) {
-                defaultSelectedIndex = i;
-                break;
-            }
-        }
-        if (defaultSelectedIndex < 0) defaultSelectedIndex = 0;
-
+        List<Integer> reprintablePages = new ArrayList<>();
+        List<Integer> reprintablePuzzleIndexes = new ArrayList<>();
         for (int i = 0; i < targetPages.size(); i++) {
             int page = targetPages.get(i);
-            items[i] = (printedPages.contains(page) ? "✅ 第 " : "⬜ 第 ") + page + " 页";
+            if (printedPages.contains(page)) {
+                reprintablePages.add(page);
+                reprintablePuzzleIndexes.add(i);
+            }
         }
 
-        final int[] selectedIndex = {defaultSelectedIndex};
+        if (reprintablePages.isEmpty()) {
+            android.widget.Toast.makeText(this, "当前没有可重打的已完成页",
+                android.widget.Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String[] items = new String[reprintablePages.size()];
+        for (int i = 0; i < reprintablePages.size(); i++) {
+            items[i] = "第 " + reprintablePages.get(i) + " 页";
+        }
+
+        final int[] selectedIndex = {reprintablePages.size() - 1};
 
         new android.app.AlertDialog.Builder(this)
             .setTitle("重打指定页")
-            .setSingleChoiceItems(items, defaultSelectedIndex, (dialog, which) -> {
+            .setSingleChoiceItems(items, selectedIndex[0], (dialog, which) -> {
                 selectedIndex[0] = which;
             })
             .setNegativeButton("取消", null)
             .setPositiveButton("确认重打", (dialog, which) -> {
-                int puzzleIndex = selectedIndex[0];
-                int page = targetPages.get(puzzleIndex);
-                engine.reprintSpecifiedPage(puzzleIndex);
-                // 立即刷新 chip 状态，将重打页标记为橙色
-                refreshPageChips(task);
-                android.widget.Toast.makeText(PrintProgressActivity.this,
-                    "已发送重打指令，请按打印机按钮重打第 " + page + " 页",
-                    android.widget.Toast.LENGTH_SHORT).show();
+                int index = selectedIndex[0];
+                int puzzleIndex = reprintablePuzzleIndexes.get(index);
+                int page = reprintablePages.get(index);
+                try {
+                    engine.reprintSpecifiedPage(puzzleIndex);
+                    refreshPageChipsFromMemory();
+                    android.widget.Toast.makeText(PrintProgressActivity.this,
+                        "已发送重打指令，请按打印机按钮重打第 " + page + " 页",
+                        android.widget.Toast.LENGTH_SHORT).show();
+                } catch (IllegalStateException | IllegalArgumentException e) {
+                    android.widget.Toast.makeText(PrintProgressActivity.this,
+                        e.getMessage(), android.widget.Toast.LENGTH_SHORT).show();
+                }
             })
             .show();
     }
@@ -596,6 +605,7 @@ public class PrintProgressActivity extends BaseActivity {
 
         currentTask = liveTask;
         refreshPageChips(liveTask);
+        updatePrintProgress(liveTask);
     }
 
     /**
@@ -613,21 +623,18 @@ public class PrintProgressActivity extends BaseActivity {
             return;
         }
 
-        // 计算 remaining 和 nextPage
         List<Integer> remaining = new ArrayList<>();
         for (int p : target) {
             if (!printed.contains(p)) remaining.add(p);
         }
         int nextPage = remaining.isEmpty() ? -1 : remaining.get(0);
 
-        // 重打状态
         PrintEngine engine = PrintEngine.getInstance();
-        boolean reprintPending = engine.isReprintPending();
-        int reprintPuzzleIndex = engine.getReprintTargetPuzzleIndex();
-        int reprintPage = (reprintPending && reprintPuzzleIndex >= 0
-            && reprintPuzzleIndex < target.size()) ? target.get(reprintPuzzleIndex) : -1;
+        boolean reprintPending = engine.hasLiveTaskState(task.getTaskId()) && engine.isReprintPending();
+        int reprintPuzzleIndex = reprintPending ? engine.getReprintTargetPuzzleIndex() : -1;
+        int reprintPage = (reprintPuzzleIndex >= 0 && reprintPuzzleIndex < target.size())
+            ? target.get(reprintPuzzleIndex) : -1;
 
-        // 构建 ChipItem 列表
         List<ChipItem> chipItems = new ArrayList<>();
         for (int page : target) {
             ChipItem item = new ChipItem(page);
@@ -718,14 +725,17 @@ public class PrintProgressActivity extends BaseActivity {
     }
 
     private void renderTaskSnapshot(PrintTaskEntity task) {
-        currentTask = task;
-        refreshPageChips(task);
-        updatePrintProgress(task);
+        PrintTaskEntity renderTask = resolveRenderTask(task);
+        currentTask = renderTask;
+        refreshPageChips(renderTask);
+        updatePrintProgress(renderTask);
+
+        if (isUsingLiveTaskState(renderTask)) {
+            return;
+        }
 
         TaskStatus status = TaskStatus.fromCode(task.getStatus());
-        if (!isCurrentTaskActivelyPrinting(task) || isTerminalStatus(status)) {
-            applyTaskStatus(task, status);
-        }
+        applyTaskStatus(task, status);
     }
 
     private void updatePrintProgress(PrintTaskEntity task) {
@@ -756,6 +766,23 @@ public class PrintProgressActivity extends BaseActivity {
 
     private boolean shouldContinuePolling(PrintTaskEntity task) {
         return !isTerminalStatus(TaskStatus.fromCode(task.getStatus()));
+    }
+
+    private PrintTaskEntity resolveRenderTask(PrintTaskEntity snapshot) {
+        if (snapshot == null) return null;
+
+        PrintEngine engine = PrintEngine.getInstance();
+        if (engine.hasLiveTaskState(snapshot.getTaskId())) {
+            PrintTaskEntity liveTask = engine.getCurrentTask();
+            if (liveTask != null && liveTask.getTaskId() == snapshot.getTaskId()) {
+                return liveTask;
+            }
+        }
+        return snapshot;
+    }
+
+    private boolean isUsingLiveTaskState(PrintTaskEntity task) {
+        return task != null && PrintEngine.getInstance().hasLiveTaskState(task.getTaskId());
     }
 
     private boolean isCurrentTaskActivelyPrinting(PrintTaskEntity task) {

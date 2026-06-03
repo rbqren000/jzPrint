@@ -139,6 +139,12 @@ public class PrintEngine {
         return currentTask;
     }
 
+    public boolean hasLiveTaskState(long taskId) {
+        return currentTask != null
+            && currentTask.getTaskId() == taskId
+            && (isPrinting.get() || isReprintMode);
+    }
+
     public ExecutorService getDbExecutor() {
         return dbExecutor;
     }
@@ -215,6 +221,7 @@ public class PrintEngine {
             throw new IllegalStateException("当前有打印任务正在进行中");
         }
 
+        clearReprintState();
         task.setStatus(TaskStatus.IN_PROGRESS.getCode());
         dbExecutor.execute(() -> taskRepo.update(task));
         currentTask = task;
@@ -330,6 +337,23 @@ public class PrintEngine {
 
     private ConnectManager.OnDataProgressListener currentDataProgressListener;
 
+    private void clearReprintState() {
+        isReprintMode = false;
+        reprintTargetPuzzleIndex = -1;
+    }
+
+    private void dispatchPhysicalPrintProgress(int pageIndex) {
+        if (phaseCallback == null || currentTask == null) return;
+
+        List<Integer> printed = IntegerListConverter.fromString(currentTask.getPrintedPages());
+        List<Integer> target = IntegerListConverter.fromString(currentTask.getTargetPages());
+        int done = 0;
+        for (int p : printed) {
+            if (target.contains(p)) done++;
+        }
+        phaseCallback.onPhysicalPrintPageProgress(done, target.size(), pageIndex);
+    }
+
     private void sendToPrinter(MultiRowData data) {
         // 防御 Bug 2A：用户在 bitmap2MultiRowData 异步处理期间点了"停止发送"，
         // 此时 cancelled 已为 true，不应继续发送
@@ -410,27 +434,22 @@ public class PrintEngine {
         if (currentTask == null) return;
         if (progressManager == null) return;
 
-        // 重打模式：跳过进度推进，仅清除重打标志恢复正常打印
-        if (isReprintMode && currentIndex == reprintTargetPuzzleIndex) {
-            isReprintMode = false;
-            reprintTargetPuzzleIndex = -1;
-            Log.d(TAG, "[onPhysicalPrintComplete] reprint done, resumed normal progress");
+        int pageIndex = progressManager.getPageByPuzzleIndex(currentIndex);
+
+        // 重打模式：不推进 printedPages，但必须发一次状态刷新，让 UI 从黄态回到绿态。
+        // 注意：固件在重打时，回调上来的 currentIndex 可能是主线进度指针，而非 reprintTargetPuzzleIndex。
+        // 因此只要 isReprintMode 为 true，我们就无条件认为本次按键对应的打印是重打动作的完成。
+        if (isReprintMode) {
+            int reprintPageIndex = progressManager.getPageByPuzzleIndex(reprintTargetPuzzleIndex);
+            clearReprintState();
+            dispatchPhysicalPrintProgress(reprintPageIndex);
+            Log.d(TAG, "[onPhysicalPrintComplete] reprint done, resumed normal progress. Actual currentIndex=" + currentIndex);
             return;
         }
 
-        int pageIndex = progressManager.getPageByPuzzleIndex(currentIndex);
         progressManager.onPageComplete(currentTask, pageIndex);
         progressManager.onSdkPrintComplete(beginIndex, endIndex, currentIndex, cartridgeId);
-
-        if (phaseCallback != null) {
-            List<Integer> printed = IntegerListConverter.fromString(currentTask.getPrintedPages());
-            List<Integer> target = IntegerListConverter.fromString(currentTask.getTargetPages());
-            int done = 0;
-            for (int p : printed) {
-                if (target.contains(p)) done++;
-            }
-            phaseCallback.onPhysicalPrintPageProgress(done, target.size(), pageIndex);
-        }
+        dispatchPhysicalPrintProgress(pageIndex);
 
         if (currentIndex == endIndex) {
             isPrinting.set(false);
@@ -443,8 +462,8 @@ public class PrintEngine {
         if (currentTask == null || progressManager == null) return;
 
         // 重打模式：跳过进度记录
-        if (isReprintMode && currentIndex == reprintTargetPuzzleIndex) {
-            Log.d(TAG, "[onPhysicalPrintStart] reprint mode, skip progress");
+        if (isReprintMode) {
+            Log.d(TAG, "[onPhysicalPrintStart] reprint mode, skip progress. Actual currentIndex=" + currentIndex);
             return;
         }
 
@@ -459,6 +478,7 @@ public class PrintEngine {
         if (isPrinting.get() && currentTask != null) {
             // 设置 cancelled 标志，防止潜在的 onDataProgressError 竞态覆盖 INTERRUPTED 状态
             cancelled.set(true);
+            clearReprintState();
             if (currentDataProgressListener != null) {
                 ConnectManager.share().unregisterDataProgressListener(currentDataProgressListener);
                 currentDataProgressListener = null;
@@ -482,6 +502,7 @@ public class PrintEngine {
     public void pause() {
         if (isPrinting.get() && currentTask != null) {
             cancelled.set(true);
+            clearReprintState();
             ConnectManager.share().cancelSendMultiRowDataPacket();
             currentTask.setStatus(TaskStatus.PAUSED.getCode());
             currentTask.setUpdatedAt(System.currentTimeMillis());
@@ -511,6 +532,7 @@ public class PrintEngine {
             + " hasPacketStartSending=" + ConnectManager.share().hasPacketStartSending());
         // 必须在 cancelSend 之前设置标志，保证 SDK 回调线程看到 cancelled=true
         cancelled.set(true);
+        clearReprintState();
         ConnectManager.share().cancelSendMultiRowDataPacket();
         Log.d(TAG, "[cancelTransfer] after cancelSend, isDataSending="
             + ConnectManager.share().isDataSending());
@@ -535,6 +557,7 @@ public class PrintEngine {
     public void switchToNewTarget() {
         if (isPrinting.get() && currentTask != null) {
             cancelled.set(true);
+            clearReprintState();
             currentTask.setStatus(TaskStatus.PAUSED.getCode());
             currentTask.setUpdatedAt(System.currentTimeMillis());
             dbExecutor.execute(() -> taskRepo.update(currentTask));
@@ -551,18 +574,31 @@ public class PrintEngine {
      * @param puzzleIndex 要重打的拼索引（0-based，对应 targetPages 中的下标）
      */
     public void reprintSpecifiedPage(int puzzleIndex) {
-        if (currentTask == null) return;
-        if (!Boolean.TRUE.equals(ConnectManager.share().isConnected())) return;
+        if (currentTask == null) {
+            throw new IllegalStateException("当前没有可重打的任务");
+        }
+        if (!Boolean.TRUE.equals(ConnectManager.share().isConnected())) {
+            throw new IllegalStateException("打印机未连接，请先连接打印机");
+        }
 
         List<Integer> target = IntegerListConverter.fromString(currentTask.getTargetPages());
-        if (puzzleIndex < 0 || puzzleIndex >= target.size()) return;
+        if (puzzleIndex < 0 || puzzleIndex >= target.size()) {
+            throw new IllegalArgumentException("重打页索引无效");
+        }
 
+        int page = target.get(puzzleIndex);
+        List<Integer> printed = IntegerListConverter.fromString(currentTask.getPrintedPages());
+        if (!printed.contains(page)) {
+            throw new IllegalStateException("仅支持重打已完成页");
+        }
+
+        clearReprintState();
         isReprintMode = true;
         reprintTargetPuzzleIndex = puzzleIndex;
 
         ConnectManager.share().sendCommand(OPCODE_REPRINT_PAGE, new byte[]{(byte) puzzleIndex});
         Log.d(TAG, "[reprintSpecifiedPage] sent opcode=0x030A puzzleIndex=" + puzzleIndex
-            + " page=" + target.get(puzzleIndex));
+            + " page=" + page);
     }
 
     /**
@@ -591,6 +627,7 @@ public class PrintEngine {
             throw new IllegalStateException("素材文件不存在，需重新下载");
         }
 
+        clearReprintState();
         List<Integer> printed = IntegerListConverter.fromString(task.getPrintedPages());
         printed.removeAll(pagesToReprint);
         task.setPrintedPages(IntegerListConverter.fromList(printed));
