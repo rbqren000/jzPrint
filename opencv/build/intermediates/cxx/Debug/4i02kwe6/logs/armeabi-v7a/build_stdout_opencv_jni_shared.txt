@@ -1,2 +1,0 @@
-ninja: Entering directory `/Users/rbq/AndroidStudioProjects/jzPrint/opencv/.cxx/Debug/4i02kwe6/armeabi-v7a'
-ninja: no work to do.

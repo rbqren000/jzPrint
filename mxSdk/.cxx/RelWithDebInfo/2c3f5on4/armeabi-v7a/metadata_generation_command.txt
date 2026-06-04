@@ -1,4 +1,4 @@
-                        -H/Users/rbq/AndroidStudioProjects/HalftoneAll/Android/jzPrint/mxSdk/src/main/cpp
+                        -H/Users/rbq/AndroidStudioProjects/jzPrint/mxSdk/src/main/cpp
 -DCMAKE_SYSTEM_NAME=Android
 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 -DCMAKE_SYSTEM_VERSION=24
@@ -9,10 +9,10 @@
 -DCMAKE_ANDROID_NDK=/Users/rbq/Library/Android/sdk/ndk/21.4.7075529
 -DCMAKE_TOOLCHAIN_FILE=/Users/rbq/Library/Android/sdk/ndk/21.4.7075529/build/cmake/android.toolchain.cmake
 -DCMAKE_MAKE_PROGRAM=/Users/rbq/Library/Android/sdk/cmake/3.22.1/bin/ninja
--DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/Users/rbq/AndroidStudioProjects/HalftoneAll/Android/jzPrint/mxSdk/build/intermediates/cxx/RelWithDebInfo/2c3f5on4/obj/armeabi-v7a
--DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/Users/rbq/AndroidStudioProjects/HalftoneAll/Android/jzPrint/mxSdk/build/intermediates/cxx/RelWithDebInfo/2c3f5on4/obj/armeabi-v7a
+-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/Users/rbq/AndroidStudioProjects/jzPrint/mxSdk/build/intermediates/cxx/RelWithDebInfo/2c3f5on4/obj/armeabi-v7a
+-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/Users/rbq/AndroidStudioProjects/jzPrint/mxSdk/build/intermediates/cxx/RelWithDebInfo/2c3f5on4/obj/armeabi-v7a
 -DCMAKE_BUILD_TYPE=RelWithDebInfo
--B/Users/rbq/AndroidStudioProjects/HalftoneAll/Android/jzPrint/mxSdk/.cxx/RelWithDebInfo/2c3f5on4/armeabi-v7a
+-B/Users/rbq/AndroidStudioProjects/jzPrint/mxSdk/.cxx/RelWithDebInfo/2c3f5on4/armeabi-v7a
 -GNinja
                         Build command args: []
                         Version: 2

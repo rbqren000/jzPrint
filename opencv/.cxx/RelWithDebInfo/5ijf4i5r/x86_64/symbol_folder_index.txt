@@ -1,1 +1,1 @@
-/Users/rbq/AndroidStudioProjects/HalftoneAll/Android/jzPrint/opencv/build/intermediates/cxx/RelWithDebInfo/5ijf4i5r/obj/x86_64
+/Users/rbq/AndroidStudioProjects/jzPrint/opencv/build/intermediates/cxx/RelWithDebInfo/5ijf4i5r/obj/x86_64

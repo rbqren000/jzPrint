@@ -1,0 +1,4 @@
+/Users/rbq/Library/Android/sdk/cmake/3.22.1/bin/ninja \
+  -C \
+  /Users/rbq/AndroidStudioProjects/jzPrint/opencv/.cxx/RelWithDebInfo/5ijf4i5r/x86 \
+  opencv_jni_shared

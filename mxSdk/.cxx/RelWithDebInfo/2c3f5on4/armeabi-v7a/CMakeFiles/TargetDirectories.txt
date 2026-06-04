@@ -1,2 +1,2 @@
-/Users/rbq/AndroidStudioProjects/HalftoneAll/Android/jzPrint/mxSdk/.cxx/RelWithDebInfo/2c3f5on4/armeabi-v7a/CMakeFiles/edit_cache.dir
-/Users/rbq/AndroidStudioProjects/HalftoneAll/Android/jzPrint/mxSdk/.cxx/RelWithDebInfo/2c3f5on4/armeabi-v7a/CMakeFiles/rebuild_cache.dir
+/Users/rbq/AndroidStudioProjects/jzPrint/mxSdk/.cxx/RelWithDebInfo/2c3f5on4/armeabi-v7a/CMakeFiles/edit_cache.dir
+/Users/rbq/AndroidStudioProjects/jzPrint/mxSdk/.cxx/RelWithDebInfo/2c3f5on4/armeabi-v7a/CMakeFiles/rebuild_cache.dir

@@ -4,7 +4,7 @@
     "type": "APK",
     "kind": "Directory"
   },
-  "applicationId": "com.rbq.taxticketprinter",
+  "applicationId": "com.org.jzprinter",
   "variantName": "release",
   "elements": [
     {

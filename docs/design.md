@@ -85,6 +85,31 @@ UI 层 → DownloadService → ApiClient → 远程 API
 PrintEngine → PrintProgressManager → PrintTaskRepository + PrintProgressRepository
 ```
 
+### 1.4 AndroidManifest 权限配置
+
+**前台服务类型声明**（Android 14+ 要求每个 `foregroundServiceType` 必须有对应权限）：
+
+```xml
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+<service
+    android:name=".service.PrintService"
+    android:foregroundServiceType="connectedDevice"
+    android:exported="false" />
+<service
+    android:name=".service.DownloadService"
+    android:foregroundServiceType="dataSync"
+    android:exported="false" />
+```
+
+| Service | foregroundServiceType | 对应权限 | 用途 |
+|---------|----------------------|---------|------|
+| `PrintService` | `connectedDevice` | `FOREGROUND_SERVICE_CONNECTED_DEVICE` | 打印期间保持 App 存活 |
+| `DownloadService` | `dataSync` | `FOREGROUND_SERVICE_DATA_SYNC` | 素材下载期间保持存活 |
+
 ## 2. 打印模式设计
 
 ### 2.1 PrintMode 枚举
@@ -1002,51 +1027,105 @@ public class MockApiClient extends ApiClient {
 
 ### 7.1 微信小程序跳转 App
 
-小程序分享 schoolId 后，用户点击可跳转到 App：
+小程序通过中间 H5 页面触发 URL Scheme `jzprint://share` 唤起 App，Android 系统将 Intent 路由到 `DeepLinkActivity`。
+
+**AndroidManifest 注册**：
 
 ```xml
-<!-- AndroidManifest.xml 添加 intent-filter -->
 <activity android:name=".ui.activity.DeepLinkActivity"
           android:exported="true">
     <intent-filter>
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:scheme="jzprint"
-              android:host="share"/>
+        <data android:scheme="jzprint" android:host="share"/>
     </intent-filter>
 </activity>
 ```
 
-### 7.2 DeepLink 处理
+### 7.2 DeepLink 链接格式
+
+```
+jzprint://share?schoolId=xxx&editionId=yyy&targetId=zzz&businessId=bbb&editionType=1
+```
+
+**参数说明**：
+
+| 参数 | 必填 | 说明 |
+|------|------|------|
+| `schoolId` | ✅ | 学校 ID |
+| `editionId` | 可选 | 教材版本 ID |
+| `targetId` | 可选 | 学生 ID 或 预铺码 |
+| `businessId` | 可选 | 业务 ID（用于素材下载） |
+| `editionType` | 可选 | 横版=1 / 竖版=2，默认 1 |
+
+### 7.3 DeepLinkActivity 处理逻辑
 
 ```java
 public class DeepLinkActivity extends BaseActivity {
+    private static final String SCHEME = "jzprint";
+    private static final String HOST = "share";
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Uri uri = getIntent().getData();
-        if (uri != null && "jzprint".equals(uri.getScheme())) {
-            String schoolId = uri.getQueryParameter("schoolId");
-            if (schoolId != null) {
-                // 保存 schoolId，跳转到校本作业列表
-                PreferencesUtils.putString(this, "schoolId", schoolId);
-                Intent intent = new Intent(this, SchoolHomeworkListActivity.class);
-                intent.putExtra("schoolId", schoolId);
-                startActivity(intent);
-            }
+        Uri data = getIntent().getData();
+        if (data == null || !SCHEME.equals(data.getScheme())) { finish(); return; }
+
+        String schoolId = data.getQueryParameter("schoolId");
+        if (schoolId == null || schoolId.isEmpty()) {
+            showToast("无效的分享链接"); finish(); return;
         }
-        finish();
+
+        // 持久化 schoolId
+        PreferencesUtils.putString(this, "schoolId", schoolId);
+
+        // 如果 token 过期，先登录再导航
+        if (!AuthManager.getInstance(this).isTokenValid()) {
+            AuthManager.getInstance(this).login(new LoginCallback() {
+                @Override public void onSuccess() { navigate(...); }
+                @Override public void onError(String error) { finish(); }
+            });
+            return;
+        }
+
+        navigateAfterAuth(schoolId, editionId, targetId, businessId, editionType);
     }
 }
 ```
 
-### 7.3 小程序端分享链接格式
+**导航优先级**（`navigateAfterAuth`）：
 
+1. `targetId` + `editionId` 都有且素材已缓存 → `PrintModeSelectActivity`（直接打印）
+2. `targetId` + `editionId` 都有但素材未缓存 → `StudentListActivity`
+3. 仅有 `editionId` → `StudentListActivity`
+4. 仅有 `schoolId` → `SchoolHomeworkListActivity`
+
+### 7.4 小程序端对接指引
+
+**对接方式**：小程序 → 中间 H5 页面 → `jzprint://share` URL Scheme
+
+小程序 `<web-view>` 内嵌 H5 页面，H5 中通过 JavaScript 触发：
+
+```javascript
+const url = 'jzprint://share?schoolId=xxx&editionId=yyy&targetId=zzz&businessId=bbb&editionType=1';
+const start = Date.now();
+
+window.location.href = url;
+
+// 2.5 秒后未唤起 App（说明未安装），跳下载页
+setTimeout(() => {
+    if (Date.now() - start < 3000) {
+        window.location.href = 'https://下载页地址';
+    }
+}, 2500);
 ```
-jzprint://share?schoolId=1234567890abcd
-```
+
+**注意事项**：
+- 参数值需 URL Encode
+- `schoolId` 不可缺少，否则 App 端提示"无效的分享链接"
+- Android 可直接通过 URL Scheme 唤起，iOS 需 Universal Link 兜底
 
 ## 8. 双人双机协作设计
 

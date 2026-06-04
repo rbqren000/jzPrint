@@ -1,7 +1,7 @@
 set(CMAKE_HOST_SYSTEM "Darwin-25.4.0")
 set(CMAKE_HOST_SYSTEM_NAME "Darwin")
 set(CMAKE_HOST_SYSTEM_VERSION "25.4.0")
-set(CMAKE_HOST_SYSTEM_PROCESSOR "x86_64")
+set(CMAKE_HOST_SYSTEM_PROCESSOR "arm64")
 
 include("/Users/rbq/Library/Android/sdk/ndk/21.4.7075529/build/cmake/android.toolchain.cmake")
 

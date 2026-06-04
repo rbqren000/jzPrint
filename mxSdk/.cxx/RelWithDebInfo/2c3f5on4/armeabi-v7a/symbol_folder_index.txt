@@ -1,1 +1,1 @@
-/Users/rbq/AndroidStudioProjects/HalftoneAll/Android/jzPrint/mxSdk/build/intermediates/cxx/RelWithDebInfo/2c3f5on4/obj/armeabi-v7a
+/Users/rbq/AndroidStudioProjects/jzPrint/mxSdk/build/intermediates/cxx/RelWithDebInfo/2c3f5on4/obj/armeabi-v7a

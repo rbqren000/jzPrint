@@ -1,19 +1,19 @@
 {
   "buildFiles": [
-    "/Users/rbq/AndroidStudioProjects/HalftoneAll/Android/jzPrint/opencv/libcxx_helper/CMakeLists.txt"
+    "/Users/rbq/AndroidStudioProjects/jzPrint/opencv/libcxx_helper/CMakeLists.txt"
   ],
   "cleanCommandsComponents": [
     [
       "/Users/rbq/Library/Android/sdk/cmake/3.22.1/bin/ninja",
       "-C",
-      "/Users/rbq/AndroidStudioProjects/HalftoneAll/Android/jzPrint/opencv/.cxx/RelWithDebInfo/5ijf4i5r/armeabi-v7a",
+      "/Users/rbq/AndroidStudioProjects/jzPrint/opencv/.cxx/RelWithDebInfo/5ijf4i5r/armeabi-v7a",
       "clean"
     ]
   ],
   "buildTargetsCommandComponents": [
     "/Users/rbq/Library/Android/sdk/cmake/3.22.1/bin/ninja",
     "-C",
-    "/Users/rbq/AndroidStudioProjects/HalftoneAll/Android/jzPrint/opencv/.cxx/RelWithDebInfo/5ijf4i5r/armeabi-v7a",
+    "/Users/rbq/AndroidStudioProjects/jzPrint/opencv/.cxx/RelWithDebInfo/5ijf4i5r/armeabi-v7a",
     "{LIST_OF_TARGETS_TO_BUILD}"
   ],
   "libraries": {
@@ -21,7 +21,7 @@
       "toolchain": "toolchain",
       "abi": "armeabi-v7a",
       "artifactName": "opencv_jni_shared",
-      "output": "/Users/rbq/AndroidStudioProjects/HalftoneAll/Android/jzPrint/opencv/.cxx/RelWithDebInfo/5ijf4i5r/armeabi-v7a/libopencv_jni_shared.a"
+      "output": "/Users/rbq/AndroidStudioProjects/jzPrint/opencv/.cxx/RelWithDebInfo/5ijf4i5r/armeabi-v7a/libopencv_jni_shared.a"
     }
   },
   "toolchains": {
