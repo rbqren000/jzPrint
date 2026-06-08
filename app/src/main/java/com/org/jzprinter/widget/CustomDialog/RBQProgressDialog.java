@@ -35,6 +35,14 @@ public class RBQProgressDialog {
     }
 
     private void showDialog(Context context, String title, String msg) {
+        // Activity 已销毁，不能显示 Dialog，否则 BadTokenException
+        if (context instanceof Activity && ((Activity) context).isFinishing()) {
+            return;
+        }
+        if (context instanceof Activity && ((Activity) context).isDestroyed()) {
+            return;
+        }
+
         if (dialog != null && dialog.isShowing()) {
             dialog.dismiss();
         }

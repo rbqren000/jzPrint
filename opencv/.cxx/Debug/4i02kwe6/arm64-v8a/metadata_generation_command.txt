@@ -1,4 +1,4 @@
-                        -H/Users/rbq/AndroidStudioProjects/jzPrint/opencv/libcxx_helper
+                        -H/Users/rbq/AndroidStudioProjects/HalftoneAll/jzPrint/opencv/libcxx_helper
 -DCMAKE_SYSTEM_NAME=Android
 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 -DCMAKE_SYSTEM_VERSION=24
@@ -9,10 +9,10 @@
 -DCMAKE_ANDROID_NDK=/Users/rbq/Library/Android/sdk/ndk/27.0.12077973
 -DCMAKE_TOOLCHAIN_FILE=/Users/rbq/Library/Android/sdk/ndk/27.0.12077973/build/cmake/android.toolchain.cmake
 -DCMAKE_MAKE_PROGRAM=/Users/rbq/Library/Android/sdk/cmake/3.22.1/bin/ninja
--DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/Users/rbq/AndroidStudioProjects/jzPrint/opencv/build/intermediates/cxx/Debug/4i02kwe6/obj/arm64-v8a
--DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/Users/rbq/AndroidStudioProjects/jzPrint/opencv/build/intermediates/cxx/Debug/4i02kwe6/obj/arm64-v8a
+-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/Users/rbq/AndroidStudioProjects/HalftoneAll/jzPrint/opencv/build/intermediates/cxx/Debug/4i02kwe6/obj/arm64-v8a
+-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/Users/rbq/AndroidStudioProjects/HalftoneAll/jzPrint/opencv/build/intermediates/cxx/Debug/4i02kwe6/obj/arm64-v8a
 -DCMAKE_BUILD_TYPE=Debug
--B/Users/rbq/AndroidStudioProjects/jzPrint/opencv/.cxx/Debug/4i02kwe6/arm64-v8a
+-B/Users/rbq/AndroidStudioProjects/HalftoneAll/jzPrint/opencv/.cxx/Debug/4i02kwe6/arm64-v8a
 -GNinja
 -DANDROID_STL=c++_shared
                         Build command args: []

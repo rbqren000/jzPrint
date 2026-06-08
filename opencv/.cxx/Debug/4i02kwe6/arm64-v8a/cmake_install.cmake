@@ -1,4 +1,4 @@
-# Install script for directory: /Users/rbq/AndroidStudioProjects/jzPrint/opencv/libcxx_helper
+# Install script for directory: /Users/rbq/AndroidStudioProjects/HalftoneAll/jzPrint/opencv/libcxx_helper
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -50,5 +50,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/Users/rbq/AndroidStudioProjects/jzPrint/opencv/.cxx/Debug/4i02kwe6/arm64-v8a/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/Users/rbq/AndroidStudioProjects/HalftoneAll/jzPrint/opencv/.cxx/Debug/4i02kwe6/arm64-v8a/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

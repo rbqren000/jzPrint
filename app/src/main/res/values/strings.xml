@@ -70,6 +70,8 @@
     <string name="config_wifi">Network Setup</string>
     <string name="connect_fail">Connection Failed</string>
     <string name="connect_success">Connection Successful</string>
+    <string name="syncing_data">Syncing data…</string>
+    <string name="syncing_complete">Syncing Complete</string>
     <string name="connect_timeout">Connection timed out</string>
     <string name="connecting">Connecting</string>
     <string name="copy_success">File Duplicated</string>

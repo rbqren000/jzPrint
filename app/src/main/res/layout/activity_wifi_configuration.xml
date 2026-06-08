@@ -188,7 +188,7 @@
 
 			<!-- 添加空白的View 让整体适当上移 -->
 			<View android:layout_width="match_parent"
-				android:layout_height="@dimen/dimen_100dp" />
+				android:layout_height="@dimen/dimen_250dp" />
 
 		</LinearLayout>
 

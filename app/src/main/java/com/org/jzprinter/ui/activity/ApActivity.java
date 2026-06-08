@@ -302,6 +302,7 @@ public class ApActivity extends BaseActivity{
 
 		ConnectManager.share().registerConnModelDiscoverListeners(onConnModelDiscoverListener);
 		ConnectManager.share().registerDeviceConnectListener(onDeviceConnectListener);
+		ConnectManager.share().registerDataSynchronizeListener(onDataSynchronizeListener);
 
 		conditionManager.addChecker(new ConditionCheckerImpl(conditionManager, bluetoothIsOpenAction));
 		conditionManager.addChecker(new ConditionCheckerImpl(conditionManager, bluetoothAction));
@@ -354,20 +355,18 @@ public class ApActivity extends BaseActivity{
 
 		@Override
 		public void onDeviceConnectSucceed(Device device) {
-			//连接成功后关闭页面
+			//连接成功后等待数据同步
 			RBQLog.i("AP设备连接成功");
-
-			progressDialog.dismiss();
-
 			//显示连接成功提示
 			showToast(getString(R.string.connect_success));
-
+			//关闭连接进度，延迟重新弹出同步进度
+			progressDialog.dismiss();
 			mHandler.postDelayed(new Runnable() {
 				@Override
 				public void run() {
-					RBQAppManager.share().killCurrentWithNavigateToActivity(backClassName);
+					progressDialog.show(ApActivity.this, "", getString(R.string.syncing_data));
 				}
-			},200);
+			}, 2000);
 		}
 
 		@Override
@@ -474,6 +473,45 @@ public class ApActivity extends BaseActivity{
 		super.onDestroy();
 		ConnectManager.share().unregisterConnModelDiscoverListeners(onConnModelDiscoverListener);
 		ConnectManager.share().unregisterDeviceConnectListener(onDeviceConnectListener);
+		ConnectManager.share().unregisterDataSynchronizeListener(onDataSynchronizeListener);
 	}
+
+	private final ConnectManager.OnDataSynchronizeListener onDataSynchronizeListener = new ConnectManager.OnDataSynchronizeListener() {
+		@Override
+		public void onDataSynchronizeStart(Device device) {
+			RBQLog.i("AP数据同步开始");
+		}
+
+		@Override
+		public void onDataSynchronizeComplete(Device device) {
+			RBQLog.i("AP数据同步完成");
+			progressDialog.dismiss();
+			showToast(getString(R.string.syncing_complete));
+			mHandler.postDelayed(new Runnable() {
+				@Override
+				public void run() {
+					RBQAppManager.share().killCurrentWithNavigateToActivity(backClassName);
+				}
+			}, 200);
+		}
+
+		@Override
+		public void onDataSynchronizeTimeout(Device device, int pendingCount) {
+			RBQLog.i("AP数据同步超时, pendingCount:" + pendingCount);
+			progressDialog.dismiss();
+			mHandler.postDelayed(new Runnable() {
+				@Override
+				public void run() {
+					RBQAppManager.share().killCurrentWithNavigateToActivity(backClassName);
+				}
+			}, 200);
+		}
+
+		@Override
+		public void onDataSynchronizeInterrupted(Device device) {
+			RBQLog.i("AP数据同步被中断");
+			progressDialog.dismiss();
+		}
+	};
 
 }

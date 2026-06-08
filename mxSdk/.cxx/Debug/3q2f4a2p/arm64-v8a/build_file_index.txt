@@ -1,1 +1,1 @@
-/Users/rbq/AndroidStudioProjects/jzPrint/mxSdk/src/main/cpp/CMakeLists.txt
+/Users/rbq/AndroidStudioProjects/HalftoneAll/jzPrint/mxSdk/src/main/cpp/CMakeLists.txt

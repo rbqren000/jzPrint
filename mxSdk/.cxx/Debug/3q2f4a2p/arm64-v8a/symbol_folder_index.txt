@@ -1,1 +1,1 @@
-/Users/rbq/AndroidStudioProjects/jzPrint/mxSdk/build/intermediates/cxx/Debug/3q2f4a2p/obj/arm64-v8a
+/Users/rbq/AndroidStudioProjects/HalftoneAll/jzPrint/mxSdk/build/intermediates/cxx/Debug/3q2f4a2p/obj/arm64-v8a

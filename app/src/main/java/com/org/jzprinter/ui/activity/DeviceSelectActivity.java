@@ -86,6 +86,7 @@ public class DeviceSelectActivity extends BaseActivity implements ConnectManager
 	private volatile ConnModel willConnectModel;
 
 	private final Handler timeOutHandler = new Handler(Looper.getMainLooper());
+	private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
 	private final ConditionManager conditionManager = new ConditionManager();
 	private final ActivityResultLauncher<Intent> gpsActivityResultLauncher = registerForActivityResult(
@@ -233,6 +234,7 @@ public class DeviceSelectActivity extends BaseActivity implements ConnectManager
 		ConnectManager.share().registerConnModelDiscoverListeners(onConnModelDiscoverListener);
 		ConnectManager.share().registerDeviceDiscoverListener(onDeviceDiscoverListener);//wifi配网device及spp蓝牙device
 		ConnectManager.share().registerDeviceConnectListener(onDeviceConnectListener);
+		ConnectManager.share().registerDataSynchronizeListener(onDataSynchronizeListener);
 
 		localStartScanning();
 	}
@@ -246,6 +248,7 @@ public class DeviceSelectActivity extends BaseActivity implements ConnectManager
 		ConnectManager.share().unregisterConnModelDiscoverListeners(onConnModelDiscoverListener);
 		ConnectManager.share().unregisterDeviceDiscoverListener(onDeviceDiscoverListener);
 		ConnectManager.share().unregisterDeviceConnectListener(onDeviceConnectListener);
+		ConnectManager.share().unregisterDataSynchronizeListener(onDataSynchronizeListener);
 
 		localStopScanningWithClear();
 
@@ -254,6 +257,11 @@ public class DeviceSelectActivity extends BaseActivity implements ConnectManager
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
+
+		// 清理 Handler 延迟任务，防止 Activity 销毁后弹 Dialog 导致 BadTokenException
+		mainHandler.removeCallbacksAndMessages(null);
+		timeOutHandler.removeCallbacksAndMessages(null);
+		progressDialog.dismiss();
 
 		ConnectManager.share().unregisterReceiveMessageListener(this);
 	}
@@ -670,13 +678,22 @@ public class DeviceSelectActivity extends BaseActivity implements ConnectManager
 
 			clearWillConnectModel();
 
-			dismissConnectingProgress();
+			// 显示连接成功提示
 			showToast(getString(R.string.connect_success), AppCompatResources.getDrawable(DeviceSelectActivity.this,R.mipmap.ic_check_blue));
 
 			RBQLog.i("保存的自动连接的device:"+device);
 			//连接成功后，记录下mac，下次可以自动连接
 			ParameterManager.saveDevice(DeviceSelectActivity.this,device);
 			refreshDeviceListView();
+
+			// 关闭连接进度，延迟重新弹出同步进度
+			dismissConnectingProgress();
+			mainHandler.postDelayed(new Runnable() {
+				@Override
+				public void run() {
+					progressDialog.show(DeviceSelectActivity.this, "", getString(R.string.syncing_data));
+				}
+			}, 2000);
 		}
 		
 		@Override
@@ -849,6 +866,32 @@ public class DeviceSelectActivity extends BaseActivity implements ConnectManager
 		}
 		return null;
 	}
+
+	private final ConnectManager.OnDataSynchronizeListener onDataSynchronizeListener = new ConnectManager.OnDataSynchronizeListener() {
+		@Override
+		public void onDataSynchronizeStart(Device device) {
+			RBQLog.i("设备选择页-数据同步开始");
+		}
+
+		@Override
+		public void onDataSynchronizeComplete(Device device) {
+			RBQLog.i("设备选择页-数据同步完成");
+			dismissConnectingProgress();
+			showToast(getString(R.string.syncing_complete), AppCompatResources.getDrawable(DeviceSelectActivity.this,R.mipmap.ic_check_blue));
+		}
+
+		@Override
+		public void onDataSynchronizeTimeout(Device device, int pendingCount) {
+			RBQLog.i("设备选择页-数据同步超时, pendingCount:" + pendingCount);
+			dismissConnectingProgress();
+		}
+
+		@Override
+		public void onDataSynchronizeInterrupted(Device device) {
+			RBQLog.i("设备选择页-数据同步被中断");
+			dismissConnectingProgress();
+		}
+	};
 
 	@Override
 	public void onReadPrinterHeadParameter(Device device, int headValue, int l_pix, int p_pix, int distance) {

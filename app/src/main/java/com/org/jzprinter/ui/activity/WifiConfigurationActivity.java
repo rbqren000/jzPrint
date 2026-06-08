@@ -115,6 +115,7 @@ public class WifiConfigurationActivity extends BaseActivity{
 		
 		ConnectManager.share().registerDistributionNetworkListener(onDistributionNetworkListener);
 		ConnectManager.share().registerDeviceConnectListener(onDeviceConnectListener);
+		ConnectManager.share().registerDataSynchronizeListener(onDataSynchronizeListener);
 		binding.etWifi.addCustomTextWatcher(new TextWatcher() {
 			@Override
 			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -301,19 +302,20 @@ public class WifiConfigurationActivity extends BaseActivity{
 		@Override
 		public void onDeviceConnectSucceed(Device device) {
 
-			progressDialog.dismiss();
-
+			// 显示连接成功提示
 			showToast(getString(R.string.connect_success), AppCompatResources.getDrawable(WifiConfigurationActivity.this,R.mipmap.ic_check_blue));
 
 			//连接成功后，记录下mac，下次可以自动连接
 			ParameterManager.saveDevice(WifiConfigurationActivity.this,device);
 
+			// 关闭连接进度，延迟重新弹出同步进度
+			progressDialog.dismiss();
 			mainHandler.postDelayed(new Runnable() {
 				@Override
 				public void run() {
-					RBQAppManager.share().killCurrentWithNavigateToActivity(backClassName);
+					progressDialog.show(WifiConfigurationActivity.this, "", getString(R.string.syncing_data));
 				}
-			},300);
+			}, 2000);
 		}
 		
 		@Override
@@ -415,7 +417,7 @@ public class WifiConfigurationActivity extends BaseActivity{
 					//自动连接
 					ConnectManager.share().connect(device);
 				}
-			}, 2000);
+			}, 1500);
 			
 		}
 		
@@ -524,6 +526,45 @@ public class WifiConfigurationActivity extends BaseActivity{
 		super.onDestroy();
 		ConnectManager.share().unregisterDistributionNetworkListener(onDistributionNetworkListener);
 		ConnectManager.share().unregisterDeviceConnectListener(onDeviceConnectListener);
+		ConnectManager.share().unregisterDataSynchronizeListener(onDataSynchronizeListener);
 	}
+
+	private final ConnectManager.OnDataSynchronizeListener onDataSynchronizeListener = new ConnectManager.OnDataSynchronizeListener() {
+		@Override
+		public void onDataSynchronizeStart(Device device) {
+			RBQLog.i("配网-数据同步开始");
+		}
+
+		@Override
+		public void onDataSynchronizeComplete(Device device) {
+			RBQLog.i("配网-数据同步完成");
+			progressDialog.dismiss();
+			showToast(getString(R.string.syncing_complete), AppCompatResources.getDrawable(WifiConfigurationActivity.this,R.mipmap.ic_check_blue));
+			mainHandler.postDelayed(new Runnable() {
+				@Override
+				public void run() {
+					RBQAppManager.share().killCurrentWithNavigateToActivity(backClassName);
+				}
+			}, 300);
+		}
+
+		@Override
+		public void onDataSynchronizeTimeout(Device device, int pendingCount) {
+			RBQLog.i("配网-数据同步超时, pendingCount:" + pendingCount);
+			progressDialog.dismiss();
+			mainHandler.postDelayed(new Runnable() {
+				@Override
+				public void run() {
+					RBQAppManager.share().killCurrentWithNavigateToActivity(backClassName);
+				}
+			}, 300);
+		}
+
+		@Override
+		public void onDataSynchronizeInterrupted(Device device) {
+			RBQLog.i("配网-数据同步被中断");
+			progressDialog.dismiss();
+		}
+	};
 
 }

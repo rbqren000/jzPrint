@@ -23,7 +23,7 @@ rule CUSTOM_COMMAND
 # Rule for re-running cmake.
 
 rule RERUN_CMAKE
-  command = /Users/rbq/Library/Android/sdk/cmake/3.22.1/bin/cmake --regenerate-during-build -S/Users/rbq/AndroidStudioProjects/jzPrint/mxSdk/src/main/cpp -B/Users/rbq/AndroidStudioProjects/jzPrint/mxSdk/.cxx/Debug/3q2f4a2p/arm64-v8a
+  command = /Users/rbq/Library/Android/sdk/cmake/3.22.1/bin/cmake --regenerate-during-build -S/Users/rbq/AndroidStudioProjects/HalftoneAll/jzPrint/mxSdk/src/main/cpp -B/Users/rbq/AndroidStudioProjects/HalftoneAll/jzPrint/mxSdk/.cxx/Debug/3q2f4a2p/arm64-v8a
   description = Re-running CMake...
   generator = 1
 
