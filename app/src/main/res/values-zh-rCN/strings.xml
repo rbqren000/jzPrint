@@ -130,6 +130,14 @@
     <string name="title_notice">提示</string>
     <string name="msg_connect_printer_first">请先连接打印机</string>
     <string name="btn_go_connect">去连接</string>
+    <string name="btn_scan">扫码</string>
+    <string name="scan_camera">扫描二维码</string>
+    <string name="scan_gallery">从相册选择</string>
+    <string name="scan_invalid_code">无效二维码</string>
+    <string name="scan_camera_error">无法打开相机</string>
+    <string name="scan_decode_failed">图片识别失败</string>
+    <string name="scan_hint">将二维码放入框内，即可自动扫描</string>
+    <string name="main_scan_to_print">扫描二维码开始打印</string>
     <string name="language_chinese">中文</string>
     <string name="language_english">English</string>
     <string name="error_split_image_failed">分割图片失败: </string>

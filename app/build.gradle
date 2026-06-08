@@ -25,11 +25,13 @@ android {
     buildTypes {
         debug {
             buildConfigField "String", "API_BASE_URL", "\"https://api.jzprinter.com\""
+            buildConfigField "boolean", "USE_DEV_SCHOOL", "true"
         }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             buildConfigField "String", "API_BASE_URL", "\"https://api.jzprinter.com\""
+            buildConfigField "boolean", "USE_DEV_SCHOOL", "false"
         }
     }
     compileOptions {
@@ -60,6 +62,7 @@ dependencies {
     }
     implementation 'com.github.kongzue:BaseJson:1.2.7'
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'com.github.jenly1314:zxing-lite:3.3.0'
 
     def room_version = "2.6.1"
     implementation "androidx.room:room-runtime:$room_version"

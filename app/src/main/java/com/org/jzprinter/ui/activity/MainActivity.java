@@ -1,19 +1,29 @@
 package com.org.jzprinter.ui.activity;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-
+import android.widget.Toast;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.activity.OnBackPressedCallback;
 import androidx.core.view.GravityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.zxing.BinaryBitmap;
+import com.google.zxing.DecodeHintType;
+import com.google.zxing.MultiFormatReader;
+import com.google.zxing.NotFoundException;
+import com.google.zxing.RGBLuminanceSource;
+import com.google.zxing.Result;
+import com.google.zxing.common.HybridBinarizer;
 import com.mx.mxSdk.ConnectManager;
+import com.org.jzprinter.BuildConfig;
 import com.org.jzprinter.R;
 import com.org.jzprinter.database.AppDatabase;
 import com.org.jzprinter.database.entity.PrintTaskEntity;
@@ -27,6 +37,7 @@ import com.org.jzprinter.print.StorageManager;
 import com.org.jzprinter.ui.adapter.TaskCardAdapter;
 import com.org.jzprinter.utils.Storage.PreferencesUtils;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Locale;
 
@@ -40,11 +51,16 @@ public class MainActivity extends BaseActivity {
     private TaskCardAdapter taskCardAdapter;
     private boolean hasCheckedResumableOnStartup = false;
 
+    private ActivityResultLauncher<Intent> scanCameraLauncher;
+    private ActivityResultLauncher<String> scanGalleryLauncher;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        registerScanLaunchers();
 
         initViews();
         ensureDevSchoolId();
@@ -57,7 +73,19 @@ public class MainActivity extends BaseActivity {
         super.onResume();
         refreshTokenIfNeeded();
         updateDeviceState();
+        updateEditionEntry();
         updateTaskCards();
+    }
+
+    /** Release 模式下根据是否有 schoolId 切换入口 */
+    private void updateEditionEntry() {
+        if (BuildConfig.USE_DEV_SCHOOL) return;
+
+        String schoolId = PreferencesUtils.getString(this, PREFS_KEY_SCHOOL_ID, "");
+        boolean empty = schoolId.isEmpty();
+        binding.tvEditionEntry.setVisibility(empty ? View.GONE : View.VISIBLE);
+        binding.dividerEntry.setVisibility(empty ? View.GONE : View.VISIBLE);
+        binding.llEmptyGuide.setVisibility(empty ? View.VISIBLE : View.GONE);
     }
 
     /** 每次回到 MainActivity 异步刷新 token，保证不会使用过期凭证 */
@@ -77,6 +105,7 @@ public class MainActivity extends BaseActivity {
     }
 
     private void ensureDevSchoolId() {
+        if (!BuildConfig.USE_DEV_SCHOOL) return;
         String current = PreferencesUtils.getString(this, PREFS_KEY_SCHOOL_ID, "");
         if (current.isEmpty()) {
             PreferencesUtils.putString(this, PREFS_KEY_SCHOOL_ID, AuthConfig.DEV_SCHOOL_ID);
@@ -103,6 +132,8 @@ public class MainActivity extends BaseActivity {
 
         binding.tvDeviceState.setOnClickListener(v -> openDeviceSelect());
 
+        binding.ivScan.setOnClickListener(v -> showScanOptions());
+
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -119,9 +150,12 @@ public class MainActivity extends BaseActivity {
     private void initContentViews() {
         binding.tvEditionEntry.setOnClickListener(v -> {
             String schoolId = PreferencesUtils.getString(this, PREFS_KEY_SCHOOL_ID, "");
-            android.util.Log.d("MainActivity", "tvEditionEntry click: schoolId=" + schoolId);
             if (schoolId.isEmpty()) {
-                showNoSchoolIdHint();
+                if (BuildConfig.USE_DEV_SCHOOL) {
+                    showNoSchoolIdHint();
+                } else {
+                    showScanOptions();
+                }
                 return;
             }
             startActivity(SchoolHomeworkListActivity.newIntent(this, schoolId));
@@ -369,6 +403,108 @@ public class MainActivity extends BaseActivity {
             return false;
         }
         return true;
+    }
+
+    // ==================== 扫码功能 ====================
+
+    private void registerScanLaunchers() {
+        scanCameraLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    String content = result.getData().getStringExtra(ScanActivity.EXTRA_RESULT);
+                    handleScanResult(content);
+                }
+            });
+
+        scanGalleryLauncher = registerForActivityResult(
+            new ActivityResultContracts.GetContent(),
+            uri -> {
+                if (uri != null) {
+                    decodeImageUri(uri);
+                }
+            });
+    }
+
+    private void showScanOptions() {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View view = getLayoutInflater().inflate(R.layout.bottom_sheet_scan, null);
+
+        view.findViewById(R.id.tvScanCamera).setOnClickListener(v -> {
+            dialog.dismiss();
+            startCameraScan();
+        });
+        view.findViewById(R.id.tvScanGallery).setOnClickListener(v -> {
+            dialog.dismiss();
+            scanGalleryLauncher.launch("image/*");
+        });
+
+        dialog.setContentView(view);
+        dialog.show();
+    }
+
+    private void startCameraScan() {
+        Intent intent = new Intent(this, ScanActivity.class);
+        scanCameraLauncher.launch(intent);
+    }
+
+    private void decodeImageUri(Uri uri) {
+        try {
+            InputStream is = getContentResolver().openInputStream(uri);
+            if (is == null) {
+                Toast.makeText(this, R.string.scan_decode_failed, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Bitmap bitmap = BitmapFactory.decodeStream(is);
+            is.close();
+
+            if (bitmap == null) {
+                Toast.makeText(this, R.string.scan_decode_failed, Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String result = decodeBitmap(bitmap);
+            bitmap.recycle();
+            handleScanResult(result);
+        } catch (Exception e) {
+            Toast.makeText(this, R.string.scan_decode_failed, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Nullable
+    private String decodeBitmap(Bitmap bitmap) {
+        int[] pixels = new int[bitmap.getWidth() * bitmap.getHeight()];
+        bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
+
+        RGBLuminanceSource source = new RGBLuminanceSource(bitmap.getWidth(), bitmap.getHeight(), pixels);
+        BinaryBitmap binaryBitmap = new BinaryBitmap(new HybridBinarizer(source));
+
+        try {
+            MultiFormatReader reader = new MultiFormatReader();
+            reader.setHints(new java.util.EnumMap<>(java.util.Map.of(
+                DecodeHintType.POSSIBLE_FORMATS, java.util.Collections.singletonList(
+                    com.google.zxing.BarcodeFormat.QR_CODE))));
+            Result result = reader.decode(binaryBitmap);
+            return result.getText();
+        } catch (NotFoundException e) {
+            return null;
+        }
+    }
+
+    private void handleScanResult(@Nullable String content) {
+        if (content == null || content.isEmpty()) {
+            Toast.makeText(this, R.string.scan_invalid_code, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (!content.startsWith("jzprint://share")) {
+            Toast.makeText(this, R.string.scan_invalid_code, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(content));
+        intent.setClass(this, DeepLinkActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
     }
 
     @Override

@@ -48,6 +48,21 @@
                 android:maxLines="1"
                 android:ellipsize="end" />
 
+            <ImageView
+                android:id="@+id/ivScan"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_qr_scan"
+                android:layout_toStartOf="@id/tvDeviceState"
+                android:layout_centerVertical="true"
+                android:padding="12dp"
+                android:scaleType="centerInside"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="@string/btn_scan"
+                app:tint="?attr/app_bar_icon_color" />
+
             <TextView
                 android:id="@+id/tvDeviceState"
                 android:layout_width="wrap_content"
@@ -101,11 +116,40 @@
                     android:gravity="center_vertical" />
 
                 <View
+                    android:id="@+id/dividerEntry"
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:layout_marginTop="4dp"
                     android:layout_marginBottom="4dp"
                     android:background="?attr/divider_color" />
+
+                <LinearLayout
+                    android:id="@+id/llEmptyGuide"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:paddingTop="80dp"
+                    android:paddingBottom="32dp"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:src="@drawable/ic_qr_scan"
+                        android:alpha="0.25"
+                        android:layout_marginBottom="16dp"
+                        app:tint="?attr/icon_color" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/main_scan_to_print"
+                        android:textSize="16sp"
+                        android:textColor="?attr/icon_color"
+                        android:alpha="0.6" />
+
+                </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/llUnfinishedEntry"

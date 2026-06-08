@@ -132,6 +132,14 @@
     <string name="title_notice">Notice</string>
     <string name="msg_connect_printer_first">Please connect to printer first</string>
     <string name="btn_go_connect">Connect</string>
+    <string name="btn_scan">Scan</string>
+    <string name="scan_camera">Scan QR Code</string>
+    <string name="scan_gallery">Choose from Gallery</string>
+    <string name="scan_invalid_code">Invalid QR code</string>
+    <string name="scan_camera_error">Failed to open camera</string>
+    <string name="scan_decode_failed">Failed to decode image</string>
+    <string name="scan_hint">Place the QR code within the frame to scan automatically</string>
+    <string name="main_scan_to_print">Scan QR Code to Print</string>
     <string name="language_chinese">中文</string>
     <string name="language_english">English</string>
     <string name="error_split_image_failed">Split image failed: </string>
