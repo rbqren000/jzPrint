@@ -15,13 +15,6 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.core.view.GravityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.google.zxing.BinaryBitmap;
-import com.google.zxing.DecodeHintType;
-import com.google.zxing.MultiFormatReader;
-import com.google.zxing.NotFoundException;
-import com.google.zxing.RGBLuminanceSource;
-import com.google.zxing.Result;
-import com.google.zxing.common.HybridBinarizer;
 import com.mx.mxSdk.ConnectManager;
 import com.org.jzprinter.BuildConfig;
 import com.org.jzprinter.R;
@@ -463,31 +456,11 @@ public class MainActivity extends BaseActivity {
                 return;
             }
 
-            String result = decodeBitmap(bitmap);
+            String result = com.king.zxing.util.CodeUtils.parseCode(bitmap, com.king.zxing.DecodeFormatManager.QR_CODE_HINTS);
             bitmap.recycle();
             handleScanResult(result);
         } catch (Exception e) {
             Toast.makeText(this, R.string.scan_decode_failed, Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    @Nullable
-    private String decodeBitmap(Bitmap bitmap) {
-        int[] pixels = new int[bitmap.getWidth() * bitmap.getHeight()];
-        bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
-
-        RGBLuminanceSource source = new RGBLuminanceSource(bitmap.getWidth(), bitmap.getHeight(), pixels);
-        BinaryBitmap binaryBitmap = new BinaryBitmap(new HybridBinarizer(source));
-
-        try {
-            MultiFormatReader reader = new MultiFormatReader();
-            reader.setHints(new java.util.EnumMap<>(java.util.Map.of(
-                DecodeHintType.POSSIBLE_FORMATS, java.util.Collections.singletonList(
-                    com.google.zxing.BarcodeFormat.QR_CODE))));
-            Result result = reader.decode(binaryBitmap);
-            return result.getText();
-        } catch (NotFoundException e) {
-            return null;
         }
     }
 

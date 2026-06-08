@@ -139,7 +139,8 @@
     <string name="scan_camera_error">Failed to open camera</string>
     <string name="scan_decode_failed">Failed to decode image</string>
     <string name="scan_hint">Place the QR code within the frame to scan automatically</string>
-    <string name="main_scan_to_print">Scan QR Code to Print</string>
+    <string name="main_scan_title">Scan to Print</string>
+    <string name="main_scan_subtitle">Get QR code from mini program or web</string>
     <string name="language_chinese">中文</string>
     <string name="language_english">English</string>
     <string name="error_split_image_failed">Split image failed: </string>
