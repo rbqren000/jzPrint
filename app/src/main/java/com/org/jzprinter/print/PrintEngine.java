@@ -53,6 +53,8 @@ public class PrintEngine {
     private volatile boolean isReprintMode = false;
     private volatile int reprintTargetPuzzleIndex = -1;
 
+    private int currentTotalPages = 0;
+
     private PrintEngine(Context context, PrintTaskRepository taskRepo,
                          MaterialLoader materialLoader) {
         this.context = context.getApplicationContext();
@@ -255,6 +257,7 @@ public class PrintEngine {
 
     private void buildAndSendMultiRow(String pagesPath, List<Integer> remainingPages) {
         int totalPages = remainingPages.size();
+        currentTotalPages = totalPages;
         Log.d(TAG, "[buildAndSendMultiRow] START totalPages=" + totalPages
             + " cancelled=" + cancelled.get());
         if (phaseCallback != null) {
@@ -390,13 +393,16 @@ public class PrintEngine {
             public void onDataProgressStart(float size, int progress, long startTime) {
                 Log.d(TAG, "[sendToPrinter] onDataProgressStart size=" + size + " progress=" + progress);
                 if (progressManager != null) progressManager.onDataTransferStart(size);
-                if (phaseCallback != null) phaseCallback.onDataTransferStart(size);
+                if (phaseCallback != null) phaseCallback.onDataTransferStart(size, currentTotalPages);
             }
 
             @Override
             public void onDataProgress(float size, int progress, long startTime, long currentTime) {
                 if (progressManager != null) progressManager.onDataTransferProgress(progress);
-                if (phaseCallback != null) phaseCallback.onDataTransferProgress(progress);
+                if (phaseCallback != null) {
+                    long elapsedMs = currentTime - startTime;
+                    phaseCallback.onDataTransferProgress(progress, elapsedMs);
+                }
             }
 
             @Override
@@ -405,7 +411,7 @@ public class PrintEngine {
                 if (progressManager != null) progressManager.onDataTransferComplete();
                 if (phaseCallback != null) {
                     phaseCallback.onPhaseChanged(PrintPhaseCallback.Phase.PRINT);
-                    phaseCallback.onDataTransferComplete();
+                    phaseCallback.onDataTransferComplete(startTime, currentTime);
                 }
             }
 

@@ -327,8 +327,12 @@ public class PrintModeSelectActivity extends BaseActivity {
             new android.app.AlertDialog.Builder(this)
                 .setTitle(R.string.main_no_printer_title)
                 .setMessage(R.string.select_pages_connect_first)
-                .setPositiveButton(R.string.btn_go_connect, (d, w) ->
-                    startActivity(new Intent(this, DeviceSelectActivity.class)))
+                .setPositiveButton(R.string.btn_go_connect, (d, w) -> {
+                    Intent intent = new Intent(this, DeviceSelectActivity.class);
+                    intent.putExtra(com.org.jzprinter.constant.Constant.KEY_INTENT_EXTRA_BACK_CLASS_NAME, 
+                        PrintModeSelectActivity.class.getName());
+                    startActivity(intent);
+                })
                 .setNegativeButton(R.string.dialog_cancel, null)
                 .show();
             return false;

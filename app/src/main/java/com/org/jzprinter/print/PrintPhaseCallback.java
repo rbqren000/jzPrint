@@ -17,11 +17,11 @@ public interface PrintPhaseCallback {
 
     void onPrepareComplete();
 
-    void onDataTransferStart(float totalSize);
+    void onDataTransferStart(float totalSize, int totalPages);
 
-    void onDataTransferProgress(int percentage);
+    void onDataTransferProgress(int percentage, long elapsedMs);
 
-    void onDataTransferComplete();
+    void onDataTransferComplete(long startTime, long endTime);
 
     void onPhysicalPrintStart(int totalPages);
 

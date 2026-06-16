@@ -66,6 +66,9 @@ public class PrintProgressActivity extends BaseActivity {
     private int prepareTotal = 0;
     private int printTotal = 0;
 
+    private float currentTransferSize = 0;
+    private int currentTransferPages = 0;
+
     public static Intent newIntent(Context context, String schoolId, String editionId,
                                    String targetId, String targetName, int editionType,
                                    int printMode, String pagesPath, long taskId,
@@ -147,27 +150,39 @@ public class PrintProgressActivity extends BaseActivity {
         }
 
         @Override
-        public void onDataTransferStart(float totalSize) {
+        public void onDataTransferStart(float totalSize, int totalPages) {
+            currentTransferSize = totalSize;
+            currentTransferPages = totalPages;
             String sizeStr = formatSize(totalSize);
             rbqRunOnUiThread(() -> {
                 binding.pbTransfer.setProgress(0);
-                binding.tvTransferStatus.setText(getString(R.string.progress_transfer_with_size, sizeStr));
+                binding.tvTransferStatus.setText(getString(R.string.progress_transfer_start, totalPages, sizeStr));
+                binding.tvTransferDetails.setVisibility(View.VISIBLE);
             });
         }
 
         @Override
-        public void onDataTransferProgress(int percentage) {
+        public void onDataTransferProgress(int percentage, long elapsedMs) {
+            String sizeStr = formatSize(currentTransferSize);
+            String elapsedStr = formatElapsed(elapsedMs);
             rbqRunOnUiThread(() -> {
                 binding.pbTransfer.setProgress(percentage);
-                binding.tvTransferStatus.setText(getString(R.string.progress_transfer_pct, percentage));
+                binding.tvTransferStatus.setText(getString(R.string.progress_transfer_progress, percentage, currentTransferPages, sizeStr));
+                binding.tvTransferDetails.setText(getString(R.string.progress_transfer_elapsed, elapsedStr));
             });
         }
 
         @Override
-        public void onDataTransferComplete() {
+        public void onDataTransferComplete(long startTime, long endTime) {
+            long elapsedMs = endTime - startTime;
+            String startTimeStr = formatTime(startTime);
+            String endTimeStr = formatTime(endTime);
+            String elapsedStr = formatElapsed(elapsedMs);
+            String sizeStr = formatSize(currentTransferSize);
             rbqRunOnUiThread(() -> {
                 binding.pbTransfer.setProgress(100);
-                binding.tvTransferStatus.setText(R.string.progress_transfer_done);
+                binding.tvTransferStatus.setText(getString(R.string.progress_transfer_done_with_size, currentTransferPages, sizeStr));
+                binding.tvTransferDetails.setText(getString(R.string.progress_transfer_complete_time, startTimeStr, endTimeStr, elapsedStr));
                 binding.tvStatus.setText(R.string.progress_wait_user);
                 setPhaseActive(2);
             });
@@ -891,10 +906,24 @@ public class PrintProgressActivity extends BaseActivity {
         }
     }
 
-    private String formatSize(float bytes) {
-        if (bytes < 1024) return String.format(Locale.US, getString(R.string.size_byte), bytes);
-        if (bytes < 1024 * 1024) return String.format(Locale.US, getString(R.string.size_kb), bytes / 1024);
-        return String.format(Locale.US, getString(R.string.size_mb), bytes / (1024 * 1024));
+    private String formatSize(float sizeInKB) {
+        if (sizeInKB < 1) {
+            return String.format(Locale.US, getString(R.string.size_byte), sizeInKB * 1000);
+        } else if (sizeInKB < 1024) {
+            return String.format(Locale.US, getString(R.string.size_kb), sizeInKB);
+        } else {
+            return String.format(Locale.US, getString(R.string.size_mb), sizeInKB / 1024);
+        }
+    }
+
+    private String formatTime(long timestamp) {
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm:ss", Locale.US);
+        return sdf.format(new java.util.Date(timestamp));
+    }
+
+    private String formatElapsed(long ms) {
+        float seconds = ms / 1000.0f;
+        return String.format(Locale.US, "%.1fs", seconds);
     }
 
     @Override
