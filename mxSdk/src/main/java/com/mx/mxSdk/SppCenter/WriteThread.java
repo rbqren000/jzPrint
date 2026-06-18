@@ -4,8 +4,9 @@ import com.mx.mxSdk.CommandContext;
 import com.mx.mxSdk.DataObjContext;
 import com.mx.mxSdk.Utils.RBQLog;
 import java.io.OutputStream;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 import tp.xmaihh.serialport.utils.ByteUtil;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -13,7 +14,8 @@ public class WriteThread implements Runnable {
 
     public static final String TAG = WriteThread.class.getSimpleName();
 
-    protected final Queue<Object> dataQueue = new ConcurrentLinkedQueue<>();
+    // 使用 BlockingQueue 替代 ConcurrentLinkedQueue，消除忙等待
+    private final BlockingQueue<Object> dataQueue = new LinkedBlockingQueue<>();
     private final AtomicBoolean isStart = new AtomicBoolean(false);
     private OutputStream outputStream;
 
@@ -22,7 +24,6 @@ public class WriteThread implements Runnable {
     private Thread heartbeatThread;
     private final AtomicBoolean isHeartbeatRunning = new AtomicBoolean(false);
     private float heartbeatInterval = 1.0f; // 心跳时间间隔，单位秒
-    private long lastHeartBeatTime = 0; // 上次心跳包发送时间戳
     private long lastDataSentTime = 0; // 上次发送数据时间戳
 
     private final byte[] heartbeatData = new byte[]{0x00};
@@ -84,17 +85,25 @@ public class WriteThread implements Runnable {
     public void run() {
 
         while (isStart.get() && outputStream != null) {
-            long currentTime = System.currentTimeMillis();
-            boolean isHeartbeat = isHeartbeatRunning.get();
-            boolean timeSinceSendData = currentTime - lastDataSentTime >= 1;
-            boolean timeSinceSendHeartBeat = isHeartbeat && currentTime - lastHeartBeatTime >= 20;
-
-            if ((!isHeartbeat && timeSinceSendData) || (timeSinceSendHeartBeat && timeSinceSendData)) {
-                Object obj = dataQueue.poll();
-                if (obj != null) {
-                    localWrite(obj);
-                    lastDataSentTime = currentTime;
+            try {
+                // 阻塞等待队列中的数据，最多等 500ms（兼顾及时响应 stop 信号）
+                Object obj = dataQueue.poll(500, TimeUnit.MILLISECONDS);
+                if (obj == null) {
+                    continue; // 超时，重新检查 isStart 状态
                 }
+
+                // 速率控制：确保连续发包间隔至少 1ms（保留原有保护逻辑）
+                long elapsed = System.currentTimeMillis() - lastDataSentTime;
+                if (elapsed < 1) {
+                    Thread.sleep(1 - elapsed);
+                }
+
+                localWrite(obj);
+                lastDataSentTime = System.currentTimeMillis();
+
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
             }
         }
     }
@@ -142,6 +151,11 @@ public class WriteThread implements Runnable {
         }
     }
 
+    /**
+     * 启动心跳。
+     * 改由通过队列发送心跳包，避免心跳线程与写线程直接共享 OutputStream 的竞态问题。
+     * 心跳线程仅在队列为空时入队心跳包，不会打断正常数据流。
+     */
     public void startHeartbeat(float time) {
         stopHeartbeat();
 
@@ -151,25 +165,17 @@ public class WriteThread implements Runnable {
 
         heartbeatThread = new Thread(() -> {
             while (isHeartbeatRunning.get()) {
-
-                long currentTime = System.currentTimeMillis();
-                long timeSinceLastData = currentTime - lastDataSentTime;
-                long timeSinceLastHeart = currentTime - lastHeartBeatTime;
-
-                if (outputStream != null &&
-                        dataQueue.isEmpty() &&
-                        timeSinceLastHeart >= heartbeatInterval * 1000 &&
-                        timeSinceLastData >= heartbeatInterval * 1000) {
-                    try {
-                        outputStream.write(heartbeatData);
-                        outputStream.flush();
-                        lastHeartBeatTime = currentTime;
-//                        RBQLog.i("心跳包已发送");
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                try {
+                    ThreadUtils.sleepInterruptible(heartbeatInterval);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
                 }
-                ThreadUtils.sleep(heartbeatInterval);
+
+                // 仅在队列空闲时入队心跳包，避免占用数据传输带宽
+                if (dataQueue.isEmpty()) {
+                    dataQueue.add(heartbeatData);
+                }
             }
         });
         heartbeatThread.start();

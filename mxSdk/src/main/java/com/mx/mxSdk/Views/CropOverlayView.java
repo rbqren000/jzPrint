@@ -9,11 +9,8 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.Shader;
-import android.graphics.Xfermode;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ShapeDrawable;
@@ -45,9 +42,10 @@ public class CropOverlayView extends AppCompatImageView {
     private static final float MAGNIFIER_CROSS_LINE_LENGTH = 3; //dp， 放大镜十字长度
     private static final float MAGNIFIER_BORDER_WIDTH = 1; //dp，放大镜边框宽度
 
-    private static final int DEFAULT_LINE_COLOR = 0xFF00FFFF;
+    private static final int DEFAULT_LINE_COLOR = 0xFF2EA7E0;
+    private static final int DEFAULT_LINE_FAILURE_COLOR = Color.RED; // 凹四边形时的线条颜色
     private static final float DEFAULT_LINE_WIDTH = 1; //dp
-    private static final int DEFAULT_MASK_ALPHA = 86; // 0 - 255
+    private static final int DEFAULT_MASK_ALPHA = 128; // 0 - 255（50% 黑色，对齐 iOS）
     private static final int DEFAULT_MAGNIFIER_CROSS_COLOR = 0xFFFF4081;
     private static final float DEFAULT_GUIDE_LINE_WIDTH = 0.3f;//dp
     private static final int DEFAULT_GUIDE_LINE_COLOR = Color.WHITE;
@@ -70,7 +68,6 @@ public class CropOverlayView extends AppCompatImageView {
     private ShapeDrawable mMagnifierDrawable;
 
     private final float[] mMatrixValue = new float[9];
-    private final Xfermode porterDuffXfermode = new PorterDuffXfermode(PorterDuff.Mode.SRC_OUT);
     private final Path mPointLinePath = new Path();
     private final Matrix mMagnifierMatrix = new Matrix();
 
@@ -81,6 +78,7 @@ public class CropOverlayView extends AppCompatImageView {
     int mPointFillAlpha = DEFAULT_POINT_FILL_ALPHA; // 锚点填充颜色透明度
     int mPointSelectedColor = DEFAULT_POINT_SELECTED_COLOR; // 选中状态的锚点颜色
     int mLineColor = DEFAULT_LINE_COLOR; // 选区线的颜色
+    int mLineFailureColor = DEFAULT_LINE_FAILURE_COLOR; // 凹四边形时线条颜色
     int mMagnifierCrossColor = DEFAULT_MAGNIFIER_CROSS_COLOR; // 放大镜十字颜色
     int mGuideLineColor = DEFAULT_GUIDE_LINE_COLOR; // 辅助线颜色
     int mMaskAlpha = DEFAULT_MASK_ALPHA; //0 - 255, 蒙版透明度
@@ -230,6 +228,15 @@ public class CropOverlayView extends AppCompatImageView {
      */
     public void setLineColor(int lineColor) {
         this.mLineColor = lineColor;
+        invalidate();
+    }
+
+    /**
+     * 设置凹四边形时报错线条颜色
+     * @param lineFailureColor 颜色
+     */
+    public void setLineFailureColor(int lineFailureColor) {
+        this.mLineFailureColor = lineFailureColor;
         invalidate();
     }
 
@@ -436,15 +443,16 @@ public class CropOverlayView extends AppCompatImageView {
         }
         Path path = resetPointPath();
         if (path != null) {
-            int sc = canvas.saveLayer(mActLeft, mActTop, mActLeft + mActWidth, mActTop + mActHeight, mMaskPaint, Canvas.ALL_SAVE_FLAG);
+            int saveCount = canvas.save();
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                canvas.clipOutPath(path);
+            } else {
+                canvas.clipPath(path, android.graphics.Region.Op.DIFFERENCE);
+            }
             mMaskPaint.setAlpha(mMaskAlpha);
-
-            canvas.drawRect(mActLeft, mActTop, mActLeft + mActWidth, mActTop + mActHeight, mMaskPaint);
-            mMaskPaint.setXfermode(porterDuffXfermode);
-            mMaskPaint.setAlpha(255);
-            canvas.drawPath(path, mMaskPaint);
             mMaskPaint.setXfermode(null);
-            canvas.restoreToCount(sc);
+            canvas.drawRect(mActLeft, mActTop, mActLeft + mActWidth, mActTop + mActHeight, mMaskPaint);
+            canvas.restoreToCount(saveCount);
         }
     }
 
@@ -483,6 +491,8 @@ public class CropOverlayView extends AppCompatImageView {
     protected void onDrawLines(Canvas canvas) {
         Path path = resetPointPath();
         if (path != null) {
+            // 凹四边形时变红，对齐 iOS 的 lineFailureColor 行为
+            mLinePaint.setColor(canRightCrop() ? mLineColor : mLineFailureColor);
             canvas.drawPath(path, mLinePaint);
         }
     }

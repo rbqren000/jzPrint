@@ -46,6 +46,8 @@ import com.mx.mxSdk.BleCenter.gatt.callback.BleWriteCallback;
 import com.mx.mxSdk.BleCenter.scan.BleScanCallback;
 import org.json.JSONException;
 import org.json.JSONObject;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -1721,9 +1723,18 @@ public class ConnectManager implements BluetoothDiscoverUtils.OnBluetoothDeviceL
 		this.wifiSocket = socket;
 
 		try {
+			// ===== WiFi TCP 优化 =====
+			// 1. 关闭 Nagle 算法，小包立即发送不合并，消除可达 40ms 的延迟
+			this.wifiSocket.setTcpNoDelay(true);
+			// 2. 优先低延迟而非高带宽（连接时间=1, 延迟=0, 带宽=0）
+			this.wifiSocket.setPerformancePreferences(1, 0, 0);
+			// 3. 增大发送/接收缓冲区，减少大数据流时的阻塞
+			this.wifiSocket.setSendBufferSize(256 * 1024);
+			this.wifiSocket.setReceiveBufferSize(256 * 1024);
 
-			this.inputStream = this.wifiSocket.getInputStream();
-			this.outputStream = this.wifiSocket.getOutputStream();
+			// 4. 包裹 BufferedStream，减少每包 128 字节的系统调用开销
+			this.inputStream = new BufferedInputStream(this.wifiSocket.getInputStream(), 8192);
+			this.outputStream = new BufferedOutputStream(this.wifiSocket.getOutputStream(), 8192);
 
 			//启动数据读取线程
 			readThread.start(inputStream);
@@ -3145,7 +3156,8 @@ public class ConnectManager implements BluetoothDiscoverUtils.OnBluetoothDeviceL
 			return;
 		}
 
-		byte[] data = this.multiRowDataPacket.getNextPacket();
+		// 合并版：一步生成完整格式化数据，消除 getNextPacket() 中间临时数组分配
+		byte[] formatData = this.multiRowDataPacket.buildNextFormattedPacket();
 
 		multiRowDataPacket.currentTime = System.currentTimeMillis();
 
@@ -3156,7 +3168,6 @@ public class ConnectManager implements BluetoothDiscoverUtils.OnBluetoothDeviceL
 			//发送进度更新事件
 			notifyDataProgressProgress(size, progress, multiRowDataPacket.startTime, multiRowDataPacket.currentTime);
 		}
-		byte[] formatData = this.multiRowDataPacket.packetFormat(data);
 		DataObj dataObj = new DataObj(formatData);
 		DataObjContext context = new DataObjContext(dataObj, dataObjCallback);
 		writeData(context);
@@ -3172,10 +3183,10 @@ public class ConnectManager implements BluetoothDiscoverUtils.OnBluetoothDeviceL
 			return;
 		}
 
-		byte[] data = this.multiRowDataPacket.getCurrentPacket();
+		// 合并版：一步生成完整格式化数据
+		byte[] formatData = this.multiRowDataPacket.buildCurrentFormattedPacket();
 		RBQLog.i("NAK 重传当前包");
 		multiRowDataPacket.currentTime = System.currentTimeMillis();
-		byte[] formatData = this.multiRowDataPacket.packetFormat(data);
 		DataObj dataObj = new DataObj(formatData);
 		DataObjContext context = new DataObjContext(dataObj, dataObjCallback);
 		writeData(context);
@@ -3304,7 +3315,8 @@ public class ConnectManager implements BluetoothDiscoverUtils.OnBluetoothDeviceL
 			return;
 		}
 
-		byte[] data = this.cmykMultiRowDataPacket.getNextPacket();
+		// 合并版：一步生成完整格式化数据
+		byte[] formatData = this.cmykMultiRowDataPacket.buildNextFormattedPacket();
 
 		cmykMultiRowDataPacket.currentTime = System.currentTimeMillis();
 
@@ -3315,7 +3327,6 @@ public class ConnectManager implements BluetoothDiscoverUtils.OnBluetoothDeviceL
 			// 发送进度更新事件
 			notifyDataProgressProgress(size, progress, cmykMultiRowDataPacket.startTime, cmykMultiRowDataPacket.currentTime);
 		}
-		byte[] formatData = this.cmykMultiRowDataPacket.packetFormat(data);
 		DataObj dataObj = new DataObj(formatData);
 		DataObjContext context = new DataObjContext(dataObj, dataObjCallback);
 		writeData(context);
@@ -3330,10 +3341,10 @@ public class ConnectManager implements BluetoothDiscoverUtils.OnBluetoothDeviceL
 			return;
 		}
 
-		byte[] data = this.cmykMultiRowDataPacket.getCurrentPacket();
+		// 合并版：一步生成完整格式化数据
+		byte[] formatData = this.cmykMultiRowDataPacket.buildCurrentFormattedPacket();
 		RBQLog.i("CMYK NAK 重传当前包");
 		cmykMultiRowDataPacket.currentTime = System.currentTimeMillis();
-		byte[] formatData = this.cmykMultiRowDataPacket.packetFormat(data);
 		DataObj dataObj = new DataObj(formatData);
 		DataObjContext context = new DataObjContext(dataObj, dataObjCallback);
 		writeData(context);
@@ -3479,9 +3490,10 @@ public class ConnectManager implements BluetoothDiscoverUtils.OnBluetoothDeviceL
 		if (!isConnected() || !otaPacket.hasNextPacket()) {
 			return;
 		}
-		byte[] data = otaPacket.getNextPacket();
+		// 合并版：一步生成完整格式化数据
+		byte[] formatData = otaPacket.buildNextFormattedPacket();
 
-		if (data == null) {
+		if (formatData == null) {
 			RBQLog.i("获取下一包为null");
 			return;
 		}
@@ -3495,7 +3507,6 @@ public class ConnectManager implements BluetoothDiscoverUtils.OnBluetoothDeviceL
 			//发送进度更新事件
 			notifyDataProgressProgress(size, progress, otaPacket.startTime, otaPacket.currentTime);
 		}
-		byte[] formatData = this.otaPacket.packetFormat(data);
 		DataObj dataObj = new DataObj(formatData);
 		DataObjContext context = new DataObjContext(dataObj, dataObjCallback);
 		writeData(context);
@@ -3509,10 +3520,10 @@ public class ConnectManager implements BluetoothDiscoverUtils.OnBluetoothDeviceL
 		if (!isConnected()) {
 			return;
 		}
-		byte[] data = otaPacket.getPacket();
+		// 合并版：一步生成完整格式化数据
+		byte[] formatData = otaPacket.buildCurrentFormattedPacket();
 		RBQLog.i("NAK 重传当前包");
 		otaPacket.currentTime = System.currentTimeMillis();
-		byte[] formatData = this.otaPacket.packetFormat(data);
 		DataObj dataObj = new  DataObj(formatData);
 		DataObjContext context = new DataObjContext(dataObj, dataObjCallback);
 		writeData(context);
@@ -3596,9 +3607,10 @@ public class ConnectManager implements BluetoothDiscoverUtils.OnBluetoothDeviceL
 	private void sendNextLogoPacket() {
 
 		if (!isConnected() || !logoPacket.hasNextPacket()) return;
-		byte[] data = logoPacket.getNextPacket();
+		// 合并版：一步生成完整格式化数据
+		byte[] formatData = logoPacket.buildNextFormattedPacket();
 
-		if (data == null) {
+		if (formatData == null) {
 			RBQLog.i("获取下一包为null");
 			return;
 		}
@@ -3613,7 +3625,6 @@ public class ConnectManager implements BluetoothDiscoverUtils.OnBluetoothDeviceL
 			//发送进度更新事件
 			notifyDataProgressProgress(size, progress, logoPacket.startTime, logoPacket.currentTime);
 		}
-		byte[] formatData = this.logoPacket.packetFormat(data);
 		DataObj dataObj = new DataObj(formatData);
 		DataObjContext context = new DataObjContext(dataObj, dataObjCallback);
 		writeData(context);
@@ -3627,10 +3638,10 @@ public class ConnectManager implements BluetoothDiscoverUtils.OnBluetoothDeviceL
 		if (!isConnected()) {
 			return;
 		}
-		byte[] data = logoPacket.getPacket();
+		// 合并版：一步生成完整格式化数据
+		byte[] formatData = logoPacket.buildCurrentFormattedPacket();
 		RBQLog.i("NAK 重传当前包");
 		logoPacket.currentTime = System.currentTimeMillis();
-		byte[] formatData = this.logoPacket.packetFormat(data);
 		DataObj dataObj = new DataObj(formatData);
 		DataObjContext context = new DataObjContext(dataObj, dataObjCallback);
 		writeData(context);

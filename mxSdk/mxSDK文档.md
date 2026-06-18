@@ -1,3 +1,5 @@
+# mxSDK 开发文档
+
 ## 一、关于sdk的依赖说明
 
 > **注意**: mxSdk 已内置以下依赖库，无需额外添加：
@@ -112,16 +114,16 @@ ConnectManager.share().discoverBluetoothDevice(20);
 //发现设备事件
 private final ConnectManager.OnDeviceDiscoverListener onDeviceDiscoverListener = new ConnectManager.OnDeviceDiscoverListener() {
     @Override
-    public void onStartDiscover() {
+    public void onDeviceStartDiscover() {
       RBQLog.i("开始扫描设备");
     }
     
     @Override
-    public void onStopDiscover() {
+    public void onDeviceStopDiscover() {
       RBQLog.i("停止扫描蓝牙设备");
     }
     @Override
-    public void onDiscovered(Device device) {
+    public void onDeviceDiscovered(Device device) {
       
     }
 };
@@ -205,7 +207,7 @@ ConnectManager.OnDistributionNetworkListener onDistributionNetworkListener = new
   };
 ```
 
-#### 13、<a name="discoverWifiDevice()">discoverWifiDevice()</a>扫描WiFi设备
+#### 13、<a name="discoverWifiDevice(float scanTime)">discoverWifiDevice(float scanTime)</a>扫描WiFi设备
 ```java
 //事件注册
 ConnectManager.share().registerDeviceDiscoverListener(onDeviceDiscoverListener);
@@ -217,16 +219,16 @@ ConnectManager.share().discoverWifiDevice();
 //事件
 private final ConnectManager.OnDeviceDiscoverListener onDeviceDiscoverListener = new ConnectManager.OnDeviceDiscoverListener() {
     @Override
-    public void onStartDiscover() {
+    public void onDeviceStartDiscover() {
         RBQLog.i("开始扫描设备");
     }
 
     @Override
-    public void onStopDiscover() {
+    public void onDeviceStopDiscover() {
         RBQLog.i("停止扫描蓝牙设备");
     }
     @Override
-    public void onDiscovered(Device device) {
+    public void onDeviceDiscovered(Device device) {
         RBQLog.i("发现设备");
     }
 };
@@ -548,12 +550,32 @@ ConnectManager.OnReceiveMsgListener onReceiveMsgListener = new ConnectManager.On
     @Override
     public void onReadBattery(Device device, int bat) {
       //读取电量
-      
+
+    }
+
+    @Override
+    public void onReadCartridgeId(Device device, String cartridgeId) {
+      //读取墨盒id
+    }
+
+    @Override
+    public void onReadSilentState(Device device, boolean silentState) {
+      //读取静音状态
+    }
+
+    @Override
+    public void onReadAutoPowerOffState(Device device, boolean autoPowerOff) {
+      //读取自动关机状态
+    }
+
+    @Override
+    public void onReadContinuousPrintState(Device device, boolean continuousPrintState) {
+      //读取连续打印状态
     }
 
     @Override
     public void onError(Device device, String error) {
-      
+
     }
   };
 ```
@@ -600,12 +622,32 @@ ConnectManager.OnReceiveMsgListener onReceiveMsgListener = new ConnectManager.On
     @Override
     public void onReadBattery(Device device, int bat) {
       //读取电量
-      
+
+    }
+
+    @Override
+    public void onReadCartridgeId(Device device, String cartridgeId) {
+      //读取墨盒id
+    }
+
+    @Override
+    public void onReadSilentState(Device device, boolean silentState) {
+      //读取静音状态
+    }
+
+    @Override
+    public void onReadAutoPowerOffState(Device device, boolean autoPowerOff) {
+      //读取自动关机状态
+    }
+
+    @Override
+    public void onReadContinuousPrintState(Device device, boolean continuousPrintState) {
+      //读取连续打印状态
     }
 
     @Override
     public void onError(Device device, String error) {
-      
+
     }
   };
 ```
@@ -857,7 +899,7 @@ MultiRowImageFactory.image2MultiRowImage(context, uri, rowLayoutDirection, new M
 
 ```
 
-#### 51、<a name="image2MultiRowImage(Context context, Uri uri, RowLayoutDirection rowLayoutDirection, int ignoreLastRowIfHeightLess, OnCreateMultiRowImageListener onCreateMultiRowImageListener)">public static void image2MultiRowImage(Context context, Uri uri, RowLayoutDirection rowLayoutDirection, int ignoreLastRowIfHeightLess, OnCreateMultiRowImageListener onCreateMultiRowImageListener)</a></a>用来生成 MultiRowImage
+#### 51、<a name="image2MultiRowImage(Context context, Uri uri, RowLayoutDirection rowLayoutDirection, int ignoreLastRowIfHeightLess, OnCreateMultiRowImageListener onCreateMultiRowImageListener)">public static void image2MultiRowImage(Context context, Uri uri, RowLayoutDirection rowLayoutDirection, int ignoreLastRowIfHeightLess, OnCreateMultiRowImageListener onCreateMultiRowImageListener)</a>用来生成 MultiRowImage
 
 ```java
 /**
@@ -886,7 +928,7 @@ MultiRowImageFactory.image2MultiRowImage(context, uri, rowLayoutDirection, ignor
         });
 ```
 
-#### 52、<a name="image2MultiRowImage(Context context, String imagePath, RowLayoutDirection rowLayoutDirection, OnCreateMultiRowImageListener onCreateMultiRowImageListener)">public static void image2MultiRowImage(Context context, String imagePath, RowLayoutDirection rowLayoutDirection, OnCreateMultiRowImageListener onCreateMultiRowImageListener)</a></a>用来生成 MultiRowImage
+#### 52、<a name="image2MultiRowImage(Context context, String imagePath, RowLayoutDirection rowLayoutDirection, OnCreateMultiRowImageListener onCreateMultiRowImageListener)">public static void image2MultiRowImage(Context context, String imagePath, RowLayoutDirection rowLayoutDirection, OnCreateMultiRowImageListener onCreateMultiRowImageListener)</a>用来生成 MultiRowImage
 
 ```java
 /**
@@ -911,7 +953,7 @@ MultiRowImageFactory.image2MultiRowImage(context, uri, rowLayoutDirection, ignor
         });
 ```
 
-#### 53、<a name="image2MultiRowImage(Context context, String imagePath, RowLayoutDirection rowLayoutDirection, int ignoreLastRowIfHeightLess, OnCreateMultiRowImageListener onCreateMultiRowImageListener)">public static void image2MultiRowImage(Context context, String imagePath, RowLayoutDirection rowLayoutDirection, int ignoreLastRowIfHeightLess, OnCreateMultiRowImageListener onCreateMultiRowImageListener)</a></a>用来生成 MultiRowImage
+#### 53、<a name="image2MultiRowImage(Context context, String imagePath, RowLayoutDirection rowLayoutDirection, int ignoreLastRowIfHeightLess, OnCreateMultiRowImageListener onCreateMultiRowImageListener)">public static void image2MultiRowImage(Context context, String imagePath, RowLayoutDirection rowLayoutDirection, int ignoreLastRowIfHeightLess, OnCreateMultiRowImageListener onCreateMultiRowImageListener)</a>用来生成 MultiRowImage
 
 ```java
 /**
@@ -939,7 +981,7 @@ MultiRowImageFactory.image2MultiRowImage(context, uri, rowLayoutDirection, ignor
         });
 ```
 
-#### 54、<a name="image2MultiRowImage(Context context, Bitmap bitmap, RowLayoutDirection rowLayoutDirection, OnCreateMultiRowImageListener onCreateMultiRowImageListener)">public static void image2MultiRowImage(Context context, Bitmap bitmap, RowLayoutDirection rowLayoutDirection, OnCreateMultiRowImageListener onCreateMultiRowImageListener)</a></a>用来生成 MultiRowImage
+#### 54、<a name="image2MultiRowImage(Context context, Bitmap bitmap, RowLayoutDirection rowLayoutDirection, OnCreateMultiRowImageListener onCreateMultiRowImageListener)">public static void image2MultiRowImage(Context context, Bitmap bitmap, RowLayoutDirection rowLayoutDirection, OnCreateMultiRowImageListener onCreateMultiRowImageListener)</a>用来生成 MultiRowImage
 
 ```java
 /**
@@ -964,7 +1006,7 @@ MultiRowImageFactory.image2MultiRowImage(context, bitmap, rowLayoutDirection, ne
         });
 ```
 
-#### 55、<a name="image2MultiRowImage(Context context, Bitmap bitmap, RowLayoutDirection rowLayoutDirection, int ignoreLastRowIfHeightLess, OnCreateMultiRowImageListener onCreateMultiRowImageListener)">public static void image2MultiRowImage(Context context, Bitmap bitmap, RowLayoutDirection rowLayoutDirection, int ignoreLastRowIfHeightLess, OnCreateMultiRowImageListener onCreateMultiRowImageListener)</a></a>用来生成 MultiRowImage
+#### 55、<a name="image2MultiRowImage(Context context, Bitmap bitmap, RowLayoutDirection rowLayoutDirection, int ignoreLastRowIfHeightLess, OnCreateMultiRowImageListener onCreateMultiRowImageListener)">public static void image2MultiRowImage(Context context, Bitmap bitmap, RowLayoutDirection rowLayoutDirection, int ignoreLastRowIfHeightLess, OnCreateMultiRowImageListener onCreateMultiRowImageListener)</a>用来生成 MultiRowImage
 
 ```java
 /**
@@ -990,7 +1032,7 @@ MultiRowImageFactory.image2MultiRowImage(context, bitmap, rowLayoutDirection, ig
         });
 ```
 
-#### 56、<a name="startPrint()">public void startPrint() </a>发送打印指令，和打印机上打印按钮功能想同
+#### 56、<a name="startPrint()">public void startPrint() </a>发送打印指令，和打印机上打印按钮功能相同
 
 ```java
 ConnectManager.share().startPrint();
@@ -1010,13 +1052,13 @@ ConnectManager.OnReadPrintStartCommandListener onReadPrintStartCommandListener =
 
 
 ## 四、常用类讲解
-#### 1、<font style="color:#080808;background-color:#ffffff;">com.mx.mxSdk.</font>Device类：打印机设备
+#### 4.1、<font style="color:#080808;background-color:#ffffff;">com.mx.mxSdk.Device类：打印机设备</font>
 该对象通常为打印机设备，这里包括蓝牙打印机设备、wifi设备打印机设备、及直接串口连接的设备，通常无需自己创建，只需要调用相应的扫描或者get方法即可获得该对象。如：discoverBluetoothDevice（扫描蓝牙设备）、discoverWifiDevice（扫描wifi设备）和getSerialDevices（获取串口设备），其示例见上边api列表中discoverBluetoothDevice方法的使用示例。
 
-#### 2、<font style="color:#080808;background-color:#ffffff;">com.mx.mxSdk.</font>DistNetDevice类：配网设备
+#### 4.2、<font style="color:#080808;background-color:#ffffff;">com.mx.mxSdk.DistNetDevice类：配网设备</font>
 该对象为配网设备，既调用discoverDistNetDevice方法搜索配网设备，由它的事件OnDistNetDeviceDiscoverListener返回的对象，该对象也无需自己创建。其示例见上边api列表中 discoverDistNetDevice方法的使用示例。
 
-#### 3、<font style="color:#080808;background-color:#ffffff;">com.mx.mxSdk.LogoImage类：打印机默认打印内容（logo）</font>
+#### 4.3、<font style="color:#080808;background-color:#ffffff;">com.mx.mxSdk.LogoImage类：打印机默认打印内容（logo）</font>
 ```java
 
 public class LogoImage implements Parcelable {
@@ -1027,7 +1069,7 @@ public class LogoImage implements Parcelable {
 LogoImage logoImage = LogoImage.createInstance("xxx/xxx.png");
 ```
 
-#### <font style="color:#080808;background-color:#ffffff;">4、com.mx.mxSdk.LogoData类 打印默认图片生成的数据对象，该对象通常无需自己创建，调用LogoDataFactory工厂类的LogoImage2Data方法生成</font>
+#### 4.4、<font style="color:#080808;background-color:#ffffff;">com.mx.mxSdk.LogoData类 打印默认图片生成的数据对象，该对象通常无需自己创建，调用LogoDataFactory工厂类的LogoImage2Data方法生成</font>
 ```java
 public class LogoData implements Parcelable {
     /** 数据长度 */
@@ -1039,7 +1081,7 @@ public class LogoData implements Parcelable {
 }
 ```
 
-#### 5、<font style="color:#080808;background-color:#ffffff;">com.mx.mxSdk.LogoDataFactory类 用于将LogoImage转为打印机默认打印数据LogoData</font>
+#### 4.5、<font style="color:#080808;background-color:#ffffff;">com.mx.mxSdk.LogoDataFactory类 用于将LogoImage转为打印机默认打印数据LogoData</font>
 ```java
 String logoImagePath = "xxx/xxx.png";
 LogoImage logoImage = LogoImage.createInstance(logoImagePath);
@@ -1068,7 +1110,7 @@ LogoDataFactory.LogoImage2Data(this, logoImage, 127, false, new LogoDataFactory.
 ConnectManager.share().setWithSendLogoPacket(logoData);
 ```
 
-#### <font style="color:#080808;background-color:#ffffff;">6、com.mx.mxSdk.MultiRowImage类：多拼图或者单张大图裁切形成的连续图</font>
+#### 4.6、<font style="color:#080808;background-color:#ffffff;">com.mx.mxSdk.MultiRowImage类：多拼图或者单张大图裁切形成的连续图</font>
 ```java
 public class MultiRowImage implements Parcelable {
 
@@ -1085,7 +1127,7 @@ MultiRowImage multiRowImage = MultiRowImage.createInstance(rowImages,thumbPath);
 MultiRowImage multiRowImage1 = MultiRowImage.createInstance(rowImages,thumbPath, RowLayoutDirectionHorizontal,true);
 ```
 
-#### 7、<font style="color:#080808;background-color:#ffffff;">com.mx.mxSdk.MultiRowData类 多拼图或者单张大图裁切形成的连续图生成的打印数据</font>
+#### 4.7、<font style="color:#080808;background-color:#ffffff;">com.mx.mxSdk.MultiRowData类 多拼图或者单张大图裁切形成的连续图生成的打印数据</font>
 ```java
 public class MultiRowData implements Parcelable {
     /** 多拼图或者单张大图裁切形成的连续图生成的打印数据 */
@@ -1103,7 +1145,7 @@ public class MultiRowData implements Parcelable {
 }
 ```
 
-#### 8、<font style="color:#080808;background-color:#ffffff;">com.mx.mxSdk.MultiRowDataFactory 类 用于将多拼打印图MultiRowImage生成打印数据的工具类</font>
+#### 4.8、<font style="color:#080808;background-color:#ffffff;">com.mx.mxSdk.MultiRowDataFactory 类 用于将多拼打印图MultiRowImage生成打印数据的工具类</font>
 ```java
 String imagePath = "xxx/xxx.png";
 String thumbPath = "xxx/xxx.png";
@@ -1136,7 +1178,7 @@ MultiRowDataFactory.bitmap2MultiRowData(this, multiRowImage, 127, true, false, f
 ConnectManager.share().setWithSendMultiRowDataPacket(multiRowData);
 ```
 
-### 五、关于打印开始和完成事件的监听
+## 五、关于打印开始和完成事件的监听
 
 ```java
 //事件注册
@@ -1159,7 +1201,7 @@ ConnectManager.OnPrintListener onPrintListener = new ConnectManager.OnPrintListe
 
 
 
-### 六、<font style="color:rgb(51, 51, 51);">TransportProtocol（传输）协议类型简介</font>
+## 六、<font style="color:rgb(51, 51, 51);">TransportProtocol（传输）协议类型简介</font>
 
 <font style="color:rgb(51, 51, 51);">以下常亮分别代表了协议的类型，数据结构为 fn + ~fn + data + crc 。实际长度为1 + 1 + data.length + 2，</font>
 
@@ -1206,5 +1248,178 @@ public class FactoryErrorCodes {
     /**io异常*/
     public static final int IOException_ERROR = 1 << 7;  // 16
 }
+```
+
+## 八、其它常用监听器
+
+本节补充 SDK 中未在 API 章节内联说明的监听器及其使用方式。
+
+### 1、OnDeviceBluetoothStateListener 蓝牙状态监听
+蓝牙打开/关闭过程事件。
+```java
+//事件注册
+ConnectManager.share().registerDeviceBluetoothStateListener(onDeviceBluetoothStateListener);
+//事件注销
+ConnectManager.share().unregisterDeviceBluetoothStateListener(onDeviceBluetoothStateListener);
+
+//事件示例
+ConnectManager.OnDeviceBluetoothStateListener onDeviceBluetoothStateListener = new ConnectManager.OnDeviceBluetoothStateListener() {
+    @Override
+    public void onDeviceBlueToothOpening() {
+        //蓝牙正在打开
+    }
+
+    @Override
+    public void onDeviceBlueToothOpened() {
+        //蓝牙已打开
+    }
+
+    @Override
+    public void onDeviceBlueToothClosing() {
+        //蓝牙正在关闭
+    }
+
+    @Override
+    public void onDeviceBlueToothClosed() {
+        //蓝牙已关闭
+    }
+};
+```
+
+### 2、OnDeviceBondListener 设备配对监听
+配对、A2DP、Socket 等事件。
+```java
+//事件注册
+ConnectManager.share().registerDeviceBondListener(onDeviceBondListener);
+//事件注销
+ConnectManager.share().unregisterDeviceBondListener(onDeviceBondListener);
+
+//事件示例
+ConnectManager.OnDeviceBondListener onDeviceBondListener = new ConnectManager.OnDeviceBondListener() {
+    @Override
+    public void onDeviceBonding(Device device) {
+        //正在与设备配对
+    }
+
+    @Override
+    public void onDeviceBonded(Device device) {
+        //配对成功
+    }
+
+    @Override
+    public void onDeviceDisBond(Device device) {
+        //取消配对
+    }
+};
+```
+
+### 3、OnCommandWriteListener 指令写入监听
+SDK 内部指令写入成功/失败事件。
+```java
+//事件注册
+ConnectManager.share().registerCommandWriteListener(onCommandWriteListener);
+//事件注销
+ConnectManager.share().unregisterCommandWriteListener(onCommandWriteListener);
+
+//事件示例
+ConnectManager.OnCommandWriteListener onCommandWriteListener = new ConnectManager.OnCommandWriteListener() {
+    @Override
+    public void onCommandWriteSuccess(Device device, Command command, Object object) {
+        //指令写入成功
+    }
+
+    @Override
+    public void onCommandWriteError(Device device, Command command, String errorMsg) {
+        //指令写入失败
+    }
+};
+```
+
+### 4、OnDataWriteListener 数据写入监听
+数据块写入成功/失败事件。
+```java
+//事件注册
+ConnectManager.share().registerDataWriteListener(onDataWriteListener);
+//事件注销
+ConnectManager.share().unregisterDataWriteListener(onDataWriteListener);
+
+//事件示例
+ConnectManager.OnDataWriteListener onDataWriteListener = new ConnectManager.OnDataWriteListener() {
+    @Override
+    public void onDataWriteSuccess(Device device, DataObj dataObj, Object object) {
+        //数据写入成功
+    }
+
+    @Override
+    public void onDataWriteError(Device device, DataObj dataObj, String errorMsg) {
+        //数据写入失败
+    }
+};
+```
+
+### 5、OnDataSynchronizeListener 数据同步监听
+多拼数据发送过程中同步状态事件。
+```java
+//事件注册
+ConnectManager.share().registerDataSynchronizeListener(onDataSynchronizeListener);
+//事件注销
+ConnectManager.share().unregisterDataSynchronizeListener(onDataSynchronizeListener);
+
+//事件示例
+ConnectManager.OnDataSynchronizeListener onDataSynchronizeListener = new ConnectManager.OnDataSynchronizeListener() {
+    @Override
+    public void onDataSynchronizeStart(Device device) {
+        //数据同步开始
+    }
+
+    @Override
+    public void onDataSynchronizeComplete(Device device) {
+        //数据同步完成
+    }
+
+    @Override
+    public void onDataSynchronizeTimeout(Device device, int pendingCount) {
+        //数据同步超时，pendingCount 为未响应指令数量
+    }
+
+    @Override
+    public void onDataSynchronizeInterrupted(Device device) {
+        //数据同步被中断（如设备断连）
+    }
+};
+```
+
+### 6、OnReadGeneralCommandListener 通用指令回读监听
+读取打印机自定义通用指令响应。
+```java
+//事件注册
+ConnectManager.share().registerReadGeneralCommandListener(onReadGeneralCommandListener);
+//事件注销
+ConnectManager.share().unregisterReadGeneralCommandListener(onReadGeneralCommandListener);
+
+//事件示例
+ConnectManager.OnReadGeneralCommandListener onReadGeneralCommandListener = new ConnectManager.OnReadGeneralCommandListener() {
+    @Override
+    public void onReadGeneralCommand(int opcode, String json) {
+        //收到通用指令响应，opcode 为操作码，json 为响应内容
+    }
+};
+```
+
+### 7、OnReadJsonListener JSON 数据回读监听
+读取打印机主动上报的 JSON 数据。
+```java
+//事件注册
+ConnectManager.share().registerReadJsonListener(onReadJsonListener);
+//事件注销
+ConnectManager.share().unregisterReadJsonListener(onReadJsonListener);
+
+//事件示例
+ConnectManager.OnReadJsonListener onReadJsonListener = new ConnectManager.OnReadJsonListener() {
+    @Override
+    public void onReadJson(Device device, String json) {
+        //收到打印机上报的 JSON 数据
+    }
+};
 ```
 

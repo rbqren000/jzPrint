@@ -28,6 +28,9 @@ public final class LogoPacket extends BasePacket {
 	
 	public long startTime = 0;//记发送数据包的开始时间
 	public long currentTime = 0;//记录当前时间
+
+	// 预分配的可复用包缓冲区，在 set() 中初始化，clear() 中释放
+	private byte[] reusablePacketBuffer;
 	
 	public Boolean hasData() {
 		if (data == null) {
@@ -47,6 +50,7 @@ public final class LogoPacket extends BasePacket {
 		this.usefulPacketDataLength = 124;
 
 		this.fullPacketDataLen = this.usefulPacketDataLength + packetHeadLen + packetHeadXorLen + crcLen;
+		this.reusablePacketBuffer = new byte[fullPacketDataLen]; // 预分配复用 buffer
 
 		if (dataLength % usefulPacketDataLength == 0) {
 
@@ -95,6 +99,7 @@ public final class LogoPacket extends BasePacket {
 		}
 		
 		this.fullPacketDataLen = this.usefulPacketDataLength + packetHeadLen + packetHeadXorLen + crcLen;
+		this.reusablePacketBuffer = new byte[fullPacketDataLen]; // 预分配复用 buffer
 		
 		if (dataLength % usefulPacketDataLength == 0) {
 			
@@ -113,6 +118,8 @@ public final class LogoPacket extends BasePacket {
 		this.index = -1;
 		this.data = null;
 		this.dataLength = 0;
+
+		this.reusablePacketBuffer = null; // 释放复用 buffer
 		
 		this.startTime = 0;
 		this.currentTime = 0;
@@ -135,25 +142,76 @@ public final class LogoPacket extends BasePacket {
 		return nexIndex;
 	}
 	
-	//返回null说明已经没有下一包数据了
+	// ====== 复用 buffer 版本的方法 ======
+
+	/**
+	 * 获取下一包的完整格式化数据（含帧头+CRC），直接写入复用 buffer。
+	 *
+	 * ⚠️ 返回的是 reusablePacketBuffer 引用，安全前提：
+	 * XModem ACK 停等协议保证收到 ACK 后才调用此方法生成下一包，
+	 * 此时上一包数据已被 WriteThread 写入 OutputStream，buffer 可安全覆盖。
+	 * 如需改为流水线/预取模式，须改用双缓冲。
+	 */
+	public byte[] buildNextFormattedPacket() {
+		int nextIdx = this.getNextPacketIndex();
+		if (nextIdx != -1) {
+			this.index = nextIdx;
+			fillFormattedPacket(nextIdx);
+			return reusablePacketBuffer;
+		}
+		return null;
+	}
+
+	/**
+	 * 获取当前包的完整格式化数据（用于 NAK 重传），直接写入复用 buffer。
+	 */
+	public byte[] buildCurrentFormattedPacket() {
+		fillFormattedPacket(this.index);
+		return reusablePacketBuffer;
+	}
+
+	/**
+	 * 将指定索引的原始数据填充到 reusablePacketBuffer 中，包含帧头、数据和 CRC。
+	 */
+	private void fillFormattedPacket(int pktIndex) {
+		int start = pktIndex * usefulPacketDataLength;
+		int remainingData = dataLength - start;
+
+		int offset = 0;
+		reusablePacketBuffer[offset++] = (byte) fh;
+		reusablePacketBuffer[offset++] = (byte) (~fh & 0xFF);
+
+		if (remainingData >= usefulPacketDataLength) {
+			System.arraycopy(this.data, start, reusablePacketBuffer, offset, usefulPacketDataLength);
+		} else {
+			System.arraycopy(this.data, start, reusablePacketBuffer, offset, remainingData);
+			java.util.Arrays.fill(reusablePacketBuffer, offset + remainingData, offset + usefulPacketDataLength, (byte) 0x1A);
+		}
+
+		offset += usefulPacketDataLength;
+		char crc = CRC16.crc16_calc(reusablePacketBuffer, 0, offset);
+		reusablePacketBuffer[offset++] = (byte) (crc >> 8 & 0xFF);
+		reusablePacketBuffer[offset] = (byte) (crc & 0xFF);
+	}
+
+	// ====== 以下方法保留用于兼容 ======
+
+	@Deprecated
 	public byte[] getNextPacket() {
-		
 		int index = this.getNextPacketIndex();
-		
 		if (index != -1) {
 			return this.getPacket(index);
 		}
 		return null;
 	}
-	
-	//获取当前index的数据包
+
+	@Deprecated
 	public byte[] getPacket() {
-		
 		return getPacket(this.index);
 	}
 
+	@Deprecated
 	public byte[] getPacket(int index) {
-
 		this.index = index;
 		byte[] packet = new byte[usefulPacketDataLength];
 
@@ -164,39 +222,25 @@ public final class LogoPacket extends BasePacket {
 			System.arraycopy(this.data, start, packet, 0, usefulPacketDataLength);
 		} else {
 			System.arraycopy(this.data, start, packet, 0, remainingData);
-			Arrays.fill(packet, remainingData, usefulPacketDataLength, (byte) 0x1A);
+			java.util.Arrays.fill(packet, remainingData, usefulPacketDataLength, (byte) 0x1A);
 		}
-
 		return packet;
 	}
 
+	@Deprecated
 	public byte[] packetFormat(@NonNull byte[] data) {
-		
 		byte[] logoData = new byte[fullPacketDataLen];
-		
-		//指令序列 1位 ，这里+1是因为起始帧的包序列是0，这里应该最开始的时候从1开始
-		//            int num = (index+1) % 255;
-		
+
 		int offset = 0;
-		//指令头
 		logoData[offset++] = (byte) fh;
 		logoData[offset++] = (byte) (~fh & 0xFF);
-		// 1
-		//            otaData[offset++] = (byte)(num & 0xFF);
-		//2
-		//指令序列取反
-		//            otaData[offset++] = (byte)(~num & 0xFF);
-		//3
 		System.arraycopy(data, 0, logoData, offset, data.length);
-		
+
 		char crc = CRC16.crc16_calc(logoData, 0, data.length + 2);
-		
-		//crc部分  //3+length
 		offset = offset + data.length;
-		
 		logoData[offset++] = (byte) (crc >> 8 & 0xFF);
 		logoData[offset] = (byte) (crc & 0xFF);
-		
+
 		return logoData;
 	}
 	

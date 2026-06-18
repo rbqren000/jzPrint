@@ -42,6 +42,10 @@ public final class MultiRowDataPacket extends BasePacket {
     public long startTime = 0;//记发送数据包的开始时间
     public long currentTime = 0;//记录当前时间
 
+    // 预分配的可复用包缓冲区，在 set() 中初始化，clear() 中释放
+    // 利用 XModem ACK 协议的串行特性，收到 ACK 后才会生成下一包，此时上一包已被 WriteThread 消费完毕
+    private byte[] reusablePacketBuffer;
+
     /**
      *
      * @param multiRowData 数据  使用默认的帧头 STX_E
@@ -54,6 +58,7 @@ public final class MultiRowDataPacket extends BasePacket {
         this.fh = TransportProtocol.STX_E;
         this.usefulPacketDataLength = 124; // STX_E 对应 124
         this.fullPacketDataLen = this.usefulPacketDataLength + packetHeadLen + packetHeadXorLen + crcLen;
+        this.reusablePacketBuffer = new byte[fullPacketDataLen]; // 预分配复用 buffer
         this.totalDataLen = this.multiRowData.totalDataLength();
         this.totalPacketCount = this.multiRowData.totalPacketCount(usefulPacketDataLength);
         this.totalRowCount = this.multiRowData.totalRowCount();
@@ -109,6 +114,7 @@ public final class MultiRowDataPacket extends BasePacket {
         }
 
         this.fullPacketDataLen = this.usefulPacketDataLength + packetHeadLen + packetHeadXorLen + crcLen;
+        this.reusablePacketBuffer = new byte[fullPacketDataLen]; // 预分配复用 buffer
         this.totalDataLen = this.multiRowData.totalDataLength();
         this.totalPacketCount = this.multiRowData.totalPacketCount(usefulPacketDataLength);
         this.totalRowCount = this.multiRowData.totalRowCount();
@@ -142,6 +148,8 @@ public final class MultiRowDataPacket extends BasePacket {
         this.currentRowImageByteData = null;
         this.currentRowTotalPacketCount = 0;
         this.currentRowDataLength = 0;
+
+        this.reusablePacketBuffer = null; // 释放复用 buffer
 
         this.startTime = 0;
         this.currentTime = 0;
@@ -203,28 +211,77 @@ public final class MultiRowDataPacket extends BasePacket {
         return true;
     }
 
-    public byte[] getCurrentPacket() {
-        byte[] packet = new byte[usefulPacketDataLength];
-        int start = indexInCurrentRowPacket * usefulPacketDataLength;
-        int remainingData = currentRowDataLength - start;
-
-        if (remainingData >= usefulPacketDataLength) {
-            System.arraycopy(currentRowImageByteData, start, packet, 0, usefulPacketDataLength);
-        } else {
-            System.arraycopy(currentRowImageByteData, start, packet, 0, remainingData);
-            Arrays.fill(packet, remainingData, usefulPacketDataLength, (byte) 0x1A);
-        }
-        return packet;
-    }
-
-
-    public byte[] getNextPacket() {
-
+    /**
+     * 获取下一包的完整格式化数据（含帧头+CRC），直接写入复用 buffer。
+     * 消除原 getNextPacket() + packetFormat() 两次分配为一次复用。
+     *
+     * ⚠️ 返回的是 reusablePacketBuffer 引用，安全前提：
+     * XModem ACK 停等协议保证收到 ACK 后才调用此方法生成下一包，
+     * 此时上一包数据已被 WriteThread 写入 OutputStream，buffer 可安全覆盖。
+     * 如需改为流水线/预取模式，须改用双缓冲。
+     */
+    public byte[] buildNextFormattedPacket() {
         index++;
         indexInCurrentRowPacket++;
+        fillFormattedPacket(indexInCurrentRowPacket);
+        return reusablePacketBuffer;
+    }
 
+    /**
+     * 获取当前包的完整格式化数据（用于 NAK 重传），直接写入复用 buffer。
+     */
+    public byte[] buildCurrentFormattedPacket() {
+        fillFormattedPacket(indexInCurrentRowPacket);
+        return reusablePacketBuffer;
+    }
+
+    /**
+     * 将指定索引的原始数据填充到 reusablePacketBuffer 中，包含帧头、数据和 CRC。
+     */
+    private void fillFormattedPacket(int pktIndex) {
+        int offset = 0;
+        reusablePacketBuffer[offset++] = (byte) fh;
+        reusablePacketBuffer[offset++] = (byte) (~fh & 0xFF);
+
+        int start = pktIndex * usefulPacketDataLength;
+        int remainingData = currentRowDataLength - start;
+
+        if (remainingData >= usefulPacketDataLength) {
+            System.arraycopy(currentRowImageByteData, start, reusablePacketBuffer, offset, usefulPacketDataLength);
+        } else {
+            System.arraycopy(currentRowImageByteData, start, reusablePacketBuffer, offset, remainingData);
+            Arrays.fill(reusablePacketBuffer, offset + remainingData, offset + usefulPacketDataLength, (byte) 0x1A);
+        }
+
+        offset += usefulPacketDataLength;
+        char crc = CRC16.crc16_calc(reusablePacketBuffer, 0, offset);
+        reusablePacketBuffer[offset++] = (byte) (crc >> 8 & 0xFF);
+        reusablePacketBuffer[offset] = (byte) (crc & 0xFF);
+    }
+
+    // ====== 以下方法保留用于兼容，内部改为复用 buffer ======
+
+    /**
+     * @deprecated 请使用 {@link #buildNextFormattedPacket()} 替代，减少 GC 压力。
+     */
+    @Deprecated
+    public byte[] getNextPacket() {
+        index++;
+        indexInCurrentRowPacket++;
+        return getRawPacketData(indexInCurrentRowPacket);
+    }
+
+    /**
+     * @deprecated 请使用 {@link #buildCurrentFormattedPacket()} 替代，减少 GC 压力。
+     */
+    @Deprecated
+    public byte[] getCurrentPacket() {
+        return getRawPacketData(indexInCurrentRowPacket);
+    }
+
+    private byte[] getRawPacketData(int pktIndex) {
         byte[] packet = new byte[usefulPacketDataLength];
-        int start = indexInCurrentRowPacket * usefulPacketDataLength;
+        int start = pktIndex * usefulPacketDataLength;
         int remainingData = currentRowDataLength - start;
 
         if (remainingData >= usefulPacketDataLength) {
@@ -233,24 +290,22 @@ public final class MultiRowDataPacket extends BasePacket {
             System.arraycopy(currentRowImageByteData, start, packet, 0, remainingData);
             Arrays.fill(packet, remainingData, usefulPacketDataLength, (byte) 0x1A);
         }
-
         return packet;
     }
 
+    /**
+     * @deprecated 请使用 {@link #buildNextFormattedPacket()} / {@link #buildCurrentFormattedPacket()} 替代。
+     */
+    @Deprecated
     public byte[] packetFormat(@NonNull byte[] data){
-
         byte[] packetData = new byte[fullPacketDataLen];
 
         int offset = 0;
-        //指令头
         packetData[offset++] = (byte) fh;
         packetData[offset++] = (byte)(~fh & 0xFF);
-        //3
         System.arraycopy(data, 0, packetData, offset, data.length);
 
         char crc = CRC16.crc16_calc(packetData,0,data.length+2);
-
-        //crc部分  //3+length
         offset = offset + data.length;
 
         packetData[offset++] = (byte) (crc >> 8 & 0xFF);
