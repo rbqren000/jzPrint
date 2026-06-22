@@ -1,5 +1,8 @@
 package com.org.jzprinter.print;
 
+import static com.mx.mxSdk.TransportProtocol.STX_A;
+import static com.mx.mxSdk.TransportProtocol.STX_B;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.Log;
@@ -438,7 +441,7 @@ public class PrintEngine {
 
         cm.registerDataProgressListener(currentDataProgressListener);
         Log.d(TAG, "[sendToPrinter] calling setWithSendMultiRowDataPacket...");
-        cm.setWithSendMultiRowDataPacket(data);
+        cm.setWithSendMultiRowDataPacket(data,STX_A);
         Log.d(TAG, "[sendToPrinter] setWithSendMultiRowDataPacket returned");
     }
 
