@@ -1,4 +1,4 @@
-package com.mx.mxSdk.Safe;
+package com.mx.mxSdk.Safe.hash;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

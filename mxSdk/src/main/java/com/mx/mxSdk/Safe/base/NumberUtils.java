@@ -1,4 +1,4 @@
-package com.mx.mxSdk.Safe;
+package com.mx.mxSdk.Safe.base;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

@@ -1,4 +1,4 @@
-package com.mx.mxSdk.Safe;
+package com.mx.mxSdk.Safe.base;
 
 import android.util.Base64;
 import java.math.BigInteger;
@@ -34,9 +34,12 @@ public class StringBytes {
     // 十六进制字符数组
     private static final char[] HEX_CHARS = "0123456789ABCDEF".toCharArray();
 
-    // 十六进制字符对应的数字映射表
+    // 十六进制字符对应的数字映射表（仅 0-9, A-F, a-f 有效，其余为 -1）
     private static final int[] HEX_VALUES = new int[128];
     static {
+        for (int i = 0; i < 128; i++) {
+            HEX_VALUES[i] = -1;
+        }
         for (int i = 0; i < 10; i++) {
             HEX_VALUES['0' + i] = i;
         }
@@ -482,7 +485,7 @@ public class StringBytes {
 
     // 16进制字符串转字节数组
     public static byte[] hexToBytes(String hex) {
-        if (hex == null||hex.length() % 2 != 0) {
+        if (hex == null || hex.length() % 2 != 0) {
             return null;
         }
         int len = hex.length() / 2;
@@ -490,8 +493,9 @@ public class StringBytes {
         for (int i = 0; i < len; i++) {
             char high = hex.charAt(i * 2);
             char low = hex.charAt(i * 2 + 1);
-            if (high >= HEX_VALUES.length || low >= HEX_VALUES.length) {
-                throw new IllegalArgumentException("hex contains invalid characters");
+            if (high >= HEX_VALUES.length || low >= HEX_VALUES.length
+                    || HEX_VALUES[high] < 0 || HEX_VALUES[low] < 0) {
+                throw new IllegalArgumentException("hex contains invalid characters: " + hex);
             }
             data[i] = (byte) ((HEX_VALUES[high] << 4) + HEX_VALUES[low]);
         }

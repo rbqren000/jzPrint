@@ -1,4 +1,4 @@
-package com.mx.mxSdk.Safe;
+package com.mx.mxSdk.Safe.base;
 
 import android.util.Base64;
 

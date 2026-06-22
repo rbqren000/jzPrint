@@ -1,4 +1,4 @@
-package com.mx.mxSdk.Safe;
+package com.mx.mxSdk.Safe.asymmetric;
 
 import android.util.Base64;
 
@@ -18,8 +18,8 @@ public class RSAUtils {
 
     // 定义加密算法
     private static final String ALGORITHM = "RSA";
-    // 定义密钥长度
-    private static final int KEY_SIZE = 1024;
+    // 定义密钥长度（2048，原 1024 已被 NIST 视为不足）
+    private static final int KEY_SIZE = 2048;
     // 定义分段大小
     private static final int SEGMENT_SIZE = KEY_SIZE / 8 - 11;
 

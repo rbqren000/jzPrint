@@ -1,4 +1,4 @@
-package com.mx.mxSdk.Safe;
+package com.mx.mxSdk.Safe.symmetric;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,6 +18,10 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DESedeKeySpec;
 import javax.crypto.spec.IvParameterSpec;
 
+/**
+ * 3DES 对称加密工具（DESede/CBC/PKCS5Padding，含文件加解密）
+ * 状态：工具类完备，适用于对安全性要求不高的兼容场景
+ */
 public class DES3Utils {
 
     // 定义默认的加密算法，有DES、DESede(即3DES)、Blowfish

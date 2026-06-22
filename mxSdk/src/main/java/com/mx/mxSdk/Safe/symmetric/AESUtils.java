@@ -1,17 +1,25 @@
-package com.mx.mxSdk.Safe;
+package com.mx.mxSdk.Safe.symmetric;
 
 import android.util.Base64;
 import android.util.Log;
+
+import com.mx.mxSdk.Safe.base.StringBytes;
+
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
+import java.security.InvalidAlgorithmParameterException;
+
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
+ * AES 对称加密工具（CBC/ECB/GCM/CTR/CFB/OFB + Base64/Hex）
+ * 状态：工具类完备，待业务接入
+ *
 
  AES/CBC/PKCS5Padding：这个常量表示使用AES算法，CBC（密码块链）模式和PKCS5填充方式。CBC模式是一种将每个明文块与前一个密文块进行异或运算的模式，可以提高安全性，但是需要一个初始化向量。PKCS5填充方式是一种在最后一个字节指定填充长度，在其他字节用相同的值填充的方式，可以支持任意长度的数据。
  AES/ECB/PKCS5Padding：这个常量表示使用AES算法，ECB（电子密码本）模式和PKCS5填充方式。ECB模式是一种将每个明文块单独加密的模式，不需要初始化向量，但是安全性较低，容易暴露重复的模式。PKCS5填充方式同上。
@@ -109,27 +117,14 @@ public class AESUtils {
         if (iv == null) {
             throw new IllegalArgumentException("Invalid iv: null");
         }
-        // 使用日志记录器记录程序开始加密
-//        Log.d("AESUtils", "Start encrypting data with mode: " + mode + ", encoding: " + encoding);
         try {
-            Cipher cipher = Cipher.getInstance(mode); // 指定加密模式和填充方式
-            if (mode.contains("CBC") || mode.contains("CFB") || mode.contains("OFB") || mode.contains("CTR")) {
-                // 如果使用了需要初始化向量的加密模式，就使用初始化向量初始化加密器
-                cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(iv));
-            } else if (mode.contains("GCM")) {
-                // 如果使用了GCM模式，就使用初始化向量和认证标签长度初始化加密器
-                cipher.init(Cipher.ENCRYPT_MODE, key, new GCMParameterSpec(128, iv));
-            } else if (mode.contains("ECB")) {
-                // 如果使用了ECB模式，就只使用密钥初始化加密器
-                cipher.init(Cipher.ENCRYPT_MODE, key);
-            } else {
-                throw new IllegalArgumentException("Invalid mode: " + mode); // 抛出非法参数异常
-            }
+            Cipher cipher = Cipher.getInstance(mode);
+            initCipher(cipher, Cipher.ENCRYPT_MODE, key, mode, iv);
             byte[] encryptedData = cipher.doFinal(data); // 加密数据
             if (encoding.equals(BASE64)) {
                 return Base64.encodeToString(encryptedData, Base64.DEFAULT); // 使用Base64编码返回字符串
             } else if (encoding.equals(HEX)) {
-                return bytesToHex(encryptedData); // 使用Hex编码返回字符串
+                return StringBytes.bytesToHex(encryptedData); // 使用Hex编码返回字符串
             } else {
                 throw new IllegalArgumentException("Invalid encoding: " + encoding); // 抛出非法参数异常
             }
@@ -138,9 +133,6 @@ public class AESUtils {
             e.printStackTrace(); // 处理异常
             Log.e("AESUtils", "Failed to encrypt data: " + e.getMessage()); // 使用日志记录器记录程序失败原因
             return null; // 返回空值
-        } finally {
-            // 使用日志记录器记录程序结束加密
-//            Log.d("AESUtils", "End encrypting data");
         }
     }
 
@@ -156,27 +148,14 @@ public class AESUtils {
         if (iv == null) {
             throw new IllegalArgumentException("Invalid iv: null");
         }
-        // 使用日志记录器记录程序开始解密
-//        Log.d("AESUtils", "Start decrypting data with mode: " + mode + ", encoding: " + encoding);
         try {
-            Cipher cipher = Cipher.getInstance(mode); // 指定加密模式和填充方式
-            if (mode.contains("CBC") || mode.contains("CFB") || mode.contains("OFB") || mode.contains("CTR")) {
-                // 如果使用了需要初始化向量的加密模式，就使用初始化向量初始化解密器
-                cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(iv));
-            } else if (mode.contains("GCM")) {
-                // 如果使用了GCM模式，就使用初始化向量和认证标签长度初始化解密器
-                cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(128, iv));
-            } else if (mode.contains("ECB")) {
-                // 如果使用了ECB模式，就只使用密钥初始化解密器
-                cipher.init(Cipher.DECRYPT_MODE, key);
-            } else {
-                throw new IllegalArgumentException("Invalid mode: " + mode); // 抛出非法参数异常
-            }
+            Cipher cipher = Cipher.getInstance(mode);
+            initCipher(cipher, Cipher.DECRYPT_MODE, key, mode, iv);
             byte[] encryptedData; // 定义加密后的字节数组
             if (encoding.equals(BASE64)) {
                 encryptedData = Base64.decode(data, Base64.DEFAULT); // 使用Base64解码输入字符串
             } else if (encoding.equals(HEX)) {
-                encryptedData = hexToBytes(data); // 使用Hex解码输入字符串
+                encryptedData = StringBytes.hexToBytes(data); // 使用Hex解码输入字符串
             } else {
                 throw new IllegalArgumentException("Invalid encoding: " + encoding); // 抛出非法参数异常
             }
@@ -186,35 +165,23 @@ public class AESUtils {
             e.printStackTrace(); // 处理异常
             Log.e("AESUtils", "Failed to decrypt data: " + e.getMessage()); // 使用日志记录器记录程序失败原因
             return null; // 返回空值
-        } finally {
-            // 使用日志记录器记录程序结束解密
-//            Log.d("AESUtils", "End decrypting data");
+        }
+    }
+
+    // 根据 mode 字符串精确匹配初始化 Cipher（用 "/" 定界符避免子串误判）
+    private static void initCipher(Cipher cipher, int opmode, Key key, String mode, byte[] iv)
+            throws InvalidKeyException, InvalidAlgorithmParameterException {
+        String upperMode = mode.toUpperCase();
+        if (upperMode.contains("/GCM/")) {
+            cipher.init(opmode, key, new GCMParameterSpec(128, iv));
+        } else if (upperMode.contains("/ECB/")) {
+            cipher.init(opmode, key); // ECB 不需要 IV
+        } else {
+            cipher.init(opmode, key, new IvParameterSpec(iv)); // CBC / CFB / OFB / CTR
         }
     }
 
 
-    // 将字节数组转换为十六进制字符串（辅助方法）
-    private static String bytesToHex(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes) {
-            sb.append(String.format("%02x", b)); // 将每个字节转换为两位十六进制数，并拼接成字符串
-        }
-        return sb.toString();
-    }
-
-    // 将十六进制字符串转换为字节数组（辅助方法）
-    private static byte[] hexToBytes(String hex) {
-        int len = hex.length();
-        if (len % 2 != 0) {
-            throw new IllegalArgumentException("Invalid hex string: " + hex); // 如果字符串长度不是偶数，抛出非法参数异常
-        }
-        byte[] bytes = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            bytes[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4) + Character.digit(hex.charAt(i + 1), 16));
-            // 将每两位十六进制数转换为一个字节，并存入字节数组中
-        }
-        return bytes;
-    }
 }
 
 /**

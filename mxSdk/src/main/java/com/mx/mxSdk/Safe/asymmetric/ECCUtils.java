@@ -1,4 +1,4 @@
-package com.mx.mxSdk.Safe;
+package com.mx.mxSdk.Safe.asymmetric;
 
 import com.mx.mxSdk.Utils.RBQLog;
 
@@ -8,7 +8,6 @@ import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
@@ -23,6 +22,10 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+/**
+ * ECC 非对称加密工具（ECDH 密钥协商 + AES-CBC 加解密）
+ * 状态：工具类完备，待业务接入
+ */
 public class ECCUtils {
 
     // 生成ECC密钥对
@@ -65,16 +68,19 @@ public class ECCUtils {
         }
     }
 
-    // 使用AES算法加密数据
+    /**
+     * 使用 AES-CBC 加密数据。
+     * ⚠️ IV 由调用方传入，不嵌入密文。双方须通过安全渠道约定 IV，切勿复用同一 IV。
+     */
     public static byte[] encryptData(byte[] data, byte[] symmetricKey, byte[] iv) {
-        Cipher cipher = null; // declare cipher outside try block
+        Cipher cipher = null;
         try {
             SecretKeySpec secretKeySpec = new SecretKeySpec(symmetricKey, "AES");
-            IvParameterSpec ivParameterSpec = new IvParameterSpec(iv); // use IvParameterSpec instead of GCMParameterSpec
-            cipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "BC"); // use Bouncy Castle provider
+            IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
+            cipher = Cipher.getInstance("AES/CBC/PKCS5Padding"); // Android 内置 provider
             cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivParameterSpec);
             return cipher.doFinal(data);
-        } catch (NoSuchProviderException|NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
             e.printStackTrace();
             return null;
         }
@@ -82,14 +88,14 @@ public class ECCUtils {
 
     // 使用AES算法解密数据
     public static byte[] decryptData(byte[] data, byte[] symmetricKey, byte[] iv) {
-        Cipher cipher = null; // declare cipher outside try block
+        Cipher cipher = null;
         try {
             SecretKeySpec secretKeySpec = new SecretKeySpec(symmetricKey, "AES");
-            IvParameterSpec ivParameterSpec = new IvParameterSpec(iv); // use IvParameterSpec instead of GCMParameterSpec
-            cipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "BC"); // use Bouncy Castle provider
+            IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
+            cipher = Cipher.getInstance("AES/CBC/PKCS5Padding"); // Android 内置 provider
             cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
             return cipher.doFinal(data);
-        } catch (NoSuchProviderException|NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException |
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException |
                  InvalidAlgorithmParameterException | IllegalBlockSizeException |
                  BadPaddingException e) {
             e.printStackTrace();

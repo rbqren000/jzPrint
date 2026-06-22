@@ -1,9 +1,13 @@
-package com.mx.mxSdk.Safe;
+package com.mx.mxSdk.Safe.symmetric;
 
 import java.security.SecureRandom;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+/**
+ * RC4 流加密 + HMAC-SHA256（⚠️ RC4 已被视为不安全，仅适用于简单混淆场景）
+ * 状态：可用，建议评估是否保留
+ */
 public class RC4 {
 
     // The state array
