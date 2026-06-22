@@ -12,9 +12,15 @@ import android.os.Looper;
 import com.mx.mxSdk.OpencvUtils.OpenCVUtils;
 import com.mx.mxSdk.Utils.MxSdkStore;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MultiRowDataFactory {
+
+    /** 共享线程池。PrintEngine.isPrinting 保证同一时间只有一个打印任务 */
+    private static final ExecutorService SHARED_EXECUTOR = Executors.newSingleThreadExecutor();
+    /** 共享主线程 Handler */
+    private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
 
     /**
      *
@@ -31,10 +37,8 @@ public class MultiRowDataFactory {
      */
     public static void bitmap2MultiRowData(Context context, MultiRowImage multiRowImage, int threshold, boolean clearBackground, boolean dithering, boolean compress, boolean flipHorizontally, boolean transparentToWhiteAuto, boolean thumbToSimulation, OnCreateMultiRowDataListener onCreateMultiRowDataListener) {
 
-        Handler mainHandler = new Handler(Looper.getMainLooper());
-
         if (multiRowImage == null) {
-            mainHandler.post(() -> {
+            MAIN_HANDLER.post(() -> {
                 if (onCreateMultiRowDataListener != null) {
                     onCreateMultiRowDataListener.onCreateMultiRowDataError(MULTI_ROW_IMAGE_NULL_ERROR);
                 }
@@ -42,16 +46,16 @@ public class MultiRowDataFactory {
             return;
         }
 
-        Executors.newSingleThreadExecutor().execute(() -> {
+        SHARED_EXECUTOR.execute(() -> {
 
-            mainHandler.post(() -> {
+            MAIN_HANDLER.post(() -> {
                 if (onCreateMultiRowDataListener != null) {
                     onCreateMultiRowDataListener.onCreateMultiRowDataStart();
                 }
             });
 
             if (context == null) {
-                mainHandler.post(() -> {
+                MAIN_HANDLER.post(() -> {
                     if (onCreateMultiRowDataListener != null) {
                         onCreateMultiRowDataListener.onCreateMultiRowDataError(Context_NULL_ERROR);
                     }
@@ -62,7 +66,7 @@ public class MultiRowDataFactory {
             MultiRowData multiRowData = bitmap2MultiRowData(context, multiRowImage, threshold, clearBackground, dithering, compress, flipHorizontally, transparentToWhiteAuto, thumbToSimulation);
 
             if (multiRowData == null) {
-                mainHandler.post(() -> {
+                MAIN_HANDLER.post(() -> {
                     if (onCreateMultiRowDataListener != null) {
                         onCreateMultiRowDataListener.onCreateMultiRowDataError(ROW_IMAGE_NULL_ERROR);
                     }
@@ -70,7 +74,7 @@ public class MultiRowDataFactory {
                 return;
             }
 
-            mainHandler.post(() -> {
+            MAIN_HANDLER.post(() -> {
                 if (onCreateMultiRowDataListener != null) {
                     onCreateMultiRowDataListener.onCreateMultiRowDataComplete(multiRowData);
                 }
@@ -112,6 +116,12 @@ public class MultiRowDataFactory {
         int bottomBeyondDistance;
         int [] rowData_initialErrors = null;
         int [] rowData_lastRowErrors = null;
+
+        // 复用大数组，减少 GC 压力
+        int[] validPixels = null;
+        int[] gray = null;
+        int[] binaryPixels = null;
+        int lastSize = 0;
 
         for (int sm = 0; sm < rowImages.size(); sm++){
 
@@ -178,8 +188,14 @@ public class MultiRowDataFactory {
             int endRow = new_height - new_bottomBeyondDistance;
             int numberOfRows = endRow - startRow;
 
-            // 创建目标数组并直接从newBitmap中获取有效区域的像素
-            int[] validPixels = new int[numberOfRows * new_width];
+            // 创建或复用数组，获取有效区域的像素
+            int requiredSize = numberOfRows * new_width;
+            if (lastSize < requiredSize) {
+                validPixels = new int[requiredSize];
+                gray = new int[requiredSize];
+                binaryPixels = new int[requiredSize];
+                lastSize = requiredSize;
+            }
             newBitmap.getPixels(validPixels, 0, new_width, 0, startRow, new_width, numberOfRows);
 
             if(isContiguousCroppedImages){
@@ -190,13 +206,11 @@ public class MultiRowDataFactory {
             }
 
 
-            int[] gray = new int[numberOfRows * new_width];	//通过位图的大小创建像素点数组
             MxImageUtils.bitmapToGray(validPixels,gray,new_width,numberOfRows);
             if (dithering){
                 MxImageUtils.formatGrayToFloydDithering(gray,new_width,numberOfRows,threshold,rowData_initialErrors,rowData_lastRowErrors);
             }
 
-            int[] binaryPixels = new int[numberOfRows * new_width];
             //黑白图
             MxImageUtils.grayToBinary(gray,binaryPixels,new_width,numberOfRows,threshold);
             byte[] d72 = MxImageUtils.formatBinary69ToData72(binaryPixels,new_width,numberOfRows);
@@ -225,10 +239,9 @@ public class MultiRowDataFactory {
     }
 
     public static void bitmap2ExtMultiRowData(Context context, MultiRowImage multiRowImage, GrayType grayType, int threshold, boolean clearBackground, boolean dithering, boolean compress, boolean flipHorizontally, boolean transparentToWhiteAuto, boolean thumbToSimulation, OnCreateExtMultiRowDataListener onCreateExtMultiRowDataListener) {
-        Handler mainHandler = new Handler(Looper.getMainLooper());
 
         if (multiRowImage == null) {
-            mainHandler.post(() -> {
+            MAIN_HANDLER.post(() -> {
                 if (onCreateExtMultiRowDataListener != null) {
                     onCreateExtMultiRowDataListener.onCreateExtMultiRowDataError(MULTI_ROW_IMAGE_NULL_ERROR);
                 }
@@ -236,16 +249,16 @@ public class MultiRowDataFactory {
             return;
         }
 
-        Executors.newSingleThreadExecutor().execute(() -> {
+        SHARED_EXECUTOR.execute(() -> {
 
-            mainHandler.post(() -> {
+            MAIN_HANDLER.post(() -> {
                 if (onCreateExtMultiRowDataListener != null) {
                     onCreateExtMultiRowDataListener.onCreateExtMultiRowDataStart();
                 }
             });
 
             if (context == null) {
-                mainHandler.post(() -> {
+                MAIN_HANDLER.post(() -> {
                     if (onCreateExtMultiRowDataListener != null) {
                         onCreateExtMultiRowDataListener.onCreateExtMultiRowDataError(Context_NULL_ERROR);
                     }
@@ -256,7 +269,7 @@ public class MultiRowDataFactory {
             ExtMultiRowData extMultiRowData = bitmap2ExtMultiRowData(context, multiRowImage, grayType, threshold, clearBackground, dithering, compress, flipHorizontally, transparentToWhiteAuto, thumbToSimulation);
 
             if (extMultiRowData == null) {
-                mainHandler.post(() -> {
+                MAIN_HANDLER.post(() -> {
                     if (onCreateExtMultiRowDataListener != null) {
                         onCreateExtMultiRowDataListener.onCreateExtMultiRowDataError(ROW_IMAGE_NULL_ERROR);
                     }
@@ -264,7 +277,7 @@ public class MultiRowDataFactory {
                 return;
             }
 
-            mainHandler.post(() -> {
+            MAIN_HANDLER.post(() -> {
                 if (onCreateExtMultiRowDataListener != null) {
                     onCreateExtMultiRowDataListener.onCreateExtMultiRowDataComplete(extMultiRowData);
                 }

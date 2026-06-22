@@ -153,26 +153,31 @@ public class PrintImagePreparer {
                 "原图宽度应为360px，请检查素材");
         }
 
-        Bitmap canvas = Bitmap.createBitmap(width, printHeadHeight,
-            Bitmap.Config.ARGB_8888);
-        Canvas c = new Canvas(canvas);
-        c.drawColor(Color.WHITE);
+        try {
+            Bitmap canvas = Bitmap.createBitmap(width, printHeadHeight,
+                Bitmap.Config.ARGB_8888);
+            Canvas c = new Canvas(canvas);
+            c.drawColor(Color.WHITE);
 
-        int y;
-        switch (alignment) {
-            case TOP:
-                y = 0;
-                break;
-            case BOTTOM:
-                y = printHeadHeight - height;
-                break;
-            default:
-                y = 0;
-                break;
+            int y;
+            switch (alignment) {
+                case TOP:
+                    y = 0;
+                    break;
+                case BOTTOM:
+                    y = printHeadHeight - height;
+                    break;
+                default:
+                    y = 0;
+                    break;
+            }
+            c.drawBitmap(rotated, 0, y, null);
+
+            rotated.recycle();
+            return canvas;
+        } catch (Exception e) {
+            if (rotated != null && !rotated.isRecycled()) rotated.recycle();
+            throw e;
         }
-        c.drawBitmap(rotated, 0, y, null);
-
-        rotated.recycle();
-        return canvas;
     }
 }

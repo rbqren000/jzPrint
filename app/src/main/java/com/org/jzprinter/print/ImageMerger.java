@@ -34,17 +34,24 @@ public class ImageMerger {
 
         if (bitmaps.isEmpty() || width == 0) return null;
 
-        Bitmap result = Bitmap.createBitmap(width, totalHeight, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(result);
+        try {
+            Bitmap result = Bitmap.createBitmap(width, totalHeight, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(result);
 
-        int y = 0;
-        for (Bitmap bm : bitmaps) {
-            canvas.drawBitmap(bm, 0, y, null);
-            y += bm.getHeight();
-            bm.recycle();
+            int y = 0;
+            for (Bitmap bm : bitmaps) {
+                canvas.drawBitmap(bm, 0, y, null);
+                y += bm.getHeight();
+                bm.recycle();
+            }
+
+            return result;
+        } catch (Exception e) {
+            for (Bitmap bm : bitmaps) {
+                if (bm != null && !bm.isRecycled()) bm.recycle();
+            }
+            throw e;
         }
-
-        return result;
     }
 
     /**

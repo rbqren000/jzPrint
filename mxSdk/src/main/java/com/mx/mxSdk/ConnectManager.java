@@ -137,6 +137,9 @@ public class ConnectManager implements BluetoothDiscoverUtils.OnBluetoothDeviceL
 	private final OtaPacket otaPacket = new OtaPacket();
 	private final LogoPacket logoPacket = new LogoPacket();
 
+	/** XModem 停等协议下可安全复用的 DataObj，减少每包对象分配 */
+	private final DataObj reusableDataObj = new DataObj(null);
+
 	//下面使用到的工具类
 	private BluetoothDiscoverUtils bluetoothDiscoverUtils;
 	private volatile boolean isConning = false;//用来标志整个流程是否正在进行
@@ -3086,7 +3089,7 @@ public class ConnectManager implements BluetoothDiscoverUtils.OnBluetoothDeviceL
 	 * @param multiRowData the multi row data
 	 */
 	public void setWithSendMultiRowDataPacket(MultiRowData multiRowData) {
-		setWithSendMultiRowDataPacket(multiRowData, TransportProtocol.STX_E);
+		setWithSendMultiRowDataPacket(multiRowData, TransportProtocol.STX_A);
 	}
 
 	/**
@@ -3168,9 +3171,8 @@ public class ConnectManager implements BluetoothDiscoverUtils.OnBluetoothDeviceL
 			//发送进度更新事件
 			notifyDataProgressProgress(size, progress, multiRowDataPacket.startTime, multiRowDataPacket.currentTime);
 		}
-		DataObj dataObj = new DataObj(formatData);
-		DataObjContext context = new DataObjContext(dataObj, dataObjCallback);
-		writeData(context);
+		reusableDataObj.setData(formatData);
+		writeData(new DataObjContext(reusableDataObj, dataObjCallback));
 
 	}
 
@@ -3187,9 +3189,8 @@ public class ConnectManager implements BluetoothDiscoverUtils.OnBluetoothDeviceL
 		byte[] formatData = this.multiRowDataPacket.buildCurrentFormattedPacket();
 		RBQLog.i("NAK 重传当前包");
 		multiRowDataPacket.currentTime = System.currentTimeMillis();
-		DataObj dataObj = new DataObj(formatData);
-		DataObjContext context = new DataObjContext(dataObj, dataObjCallback);
-		writeData(context);
+		reusableDataObj.setData(formatData);
+		writeData(new DataObjContext(reusableDataObj, dataObjCallback));
 	}
 
 	/**
@@ -3428,7 +3429,7 @@ public class ConnectManager implements BluetoothDiscoverUtils.OnBluetoothDeviceL
 	 * @param data the data
 	 */
 	public void setWithSendOtaPacket(byte[] data) {
-		setWithSendOtaPacket(data, TransportProtocol.STX_E);
+		setWithSendOtaPacket(data, TransportProtocol.STX_A);
 	}
 
 	/**
@@ -3548,7 +3549,7 @@ public class ConnectManager implements BluetoothDiscoverUtils.OnBluetoothDeviceL
 	 * @param logoData the data
 	 */
 	public void setWithSendLogoPacket(LogoData logoData) {
-		setWithSendLogoPacket(logoData, TransportProtocol.STX_E);
+		setWithSendLogoPacket(logoData, TransportProtocol.STX_A);
 	}
 
 	/**

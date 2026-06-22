@@ -15,9 +15,15 @@ import com.mx.mxSdk.OpencvUtils.OpenCVUtils;
 import com.mx.mxSdk.Utils.MxSdkStore;
 import com.mx.mxSdk.Utils.RBQLog;
 
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class LogoDataFactory {
+
+    /** 共享线程池 */
+    private static final ExecutorService SHARED_EXECUTOR = Executors.newSingleThreadExecutor();
+    /** 共享主线程 Handler */
+    private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
 
     /**
      *
@@ -28,10 +34,9 @@ public class LogoDataFactory {
      * @param onCreateLogoDataListener  logo图片对象处理事件
      */
     public static void LogoImage2Data(Context context, LogoImage logoImage,int threshold, boolean transparentToWhiteAuto, OnCreateLogoDataListener onCreateLogoDataListener) {
-        Handler mainHandler = new Handler(Looper.getMainLooper());
 
         if (logoImage == null) {
-            mainHandler.post(() -> {
+            MAIN_HANDLER.post(() -> {
                 if (onCreateLogoDataListener != null) {
                     onCreateLogoDataListener.onCreateLogoDataError(IMAGE_NULL_ERROR);
                 }
@@ -39,16 +44,16 @@ public class LogoDataFactory {
             return;
         }
 
-        Executors.newSingleThreadExecutor().execute(() -> {
+        SHARED_EXECUTOR.execute(() -> {
 
-            mainHandler.post(() -> {
+            MAIN_HANDLER.post(() -> {
                 if (onCreateLogoDataListener != null) {
                     onCreateLogoDataListener.onCreateLogoDataStart();
                 }
             });
 
             if (context == null) {
-                mainHandler.post(() -> {
+                MAIN_HANDLER.post(() -> {
                     if (onCreateLogoDataListener != null) {
                         onCreateLogoDataListener.onCreateLogoDataError(Context_NULL_ERROR);
                     }
@@ -59,7 +64,7 @@ public class LogoDataFactory {
             LogoData logoData = LogoImage2Data(context, logoImage, threshold, transparentToWhiteAuto);
 
             if (logoData == null) {
-                mainHandler.post(() -> {
+                MAIN_HANDLER.post(() -> {
                     if (onCreateLogoDataListener != null) {
                         onCreateLogoDataListener.onCreateLogoDataError(IMAGE_PATH_NULL_ERROR);
                     }
@@ -67,7 +72,7 @@ public class LogoDataFactory {
                 return;
             }
 
-            mainHandler.post(() -> {
+            MAIN_HANDLER.post(() -> {
                 if (onCreateLogoDataListener != null) {
                     onCreateLogoDataListener.onCreateLogoDataComplete(logoData);
                 }
@@ -132,10 +137,9 @@ public class LogoDataFactory {
 
 
     public static void LogoImage2ExtLogoData(Context context, LogoImage logoImage,GrayType grayType,int threshold, boolean transparentToWhiteAuto, OnCreateExtLogoDataListener onCreateExtLogoDataListener) {
-        Handler mainHandler = new Handler(Looper.getMainLooper());
 
         if (logoImage == null) {
-            mainHandler.post(() -> {
+            MAIN_HANDLER.post(() -> {
                 if (onCreateExtLogoDataListener != null) {
                     onCreateExtLogoDataListener.onCreateExtLogoDataError(IMAGE_NULL_ERROR);
                 }
@@ -143,16 +147,16 @@ public class LogoDataFactory {
             return;
         }
 
-        Executors.newSingleThreadExecutor().execute(() -> {
+        SHARED_EXECUTOR.execute(() -> {
 
-            mainHandler.post(() -> {
+            MAIN_HANDLER.post(() -> {
                 if (onCreateExtLogoDataListener != null) {
                     onCreateExtLogoDataListener.onCreateExtLogoDataStart();
                 }
             });
 
             if (context == null) {
-                mainHandler.post(() -> {
+                MAIN_HANDLER.post(() -> {
                     if (onCreateExtLogoDataListener != null) {
                         onCreateExtLogoDataListener.onCreateExtLogoDataError(Context_NULL_ERROR);
                     }
@@ -163,7 +167,7 @@ public class LogoDataFactory {
             ExtLogoData extLogoData = LogoImage2ExtLogoData(context, logoImage,grayType, threshold, transparentToWhiteAuto);
 
             if (extLogoData == null) {
-                mainHandler.post(() -> {
+                MAIN_HANDLER.post(() -> {
                     if (onCreateExtLogoDataListener != null) {
                         onCreateExtLogoDataListener.onCreateExtLogoDataError(IMAGE_PATH_NULL_ERROR);
                     }
@@ -171,7 +175,7 @@ public class LogoDataFactory {
                 return;
             }
 
-            mainHandler.post(() -> {
+            MAIN_HANDLER.post(() -> {
                 if (onCreateExtLogoDataListener != null) {
                     onCreateExtLogoDataListener.onCreateExtLogoDataComplete(extLogoData);
                 }

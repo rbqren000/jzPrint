@@ -26,9 +26,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MultiRowImageFactory {
+
+    /** 共享线程池 */
+    private static final ExecutorService SHARED_EXECUTOR = Executors.newSingleThreadExecutor();
+    /** 共享主线程 Handler */
+    private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
     /**
      *
      * @param context 上下文对象
@@ -50,10 +56,8 @@ public class MultiRowImageFactory {
      */
     public static void image2MultiRowImage(Context context, Uri uri, RowLayoutDirection rowLayoutDirection, int ignoreLastRowIfHeightLess, OnCreateMultiRowImageListener onCreateMultiRowImageListener) {
 
-        Handler mainHandler = new Handler(Looper.getMainLooper());
-
         if (context == null) {
-            mainHandler.post(() -> {
+            MAIN_HANDLER.post(() -> {
                 if (onCreateMultiRowImageListener != null) {
                     onCreateMultiRowImageListener.onCreateMultiRowImageError(Context_NULL_ERROR);
                 }
@@ -62,7 +66,7 @@ public class MultiRowImageFactory {
         }
 
         if (uri == null) {
-            mainHandler.post(() -> {
+            MAIN_HANDLER.post(() -> {
                 if (onCreateMultiRowImageListener != null) {
                     onCreateMultiRowImageListener.onCreateMultiRowImageError(IMAGE_NULL_ERROR);
                 }
@@ -70,9 +74,9 @@ public class MultiRowImageFactory {
             return;
         }
 
-        Executors.newSingleThreadExecutor().execute(() -> {
+        SHARED_EXECUTOR.execute(() -> {
 
-            mainHandler.post(() -> {
+            MAIN_HANDLER.post(() -> {
                 if (onCreateMultiRowImageListener != null) {
                     onCreateMultiRowImageListener.onCreateMultiRowImageStart();
                 }
@@ -83,7 +87,7 @@ public class MultiRowImageFactory {
                 MultiRowImage multiRowImage = image2MultiRowImage(context, uri, rowLayoutDirection, ignoreLastRowIfHeightLess);
 
                 if (multiRowImage == null) {
-                    mainHandler.post(() -> {
+                    MAIN_HANDLER.post(() -> {
                         if (onCreateMultiRowImageListener != null) {
                             onCreateMultiRowImageListener.onCreateMultiRowImageError(MULTI_ROW_IMAGE_CREATION_FAILED);
                         }
@@ -91,14 +95,14 @@ public class MultiRowImageFactory {
                     return;
                 }
 
-                mainHandler.post(() -> {
+                MAIN_HANDLER.post(() -> {
                     if (onCreateMultiRowImageListener != null) {
                         onCreateMultiRowImageListener.onCreateMultiRowImageComplete(multiRowImage);
                     }
                 });
 
             } catch (IOException e) {
-                mainHandler.post(() -> {
+                MAIN_HANDLER.post(() -> {
                     if (onCreateMultiRowImageListener != null) {
                         onCreateMultiRowImageListener.onCreateMultiRowImageError(IOException_ERROR);
                     }
@@ -242,10 +246,10 @@ public class MultiRowImageFactory {
 
     public static void image2MultiRowImage(Context context, String imagePath, RowLayoutDirection rowLayoutDirection, int ignoreLastRowIfHeightLess, OnCreateMultiRowImageListener onCreateMultiRowImageListener) {
 
-        Handler mainHandler = new Handler(Looper.getMainLooper());
+        
 
         if (context == null) {
-            mainHandler.post(() -> {
+            MAIN_HANDLER.post(() -> {
                 if (onCreateMultiRowImageListener != null) {
                     onCreateMultiRowImageListener.onCreateMultiRowImageError(Context_NULL_ERROR);
                 }
@@ -254,7 +258,7 @@ public class MultiRowImageFactory {
         }
 
         if (imagePath == null || imagePath.isEmpty()) {
-            mainHandler.post(() -> {
+            MAIN_HANDLER.post(() -> {
                 if (onCreateMultiRowImageListener != null) {
                     onCreateMultiRowImageListener.onCreateMultiRowImageError(IMAGE_NULL_ERROR);
                 }
@@ -264,7 +268,7 @@ public class MultiRowImageFactory {
 
         File imageFile = new File(imagePath);
         if (!imageFile.exists()) {
-            mainHandler.post(() -> {
+            MAIN_HANDLER.post(() -> {
                 if (onCreateMultiRowImageListener != null) {
                     onCreateMultiRowImageListener.onCreateMultiRowImageError(FILE_NOT_FOUND);
                 }
@@ -272,9 +276,9 @@ public class MultiRowImageFactory {
             return;
         }
 
-        Executors.newSingleThreadExecutor().execute(() -> {
+        SHARED_EXECUTOR.execute(() -> {
 
-            mainHandler.post(() -> {
+            MAIN_HANDLER.post(() -> {
                 if (onCreateMultiRowImageListener != null) {
                     onCreateMultiRowImageListener.onCreateMultiRowImageStart();
                 }
@@ -286,7 +290,7 @@ public class MultiRowImageFactory {
 
                 if (multiRowImage == null){
 
-                    mainHandler.post(() -> {
+                    MAIN_HANDLER.post(() -> {
                         if (onCreateMultiRowImageListener != null) {
                             onCreateMultiRowImageListener.onCreateMultiRowImageError(MULTI_ROW_IMAGE_CREATION_FAILED);
                         }
@@ -294,14 +298,14 @@ public class MultiRowImageFactory {
                     return;
                 }
 
-                mainHandler.post(() -> {
+                MAIN_HANDLER.post(() -> {
                     if (onCreateMultiRowImageListener != null) {
                         onCreateMultiRowImageListener.onCreateMultiRowImageComplete(multiRowImage);
                     }
                 });
 
             } catch (IOException e) {
-                mainHandler.post(() -> {
+                MAIN_HANDLER.post(() -> {
                     if (onCreateMultiRowImageListener != null) {
                         onCreateMultiRowImageListener.onCreateMultiRowImageError(IOException_ERROR);
                     }
@@ -423,10 +427,10 @@ public class MultiRowImageFactory {
 
     public static void image2MultiRowImage(Context context,Bitmap bitmap, RowLayoutDirection rowLayoutDirection, int ignoreLastRowIfHeightLess, OnCreateMultiRowImageListener onCreateMultiRowImageListener){
 
-        Handler mainHandler = new Handler(Looper.getMainLooper());
+        
 
         if (context == null){
-            mainHandler.post(() -> {
+            MAIN_HANDLER.post(() -> {
                 if (onCreateMultiRowImageListener != null) {
                     onCreateMultiRowImageListener.onCreateMultiRowImageError(Context_NULL_ERROR);
                 }
@@ -435,7 +439,7 @@ public class MultiRowImageFactory {
         }
 
         if (bitmap == null){
-            mainHandler.post(() -> {
+            MAIN_HANDLER.post(() -> {
                 if (onCreateMultiRowImageListener != null) {
                     onCreateMultiRowImageListener.onCreateMultiRowImageError(IMAGE_NULL_ERROR);
                 }
@@ -443,9 +447,9 @@ public class MultiRowImageFactory {
             return;
         }
 
-        Executors.newSingleThreadExecutor().execute(() -> {
+        SHARED_EXECUTOR.execute(() -> {
 
-            mainHandler.post(() -> {
+            MAIN_HANDLER.post(() -> {
                 if (onCreateMultiRowImageListener != null) {
                     onCreateMultiRowImageListener.onCreateMultiRowImageStart();
                 }
@@ -453,7 +457,7 @@ public class MultiRowImageFactory {
 
             MultiRowImage multiRowImage = image2MultiRowImage(context,bitmap, rowLayoutDirection,ignoreLastRowIfHeightLess);
 
-            mainHandler.post(() -> {
+            MAIN_HANDLER.post(() -> {
                 if (onCreateMultiRowImageListener != null) {
                     onCreateMultiRowImageListener.onCreateMultiRowImageComplete(multiRowImage);
                 }

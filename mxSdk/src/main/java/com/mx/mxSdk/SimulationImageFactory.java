@@ -8,6 +8,9 @@ import androidx.annotation.Nullable;
 
 import com.mx.mxSdk.Utils.MxSdkStore;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 /**
  * ========================================
  * 模拟图像生成工厂类
@@ -20,6 +23,9 @@ import com.mx.mxSdk.Utils.MxSdkStore;
  */
 public class SimulationImageFactory {
 
+    /** 共享线程池 */
+    private static final ExecutorService SHARED_EXECUTOR = Executors.newSingleThreadExecutor();
+    /** 共享主线程 Handler */
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     //////////////////////////////////////////////////////////////////
@@ -74,7 +80,7 @@ public class SimulationImageFactory {
             return;
         }
 
-        new Thread(new Runnable() {
+        SHARED_EXECUTOR.execute(new Runnable() {
             @Override
             public void run() {
                 // 通知开始
@@ -127,7 +133,7 @@ public class SimulationImageFactory {
                     }
                 });
             }
-        }).start();
+        });
     }
 
     /**
@@ -147,7 +153,7 @@ public class SimulationImageFactory {
             return;
         }
 
-        new Thread(new Runnable() {
+        SHARED_EXECUTOR.execute(new Runnable() {
             @Override
             public void run() {
                 // 通知开始
@@ -185,7 +191,7 @@ public class SimulationImageFactory {
                     }
                 });
             }
-        }).start();
+        });
     }
 
     /**
@@ -205,7 +211,7 @@ public class SimulationImageFactory {
             return;
         }
 
-        new Thread(new Runnable() {
+        SHARED_EXECUTOR.execute(new Runnable() {
             @Override
             public void run() {
                 // 通知开始
@@ -258,6 +264,6 @@ public class SimulationImageFactory {
                     }
                 });
             }
-        }).start();
+        });
     }
 }

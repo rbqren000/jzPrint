@@ -294,15 +294,19 @@ public class PrintEngine {
 
             PrintImagePreparer.RotationDirection rotation = PrintImagePreparer.getRotation(pageIndex, oddPageOnRight, leftBottomToTop, rightBottomToTop);
             PrintImagePreparer.VerticalAlignment alignment = PrintImagePreparer.getAlignment(pageIndex, oddPageOnRight, leftBottomToTop, rightBottomToTop);
-            Bitmap prepared = PrintImagePreparer.prepare(page, rotation, alignment);
-            page.recycle();
-
-            MultiRowImage pageImage = MultiRowImageFactory.image2MultiRowImage(
-                context, prepared,
-                RowLayoutDirection.RowLayoutDirectionVertical, 0);
-            prepared.recycle();
-
-            allRowImages.addAll(pageImage.getRowImages());
+            try {
+                Bitmap prepared = PrintImagePreparer.prepare(page, rotation, alignment);
+                try {
+                    MultiRowImage pageImage = MultiRowImageFactory.image2MultiRowImage(
+                        context, prepared,
+                        RowLayoutDirection.RowLayoutDirectionVertical, 0);
+                    allRowImages.addAll(pageImage.getRowImages());
+                } finally {
+                    prepared.recycle();
+                }
+            } finally {
+                page.recycle();
+            }
         }
 
         if (phaseCallback != null) {
