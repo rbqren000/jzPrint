@@ -56,14 +56,18 @@ public class SchoolHomeworkListActivity extends BaseActivity {
         adapter = new EditionAdapter();
         adapter.setOnEditionClickListener(edition -> {
             if (edition.supportsStudent() && edition.supportsPrepareCode()) {
-                new android.app.AlertDialog.Builder(this, R.style.mAlertDialog)
+                android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(this, R.style.mAlertDialog)
                     .setTitle(edition.editionName)
                     .setItems(new String[]{getString(R.string.title_student_list), getString(R.string.title_prepare_code_list)}, (d, which) -> {
                         int type = which == 0 ? 1 : 2;
                         startActivity(StudentListActivity.newIntent(this,
                             schoolId, edition.editionId, type, edition.editionName));
                     })
-                    .show();
+                    .create();
+                dialog.getListView().setDivider(new android.graphics.drawable.ColorDrawable(0xFFE0E0E0));
+                dialog.getListView().setDividerHeight(1);
+                dialog.getListView().setFooterDividersEnabled(false);
+                dialog.show();
             } else if (edition.supportsStudent()) {
                 startActivity(StudentListActivity.newIntent(this,
                     schoolId, edition.editionId, 1, edition.editionName));

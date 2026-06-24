@@ -64,6 +64,18 @@ public class ActionSheetBuilder {
                     dialog.dismiss();
                 });
                 container.addView(itemView);
+
+                // 每个 item 之间添加分割线（最后一个之后不加）
+                if (i < items.size() - 1) {
+                    View divider = new View(context);
+                    divider.setBackgroundColor(0xFFE0E0E0);
+                    int marginDp = (int) (24 * context.getResources().getDisplayMetrics().density);
+                    LinearLayout.LayoutParams dividerParams = new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT, 1);
+                    dividerParams.setMargins(marginDp, 0, marginDp, 0);
+                    divider.setLayoutParams(dividerParams);
+                    container.addView(divider);
+                }
             }
         }
 

@@ -116,7 +116,7 @@
     <string name="select_language">Select Language</string>
 <string name="preview">Preview</string>
     <string name="print">Print</string>
-    <string name="about_message">Jian Zuo\nVersion: 1.0.0\n\nSchool homework printing app.</string>
+    <string name="about_message">Jian Zuo\nVersion: %s\n\nSchool homework printing app.</string>
     <string name="back">Back</string>
 <string name="dialog_ok">OK</string>
     <string name="dialog_cancel">Cancel</string>

@@ -16,6 +16,7 @@ import com.org.jzprinter.widget.CustomDialog.adapter.SingleChoiceAdapter;
 import java.util.Collections;
 import java.util.List;
 
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 public class SingleChoiceDialogBuilder {
@@ -84,6 +85,10 @@ public class SingleChoiceDialogBuilder {
         SingleChoiceAdapter adapter = new SingleChoiceAdapter(safeItems, defaultSelection);
         binding.optionsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
         binding.optionsRecyclerView.setAdapter(adapter);
+
+        // 添加列表项之间的分割线
+        DividerItemDecoration divider = new DividerItemDecoration(context, LinearLayoutManager.VERTICAL);
+        binding.optionsRecyclerView.addItemDecoration(divider);
 
         binding.okButton.setOnClickListener(v -> {
             if (listener != null) {

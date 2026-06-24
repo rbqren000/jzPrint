@@ -45,8 +45,8 @@
             android:layout_marginEnd="8dp"
             android:text="@string/dialog_cancel"
             android:textSize="16sp"
-            android:textColor="@color/text_secondary"
-            android:background="@color/bg_secondary"
+            android:textColor="@color/btn_secondary_text"
+            android:background="@drawable/bg_btn_outline"
             android:textAllCaps="false" />
 
         <Button

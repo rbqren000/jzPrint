@@ -2,9 +2,7 @@ package com.mx.mxSdk.Safe.symmetric;
 
 import android.util.Base64;
 import android.util.Log;
-
-import com.mx.mxSdk.Safe.base.StringBytes;
-
+import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -15,6 +13,8 @@ import java.security.InvalidAlgorithmParameterException;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+
+import com.mx.mxSdk.Safe.base.StringBytes;
 
 /**
  * AES 对称加密工具（CBC/ECB/GCM/CTR/CFB/OFB + Base64/Hex）

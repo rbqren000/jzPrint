@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 public class MultiChoiceDialogBuilder {
@@ -88,6 +89,10 @@ public class MultiChoiceDialogBuilder {
         MultiChoiceAdapter adapter = new MultiChoiceAdapter(items, defaultSelectedIndices);
         binding.optionsRecyclerView.setLayoutManager(new LinearLayoutManager(context));
         binding.optionsRecyclerView.setAdapter(adapter);
+
+        // 添加列表项之间的分割线
+        DividerItemDecoration divider = new DividerItemDecoration(context, LinearLayoutManager.VERTICAL);
+        binding.optionsRecyclerView.addItemDecoration(divider);
 
         binding.selectAllButton.setOnClickListener(v -> adapter.selectAll());
         binding.clearButton.setOnClickListener(v -> adapter.clearAll());

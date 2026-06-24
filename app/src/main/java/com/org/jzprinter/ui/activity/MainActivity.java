@@ -326,9 +326,10 @@ public class MainActivity extends BaseActivity {
     }
 
     private void showAboutDialog() {
+        String version = BuildConfig.VERSION_NAME;
         new AlertDialog.Builder(this, R.style.mAlertDialog)
             .setTitle(R.string.menu_about)
-            .setMessage(R.string.about_message)
+            .setMessage(getString(R.string.about_message, version))
             .setPositiveButton(android.R.string.ok, null)
             .show();
     }

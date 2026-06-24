@@ -114,7 +114,7 @@
     <string name="select_language">选择语言</string>
 <string name="preview">预览</string>
     <string name="print">打印</string>
-    <string name="about_message">简作\n版本：1.0.0\n\n校本作业打印应用。</string>
+    <string name="about_message">简作\n版本：%s\n\n校本作业打印应用。</string>
     <string name="back">返回</string>
 <string name="dialog_ok">确定</string>
     <string name="dialog_cancel">取消</string>

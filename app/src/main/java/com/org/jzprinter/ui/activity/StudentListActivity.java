@@ -39,6 +39,7 @@ import java.util.Map;
 
 public class StudentListActivity extends BaseActivity {
 
+    private static final String TAG = "StudentListActivity";
     private static final String EXTRA_SCHOOL_ID = "schoolId";
     private static final String EXTRA_EDITION_ID = "editionId";
     private static final String EXTRA_EDITION_TYPE = "editionType";
@@ -435,7 +436,23 @@ public class StudentListActivity extends BaseActivity {
                 PrintEngine.getInstance().switchToNewTarget();
                 startActivity(TaskDetailActivity.newIntent(this, task.getTaskId()));
             })
-            .setNegativeButton(R.string.dialog_resume_restart, (d, w) -> onRestart.run())
+            .setNegativeButton(R.string.dialog_resume_restart, (d, w) -> {
+                // 先取消旧任务，避免 startNewTask 防重检查抛异常
+                task.setStatus(TaskStatus.CANCELLED.getCode());
+                task.setUpdatedAt(System.currentTimeMillis());
+                // 等待 DB 更新完成后，回到主线程再跳转，消除竞态窗口
+                PrintEngine.getInstance().getDbExecutor().execute(() -> {
+                    try {
+                        AppDatabase.getInstance(StudentListActivity.this).printTaskRepository().update(task);
+                        rbqRunOnUiThread(() -> {
+                            if (!isFinishing()) onRestart.run();
+                        });
+                    } catch (Exception e) {
+                        Log.e(TAG, "取消旧任务失败", e);
+                        rbqRunOnUiThread(() -> showToast("取消失败，请重试"));
+                    }
+                });
+            })
             .setNeutralButton(R.string.main_cancel_task_btn, (d, w) -> {
                 task.setStatus(TaskStatus.CANCELLED.getCode());
                 task.setUpdatedAt(System.currentTimeMillis());
@@ -457,15 +474,39 @@ public class StudentListActivity extends BaseActivity {
             names[i] = getString(R.string.task_card_progress, printed, total, mode.getLabel(this));
         }
 
-        new android.app.AlertDialog.Builder(this, R.style.mAlertDialog)
+        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(this, R.style.mAlertDialog)
             .setTitle(getString(R.string.student_multi_unfinished, name))
             .setItems(names, (d, which) -> {
                 PrintTaskEntity selected = tasks.get(which);
                 PrintEngine.getInstance().switchToNewTarget();
                 startActivity(TaskDetailActivity.newIntent(this, selected.getTaskId()));
             })
-            .setNegativeButton(R.string.dialog_resume_restart, (d, w) -> onRestart.run())
-            .show();
+            .setNegativeButton(R.string.dialog_resume_restart, (d, w) -> {
+                // 先取消所有旧任务，避免 startNewTask 防重检查抛异常
+                // 等待 DB 更新完成后，回到主线程再跳转，消除竞态窗口
+                PrintEngine.getInstance().getDbExecutor().execute(() -> {
+                    try {
+                        AppDatabase db = AppDatabase.getInstance(StudentListActivity.this);
+                        PrintTaskRepository repo = db.printTaskRepository();
+                        for (PrintTaskEntity t : tasks) {
+                            t.setStatus(TaskStatus.CANCELLED.getCode());
+                            t.setUpdatedAt(System.currentTimeMillis());
+                            repo.update(t);
+                        }
+                        rbqRunOnUiThread(() -> {
+                            if (!isFinishing()) onRestart.run();
+                        });
+                    } catch (Exception e) {
+                        Log.e(TAG, "批量取消旧任务失败", e);
+                        rbqRunOnUiThread(() -> showToast("取消失败，请重试"));
+                    }
+                });
+            })
+            .create();
+        dialog.getListView().setDivider(new android.graphics.drawable.ColorDrawable(0xFFE0E0E0));
+        dialog.getListView().setDividerHeight(1);
+        dialog.getListView().setFooterDividersEnabled(false);
+        dialog.show();
     }
 
     private void showExistingTasksDialog(String name,
@@ -481,13 +522,18 @@ public class StudentListActivity extends BaseActivity {
             items[i] = getString(R.string.task_card_progress, printed, total, mode.getLabel(this)) + " " + status.getLabel(this);
         }
 
-        new android.app.AlertDialog.Builder(this, R.style.mAlertDialog)
+        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(this, R.style.mAlertDialog)
             .setTitle(getString(R.string.label_print_records, name))
             .setItems(items, (d, which) -> {
                 PrintTaskEntity selected = tasks.get(which);
                 startActivity(TaskDetailActivity.newIntent(this, selected.getTaskId()));
             })
             .setNegativeButton("新打印", (d, w) -> onRestart.run())
-            .show();
+            .create();
+        // 为列表项之间添加分割线
+        dialog.getListView().setDivider(new android.graphics.drawable.ColorDrawable(0xFFE0E0E0));
+        dialog.getListView().setDividerHeight(1);
+        dialog.getListView().setFooterDividersEnabled(false);
+        dialog.show();
     }
 }

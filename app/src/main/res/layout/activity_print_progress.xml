@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -155,14 +156,12 @@
 
     </LinearLayout>
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:paddingBottom="16dp"
-        android:gravity="end">
+        android:paddingBottom="16dp">
 
         <Button
             android:id="@+id/btnRestart"
@@ -170,8 +169,7 @@
             android:layout_height="40dp"
             android:text="@string/progress_resend"
             android:textSize="14sp"
-            android:layout_marginEnd="8dp"
-            android:minWidth="100dp"
+            android:minWidth="80dp"
             android:enabled="false" />
 
         <Button
@@ -180,8 +178,7 @@
             android:layout_height="40dp"
             android:text="@string/progress_btn_reprint_page"
             android:textSize="14sp"
-            android:layout_marginEnd="8dp"
-            android:minWidth="100dp"
+            android:minWidth="80dp"
             android:visibility="gone" />
 
         <Button
@@ -190,8 +187,7 @@
             android:layout_height="40dp"
             android:text="@string/progress_cancel_print"
             android:textSize="14sp"
-            android:layout_marginEnd="8dp"
-            android:minWidth="100dp" />
+            android:minWidth="80dp" />
 
         <Button
             android:id="@+id/btnViewDetail"
@@ -201,9 +197,23 @@
             android:textSize="14sp"
             android:backgroundTint="@color/btn_primary"
             android:textColor="@color/btn_primary_text"
-            android:minWidth="100dp"
+            android:minWidth="80dp"
             android:visibility="gone" />
 
-    </LinearLayout>
+        <androidx.constraintlayout.helper.widget.Flow
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:constraint_referenced_ids="btnRestart,btnReprintSpecifiedPage,btnPauseOrCancel,btnViewDetail"
+            app:flow_wrapMode="chain"
+            app:flow_horizontalGap="8dp"
+            app:flow_verticalGap="8dp"
+            app:flow_horizontalStyle="packed"
+            app:flow_horizontalBias="1.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </LinearLayout>
