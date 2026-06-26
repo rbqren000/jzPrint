@@ -126,6 +126,7 @@ public class MainActivity extends BaseActivity {
         binding.tvDeviceState.setOnClickListener(v -> openDeviceSelect());
 
         binding.ivScan.setOnClickListener(v -> showScanOptions());
+        binding.llEmptyGuide.setOnClickListener(v -> showScanOptions());
 
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override

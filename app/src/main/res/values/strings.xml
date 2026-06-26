@@ -348,4 +348,16 @@
     <string name="label_print_records">%1$s print records</string>
     <string name="btn_new_print">New print</string>
     <string name="bluetooth_not_enabled">Bluetooth not enabled, printer may not work</string>
+    <string name="search_student_hint">Search student name</string>
+    <string name="empty_search_result">No matching student found</string>
+    <string name="all_classes">All classes</string>
+    <string name="download_all">Download all</string>
+    <string name="download_all_confirm_title">Confirm download</string>
+    <string name="download_all_confirm_message">Will download %1$d students\' materials\nEstimated time: about %2$d minutes</string>
+    <string name="download_all_prepare_confirm">Will download %1$d prepare codes</string>
+    <string name="download_all_success">All downloaded successfully</string>
+    <string name="download_all_result">Download complete: success %1$d, failed %2$d</string>
+    <string name="download_all_already_ready">All materials already downloaded</string>
+    <string name="download_retry_failed">Retry failed items</string>
+    <string name="download_preparing">Preparing...</string>
 </resources>

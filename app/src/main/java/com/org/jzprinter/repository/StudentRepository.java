@@ -31,4 +31,8 @@ public class StudentRepository {
     public List<StudentEntity> getMaterialReady(String schoolId, String editionId) {
         return studentDao.getMaterialReady(schoolId, editionId);
     }
+
+    public List<StudentEntity> searchByName(String schoolId, String editionId, String keyword) {
+        return studentDao.searchByName(schoolId, editionId, keyword);
+    }
 }

@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import com.org.jzprinter.R;
 
@@ -22,6 +23,7 @@ public class RBQProgressDialog {
     private Dialog dialog;
     private TextView titleTextView;
     private TextView messageView;
+    private ProgressBar progressBar;
     private WeakReference<Context> contextRef;
 
     public void show(Context context, String title, String msg) {
@@ -54,6 +56,7 @@ public class RBQProgressDialog {
         LinearLayout container = view.findViewById(R.id.container);
 
         titleTextView = view.findViewById(R.id.titleTextView);
+        progressBar = view.findViewById(R.id.progressBar);
         messageView = view.findViewById(R.id.progress_message);
 
         if (!TextUtils.isEmpty(title)) {
@@ -131,6 +134,22 @@ public class RBQProgressDialog {
             } else {
                 titleTextView.setVisibility(View.GONE);
             }
+        }
+    }
+
+    public void updateProgress(int progress, int max) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            updateProgressUI(progress, max);
+        } else {
+            runOnUiThread(() -> updateProgressUI(progress, max));
+        }
+    }
+
+    private void updateProgressUI(int progress, int max) {
+        if (dialog != null && dialog.isShowing() && progressBar != null) {
+            progressBar.setVisibility(View.VISIBLE);
+            progressBar.setMax(max);
+            progressBar.setProgress(progress);
         }
     }
 

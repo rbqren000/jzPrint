@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -30,25 +31,29 @@ public class DownloadService extends Service {
     private static final String CHANNEL_ID = "download_service_channel";
     private static final int NOTIFICATION_ID = 1002;
     private static DownloadService instance;
+    private static final AtomicInteger activeDownloads = new AtomicInteger(0);
 
     public static boolean isRunning() {
         return instance != null;
     }
 
     public static void start(Context context) {
-        if (isRunning()) return;
-        Intent intent = new Intent(context, DownloadService.class);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(intent);
-        } else {
-            context.startService(intent);
+        if (activeDownloads.incrementAndGet() == 1) {
+            Intent intent = new Intent(context, DownloadService.class);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent);
+            } else {
+                context.startService(intent);
+            }
         }
     }
 
     public static void stop() {
-        if (instance != null) {
-            instance.stopSelf();
-            instance = null;
+        if (activeDownloads.decrementAndGet() == 0) {
+            if (instance != null) {
+                instance.stopSelf();
+                instance = null;
+            }
         }
     }
 

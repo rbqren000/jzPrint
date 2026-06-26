@@ -3,6 +3,7 @@ package com.org.jzprinter.ui.adapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -13,7 +14,11 @@ import com.org.jzprinter.R;
 import com.org.jzprinter.database.entity.StudentEntity;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class StudentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -43,8 +48,12 @@ public class StudentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     }
 
     private final List<ListItem> items = new ArrayList<>();
+    private final List<ListItem> displayItems = new ArrayList<>();
+    private final Set<String> collapsedClasses = new HashSet<>();
+    private final Map<String, Integer> classStudentCount = new HashMap<>();
     private OnStudentClickListener listener;
     private OnDownloadClickListener downloadListener;
+    private OnClassClickListener classClickListener;
 
     public interface OnStudentClickListener {
         void onStudentClick(StudentEntity student);
@@ -52,6 +61,10 @@ public class StudentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     public interface OnDownloadClickListener {
         void onDownloadClick(StudentEntity student);
+    }
+
+    public interface OnClassClickListener {
+        void onClassClick(String className);
     }
 
     public void setOnStudentClickListener(OnStudentClickListener listener) {
@@ -62,17 +75,92 @@ public class StudentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         this.downloadListener = listener;
     }
 
-    public void setItems(List<ListItem> items) {
-        this.items.clear();
-        if (items != null) {
-            this.items.addAll(items);
+    public void setOnClassClickListener(OnClassClickListener listener) {
+        this.classClickListener = listener;
+    }
+
+    public void setItems(List<ListItem> newItems) {
+        items.clear();
+        if (newItems != null) {
+            items.addAll(newItems);
         }
+        calculateClassStudentCount();
+        rebuildDisplayItems();
         notifyDataSetChanged();
+    }
+
+    public boolean isClassCollapsed(String className) {
+        return collapsedClasses.contains(className);
+    }
+
+    public void toggleClass(String className) {
+        boolean wasCollapsed = collapsedClasses.contains(className);
+        if (wasCollapsed) {
+            collapsedClasses.remove(className);
+        } else {
+            collapsedClasses.add(className);
+        }
+
+        int sectionPosition = -1;
+        for (int i = 0; i < displayItems.size(); i++) {
+            if (displayItems.get(i).isSection()
+                && className.equals(displayItems.get(i).sectionTitle)) {
+                sectionPosition = i;
+                break;
+            }
+        }
+
+        if (sectionPosition >= 0) {
+            int count = classStudentCount.getOrDefault(className, 0);
+            if (wasCollapsed) {
+                rebuildDisplayItems();
+                notifyItemRangeInserted(sectionPosition + 1, count);
+            } else {
+                rebuildDisplayItems();
+                notifyItemRangeRemoved(sectionPosition + 1, count);
+            }
+            notifyItemChanged(sectionPosition);
+        }
+    }
+
+    private void calculateClassStudentCount() {
+        classStudentCount.clear();
+        String currentClass = null;
+        int count = 0;
+        for (ListItem item : items) {
+            if (item.isSection()) {
+                if (currentClass != null) {
+                    classStudentCount.put(currentClass, count);
+                }
+                currentClass = item.sectionTitle;
+                count = 0;
+            } else {
+                count++;
+            }
+        }
+        if (currentClass != null) {
+            classStudentCount.put(currentClass, count);
+        }
+    }
+
+    private void rebuildDisplayItems() {
+        displayItems.clear();
+        String currentClass = null;
+        boolean skip = false;
+        for (ListItem item : items) {
+            if (item.isSection()) {
+                currentClass = item.sectionTitle;
+                skip = collapsedClasses.contains(currentClass);
+                displayItems.add(item);
+            } else if (!skip) {
+                displayItems.add(item);
+            }
+        }
     }
 
     @Override
     public int getItemViewType(int position) {
-        return items.get(position).isSection() ? TYPE_SECTION : TYPE_ITEM;
+        return displayItems.get(position).isSection() ? TYPE_SECTION : TYPE_ITEM;
     }
 
     @NonNull
@@ -81,7 +169,17 @@ public class StudentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         if (viewType == TYPE_SECTION) {
             View view = inflater.inflate(R.layout.item_section_header, parent, false);
-            return new SectionViewHolder(view);
+            SectionViewHolder vh = new SectionViewHolder(view);
+            vh.itemView.setOnClickListener(v -> {
+                int pos = vh.getAdapterPosition();
+                if (pos != RecyclerView.NO_POSITION && classClickListener != null) {
+                    ListItem item = displayItems.get(pos);
+                    if (item.isSection()) {
+                        classClickListener.onClassClick(item.sectionTitle);
+                    }
+                }
+            });
+            return vh;
         }
         View view = inflater.inflate(R.layout.item_student, parent, false);
         return new ItemViewHolder(view);
@@ -89,9 +187,14 @@ public class StudentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        ListItem item = items.get(position);
+        ListItem item = displayItems.get(position);
         if (item.isSection()) {
-            ((SectionViewHolder) holder).tvSectionTitle.setText(item.sectionTitle);
+            SectionViewHolder vh = (SectionViewHolder) holder;
+            String className = item.sectionTitle;
+            int count = classStudentCount.getOrDefault(className, 0);
+            vh.tvSectionTitle.setText(className + " (" + count + ")");
+            boolean collapsed = collapsedClasses.contains(className);
+            vh.ivCollapseIcon.setRotation(collapsed ? 0f : 180f);
         } else {
             StudentEntity student = item.student;
             ItemViewHolder vh = (ItemViewHolder) holder;
@@ -122,13 +225,15 @@ public class StudentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     @Override
     public int getItemCount() {
-        return items.size();
+        return displayItems.size();
     }
 
     static class SectionViewHolder extends RecyclerView.ViewHolder {
+        ImageView ivCollapseIcon;
         TextView tvSectionTitle;
         SectionViewHolder(View itemView) {
             super(itemView);
+            ivCollapseIcon = itemView.findViewById(R.id.ivCollapseIcon);
             tvSectionTitle = itemView.findViewById(R.id.tvSectionTitle);
         }
     }

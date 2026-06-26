@@ -27,4 +27,10 @@ public interface StudentDao {
 
     @Query("SELECT * FROM student WHERE schoolId = :schoolId AND editionId = :editionId AND materialReady = 1")
     List<StudentEntity> getMaterialReady(@NonNull String schoolId, @NonNull String editionId);
+
+    @Query("SELECT * FROM student " +
+           "WHERE schoolId = :schoolId AND editionId = :editionId " +
+           "AND studentName LIKE '%' || :keyword || '%' " +
+           "ORDER BY className, studentName")
+    List<StudentEntity> searchByName(@NonNull String schoolId, @NonNull String editionId, @NonNull String keyword);
 }

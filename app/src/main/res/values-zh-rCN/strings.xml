@@ -346,4 +346,16 @@
     <string name="label_print_records">%1$s 的打印记录</string>
     <string name="btn_new_print">新打印</string>
     <string name="bluetooth_not_enabled">蓝牙未打开可能无法使用打印机</string>
+    <string name="search_student_hint">搜索学生姓名</string>
+    <string name="empty_search_result">未找到匹配的学生</string>
+    <string name="all_classes">全部班级</string>
+    <string name="download_all">一键下载</string>
+    <string name="download_all_confirm_title">确认下载</string>
+    <string name="download_all_confirm_message">将下载 %1$d 个学生的素材\n预计耗时约 %2$d 分钟</string>
+    <string name="download_all_prepare_confirm">将下载 %1$d 个预铺码的素材</string>
+    <string name="download_all_success">全部下载成功</string>
+    <string name="download_all_result">下载完成：成功 %1$d 个，失败 %2$d 个</string>
+    <string name="download_all_already_ready">所有素材已下载</string>
+    <string name="download_retry_failed">重试失败项</string>
+    <string name="download_preparing">准备中...</string>
 </resources>

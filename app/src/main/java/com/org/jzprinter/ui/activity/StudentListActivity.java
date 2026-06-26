@@ -3,10 +3,15 @@ package com.org.jzprinter.ui.activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.DividerItemDecoration;
 
@@ -26,6 +31,7 @@ import com.org.jzprinter.print.PrintMode;
 import com.org.jzprinter.print.TaskStatus;
 import com.org.jzprinter.repository.PrintTaskRepository;
 import com.org.jzprinter.repository.StudentRepository;
+import com.org.jzprinter.service.DownloadAllManager;
 import com.org.jzprinter.service.DownloadService;
 import com.org.jzprinter.ui.adapter.PrepareCodeAdapter;
 import com.org.jzprinter.ui.adapter.StudentAdapter;
@@ -36,6 +42,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class StudentListActivity extends BaseActivity {
 
@@ -64,6 +72,18 @@ public class StudentListActivity extends BaseActivity {
     private int editionType;
     private Map<String, String> prepareCodeBusinessIdMap = new HashMap<>();
 
+    private StudentAdapter studentAdapter;
+    private final Handler searchHandler = new Handler(Looper.getMainLooper());
+    private Runnable searchRunnable;
+    private final List<String> allClassNames = new ArrayList<>();
+    private String selectedClass = "";
+
+    private DownloadAllManager downloadAllManager;
+    private List<StudentEntity> currentStudents = new ArrayList<>();
+    private List<String> currentPrepareCodes = new ArrayList<>();
+    private List<Boolean> currentReadyStates = new ArrayList<>();
+    private RBQProgressDialog batchProgressDialog;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -81,17 +101,33 @@ public class StudentListActivity extends BaseActivity {
         binding.commonAppBar.leftMenuLayout.setOnClickListener(v -> finish());
 
         binding.rvList.setLayoutManager(new LinearLayoutManager(this));
-        // 添加分割线，与首页保持一致样式
         DividerItemDecoration divider = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
         divider.setDrawable(getResources().getDrawable(R.drawable.divider_line, getTheme()));
         binding.rvList.addItemDecoration(divider);
         apiClient = ApiClientFactory.create(this);
+
+        if (editionType == 1) {
+            binding.searchContainer.setVisibility(View.VISIBLE);
+        }
+        setupSearchView();
+        setupDownloadAllButton();
 
         if (editionType == 2) {
             loadPrepareCodes();
         } else {
             loadStudents();
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (searchHandler != null) {
+            searchHandler.removeCallbacksAndMessages(null);
+        }
+        if (downloadAllManager != null) {
+            downloadAllManager.cancel();
+        }
+        super.onDestroy();
     }
 
     private void showLoading() {
@@ -109,6 +145,7 @@ public class StudentListActivity extends BaseActivity {
     private void showEmpty(String message) {
         binding.pbLoading.setVisibility(View.GONE);
         binding.rvList.setVisibility(View.GONE);
+        binding.btnDownloadAll.setVisibility(View.GONE);
         binding.tvEmpty.setVisibility(View.VISIBLE);
         binding.tvEmpty.setText(message);
     }
@@ -159,8 +196,11 @@ public class StudentListActivity extends BaseActivity {
                         }
                         List<StudentEntity> saved = studentRepo.getByEdition(schoolId, editionId);
                         rbqRunOnUiThread(() -> {
+                            currentStudents = saved;
                             buildGroupedStudentList(saved);
+                            setupClassFilter(saved);
                             showContent();
+                            binding.btnDownloadAll.setVisibility(View.VISIBLE);
                         });
                     });
                 }
@@ -197,11 +237,105 @@ public class StudentListActivity extends BaseActivity {
             displayItems.add(StudentAdapter.ListItem.item(student));
         }
 
-        StudentAdapter adapter = new StudentAdapter();
-        adapter.setItems(displayItems);
-        adapter.setOnStudentClickListener(this::onStudentClick);
-        adapter.setOnDownloadClickListener(this::onStudentDownload);
-        binding.rvList.setAdapter(adapter);
+        if (studentAdapter == null) {
+            studentAdapter = new StudentAdapter();
+            studentAdapter.setOnClassClickListener(className ->
+                studentAdapter.toggleClass(className));
+        }
+        studentAdapter.setOnStudentClickListener(this::onStudentClick);
+        studentAdapter.setOnDownloadClickListener(this::onStudentDownload);
+        studentAdapter.setItems(displayItems);
+        binding.rvList.setAdapter(studentAdapter);
+    }
+
+    private void setupSearchView() {
+        binding.searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                if (searchRunnable != null) {
+                    searchHandler.removeCallbacks(searchRunnable);
+                }
+                searchRunnable = () -> applyFilters(newText);
+                searchHandler.postDelayed(searchRunnable, 300);
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return true;
+            }
+        });
+    }
+
+    private void setupClassFilter(List<StudentEntity> students) {
+        Set<String> classSet = new TreeSet<>();
+        for (StudentEntity s : students) {
+            classSet.add(s.getClassName());
+        }
+        allClassNames.clear();
+        allClassNames.add(getString(R.string.all_classes));
+        allClassNames.addAll(classSet);
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+            android.R.layout.simple_spinner_item, allClassNames);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        binding.spinnerClassFilter.setAdapter(adapter);
+
+        selectedClass = getString(R.string.all_classes);
+
+        binding.spinnerClassFilter.setOnItemSelectedListener(
+            new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view,
+                                           int position, long id) {
+                    selectedClass = allClassNames.get(position);
+                    String searchKeyword = binding.searchView.getQuery().toString().trim();
+                    applyFilters(searchKeyword);
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {}
+            });
+    }
+
+    private void applyFilters(String searchKeyword) {
+        if (isFinishing()) return;
+        PrintEngine.getInstance().getDbExecutor().execute(() -> {
+            if (isFinishing()) return;
+            StudentRepository repo = AppDatabase.getInstance(this).studentRepository();
+            List<StudentEntity> students = repo.getByEdition(schoolId, editionId);
+
+            if (selectedClass != null && !getString(R.string.all_classes).equals(selectedClass)) {
+                List<StudentEntity> filtered = new ArrayList<>();
+                for (StudentEntity s : students) {
+                    if (selectedClass.equals(s.getClassName())) {
+                        filtered.add(s);
+                    }
+                }
+                students = filtered;
+            }
+
+            if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
+                List<StudentEntity> filtered = new ArrayList<>();
+                for (StudentEntity s : students) {
+                    if (s.getStudentName().contains(searchKeyword.trim())) {
+                        filtered.add(s);
+                    }
+                }
+                students = filtered;
+            }
+
+            List<StudentEntity> finalStudents = students;
+            rbqRunOnUiThread(() -> {
+                if (isFinishing()) return;
+                if (finalStudents.isEmpty()) {
+                    showEmpty(getString(R.string.empty_search_result));
+                } else {
+                    buildGroupedStudentList(finalStudents);
+                    showContent();
+                }
+            });
+        });
     }
 
     private void loadPrepareCodes() {
@@ -231,6 +365,8 @@ public class StudentListActivity extends BaseActivity {
                             readyStates.add(isPagesDirReady(pagesPath));
                         }
                         rbqRunOnUiThread(() -> {
+                            currentPrepareCodes = codes;
+                            currentReadyStates = readyStates;
                             PrepareCodeAdapter adapter = new PrepareCodeAdapter();
                             adapter.setItems(codes, readyStates);
                             adapter.setOnPrepareCodeClickListener(
@@ -239,6 +375,7 @@ public class StudentListActivity extends BaseActivity {
                                 StudentListActivity.this::onPrepareCodeDownload);
                             binding.rvList.setAdapter(adapter);
                             showContent();
+                            binding.btnDownloadAll.setVisibility(View.VISIBLE);
                         });
                     });
                 }
@@ -264,7 +401,7 @@ public class StudentListActivity extends BaseActivity {
 
     private void onPrepareCodeDownload(String prepareCode) {
         String businessId = prepareCodeBusinessIdMap.get(prepareCode);
-        android.util.Log.d("StudentList", "[precodeDownload] prepareCode=" + prepareCode
+        Log.d("StudentList", "[precodeDownload] prepareCode=" + prepareCode
             + " businessId=" + businessId + " editionType=" + editionType);
         if (businessId == null) {
             new android.app.AlertDialog.Builder(this, R.style.mAlertDialog)
@@ -346,6 +483,174 @@ public class StudentListActivity extends BaseActivity {
         } else {
             loadStudents();
         }
+    }
+
+    private void setupDownloadAllButton() {
+        binding.btnDownloadAll.setOnClickListener(v -> {
+            if (editionType == 2) {
+                showPrepareCodeDownloadConfirm();
+            } else {
+                showStudentDownloadConfirm();
+            }
+        });
+    }
+
+    private void showStudentDownloadConfirm() {
+        List<StudentEntity> notReady = new ArrayList<>();
+        for (StudentEntity s : currentStudents) {
+            if (!s.isMaterialReady()) {
+                notReady.add(s);
+            }
+        }
+
+        if (notReady.isEmpty()) {
+            showToast(getString(R.string.download_all_already_ready));
+            return;
+        }
+
+        int minutes = (int) Math.ceil(notReady.size() * 5.0 / 3 / 60);
+        new android.app.AlertDialog.Builder(this, R.style.mAlertDialog)
+            .setTitle(R.string.download_all_confirm_title)
+            .setMessage(getString(R.string.download_all_confirm_message, notReady.size(), minutes))
+            .setPositiveButton(R.string.dialog_ok, (d, w) -> startDownloadAllStudents(notReady))
+            .setNegativeButton(R.string.dialog_cancel, null)
+            .show();
+    }
+
+    private void startDownloadAllStudents(List<StudentEntity> students) {
+        if (downloadAllManager == null) {
+            downloadAllManager = new DownloadAllManager();
+        }
+
+        List<DownloadAllManager.DownloadTask> tasks = new ArrayList<>();
+        for (StudentEntity s : students) {
+            tasks.add(new DownloadAllManager.StudentTask(s));
+        }
+
+        batchProgressDialog = new RBQProgressDialog();
+        batchProgressDialog.show(this, getString(R.string.download_all),
+            getString(R.string.download_preparing));
+
+        downloadAllManager.downloadAll(this, schoolId, editionId, editionType, tasks,
+            new DownloadAllManager.DownloadAllCallback() {
+                @Override
+                public void onProgress(int completed, int total, String itemName) {
+                    rbqRunOnUiThread(() -> {
+                        batchProgressDialog.updateMessage(completed + "/" + total + " - " + itemName);
+                        batchProgressDialog.updateProgress(completed, total);
+                    });
+                }
+
+                @Override
+                public void onFailed(DownloadAllManager.DownloadTask task, String error) {}
+
+                @Override
+                public void onComplete(int successCount, int failedCount) {
+                    rbqRunOnUiThread(() -> {
+                        batchProgressDialog.dismiss();
+                        if (failedCount == 0) {
+                            showToast(getString(R.string.download_all_success));
+                        } else {
+                            showDownloadResult(successCount, failedCount);
+                        }
+                        loadStudents();
+                    });
+                }
+            });
+    }
+
+    private void showPrepareCodeDownloadConfirm() {
+        List<String> notReady = new ArrayList<>();
+        for (int i = 0; i < currentPrepareCodes.size(); i++) {
+            if (i < currentReadyStates.size() && !currentReadyStates.get(i)) {
+                notReady.add(currentPrepareCodes.get(i));
+            }
+        }
+
+        if (notReady.isEmpty()) {
+            showToast(getString(R.string.download_all_already_ready));
+            return;
+        }
+
+        new android.app.AlertDialog.Builder(this, R.style.mAlertDialog)
+            .setTitle(R.string.download_all_confirm_title)
+            .setMessage(getString(R.string.download_all_prepare_confirm, notReady.size()))
+            .setPositiveButton(R.string.dialog_ok, (d, w) -> startDownloadAllPrepareCodes(notReady))
+            .setNegativeButton(R.string.dialog_cancel, null)
+            .show();
+    }
+
+    private void startDownloadAllPrepareCodes(List<String> codes) {
+        if (downloadAllManager == null) {
+            downloadAllManager = new DownloadAllManager();
+        }
+
+        List<DownloadAllManager.DownloadTask> tasks = new ArrayList<>();
+        for (String code : codes) {
+            String businessId = prepareCodeBusinessIdMap.get(code);
+            if (businessId != null) {
+                tasks.add(new DownloadAllManager.PrepareCodeTask(code, businessId));
+            }
+        }
+
+        batchProgressDialog = new RBQProgressDialog();
+        batchProgressDialog.show(this, getString(R.string.download_all),
+            getString(R.string.download_preparing));
+
+        downloadAllManager.downloadAll(this, schoolId, editionId, editionType, tasks,
+            new DownloadAllManager.DownloadAllCallback() {
+                @Override
+                public void onProgress(int completed, int total, String itemName) {
+                    rbqRunOnUiThread(() -> {
+                        batchProgressDialog.updateMessage(completed + "/" + total + " - " + itemName);
+                        batchProgressDialog.updateProgress(completed, total);
+                    });
+                }
+
+                @Override
+                public void onFailed(DownloadAllManager.DownloadTask task, String error) {}
+
+                @Override
+                public void onComplete(int successCount, int failedCount) {
+                    rbqRunOnUiThread(() -> {
+                        batchProgressDialog.dismiss();
+                        showToast(getString(R.string.download_all_result, successCount, failedCount));
+                        loadPrepareCodes();
+                    });
+                }
+            });
+    }
+
+    private void showDownloadResult(int successCount, int failedCount) {
+        List<DownloadAllManager.DownloadTask> failed = downloadAllManager.getFailedList();
+
+        StringBuilder msg = new StringBuilder();
+        msg.append(getString(R.string.download_all_result, successCount, failedCount)).append("\n\n");
+        for (int i = 0; i < Math.min(failed.size(), 5); i++) {
+            msg.append("- ").append(failed.get(i).getDisplayName()).append("\n");
+        }
+        if (failed.size() > 5) {
+            msg.append("... ").append(failed.size()).append(" total");
+        }
+
+        new android.app.AlertDialog.Builder(this, R.style.mAlertDialog)
+            .setTitle(R.string.download_all_confirm_title)
+            .setMessage(msg.toString())
+            .setPositiveButton(R.string.download_retry_failed, (d, w) -> {
+                startDownloadAllStudents(collectFailedStudents(failed));
+            })
+            .setNegativeButton(R.string.dialog_close, null)
+            .show();
+    }
+
+    private List<StudentEntity> collectFailedStudents(List<DownloadAllManager.DownloadTask> failed) {
+        List<StudentEntity> result = new ArrayList<>();
+        for (DownloadAllManager.DownloadTask task : failed) {
+            if (task instanceof DownloadAllManager.StudentTask) {
+                result.add(((DownloadAllManager.StudentTask) task).getStudent());
+            }
+        }
+        return result;
     }
 
     private void onStudentClick(StudentEntity student) {
@@ -437,10 +742,8 @@ public class StudentListActivity extends BaseActivity {
                 startActivity(TaskDetailActivity.newIntent(this, task.getTaskId()));
             })
             .setNegativeButton(R.string.dialog_resume_restart, (d, w) -> {
-                // 先取消旧任务，避免 startNewTask 防重检查抛异常
                 task.setStatus(TaskStatus.CANCELLED.getCode());
                 task.setUpdatedAt(System.currentTimeMillis());
-                // 等待 DB 更新完成后，回到主线程再跳转，消除竞态窗口
                 PrintEngine.getInstance().getDbExecutor().execute(() -> {
                     try {
                         AppDatabase.getInstance(StudentListActivity.this).printTaskRepository().update(task);
@@ -448,8 +751,8 @@ public class StudentListActivity extends BaseActivity {
                             if (!isFinishing()) onRestart.run();
                         });
                     } catch (Exception e) {
-                        Log.e(TAG, "取消旧任务失败", e);
-                        rbqRunOnUiThread(() -> showToast("取消失败，请重试"));
+                        Log.e(TAG, "cancel old task failed", e);
+                        rbqRunOnUiThread(() -> showToast("cancel failed, retry"));
                     }
                 });
             })
@@ -463,8 +766,8 @@ public class StudentListActivity extends BaseActivity {
     }
 
     private void showMultiTaskResumeDialog(String name,
-                                             List<PrintTaskEntity> tasks,
-                                             Runnable onRestart) {
+                                              List<PrintTaskEntity> tasks,
+                                              Runnable onRestart) {
         String[] names = new String[tasks.size()];
         for (int i = 0; i < tasks.size(); i++) {
             PrintTaskEntity t = tasks.get(i);
@@ -482,8 +785,6 @@ public class StudentListActivity extends BaseActivity {
                 startActivity(TaskDetailActivity.newIntent(this, selected.getTaskId()));
             })
             .setNegativeButton(R.string.dialog_resume_restart, (d, w) -> {
-                // 先取消所有旧任务，避免 startNewTask 防重检查抛异常
-                // 等待 DB 更新完成后，回到主线程再跳转，消除竞态窗口
                 PrintEngine.getInstance().getDbExecutor().execute(() -> {
                     try {
                         AppDatabase db = AppDatabase.getInstance(StudentListActivity.this);
@@ -497,8 +798,8 @@ public class StudentListActivity extends BaseActivity {
                             if (!isFinishing()) onRestart.run();
                         });
                     } catch (Exception e) {
-                        Log.e(TAG, "批量取消旧任务失败", e);
-                        rbqRunOnUiThread(() -> showToast("取消失败，请重试"));
+                        Log.e(TAG, "batch cancel failed", e);
+                        rbqRunOnUiThread(() -> showToast("cancel failed, retry"));
                     }
                 });
             })
@@ -510,8 +811,8 @@ public class StudentListActivity extends BaseActivity {
     }
 
     private void showExistingTasksDialog(String name,
-                                          List<PrintTaskEntity> tasks,
-                                          Runnable onRestart) {
+                                           List<PrintTaskEntity> tasks,
+                                           Runnable onRestart) {
         String[] items = new String[tasks.size()];
         for (int i = 0; i < tasks.size(); i++) {
             PrintTaskEntity t = tasks.get(i);
@@ -528,9 +829,8 @@ public class StudentListActivity extends BaseActivity {
                 PrintTaskEntity selected = tasks.get(which);
                 startActivity(TaskDetailActivity.newIntent(this, selected.getTaskId()));
             })
-            .setNegativeButton("新打印", (d, w) -> onRestart.run())
+            .setNegativeButton(R.string.btn_new_print, (d, w) -> onRestart.run())
             .create();
-        // 为列表项之间添加分割线
         dialog.getListView().setDivider(new android.graphics.drawable.ColorDrawable(0xFFE0E0E0));
         dialog.getListView().setDividerHeight(1);
         dialog.getListView().setFooterDividersEnabled(false);
