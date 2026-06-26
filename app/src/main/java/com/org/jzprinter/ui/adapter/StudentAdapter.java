@@ -192,6 +192,7 @@ public class StudentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             SectionViewHolder vh = (SectionViewHolder) holder;
             String className = item.sectionTitle;
             int count = classStudentCount.getOrDefault(className, 0);
+            vh.ivCollapseIcon.setVisibility(View.VISIBLE);
             vh.tvSectionTitle.setText(className + " (" + count + ")");
             boolean collapsed = collapsedClasses.contains(className);
             vh.ivCollapseIcon.setRotation(collapsed ? 0f : 180f);

@@ -16,6 +16,7 @@
         android:layout_height="20dp"
         android:src="@drawable/ic_arrow_down"
         android:rotation="180"
+        android:visibility="gone"
         android:layout_marginEnd="4dp"/>
 
     <TextView
